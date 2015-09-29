@@ -7,6 +7,8 @@ type NetworkStruct struct {
 		Bat0 struct {
 			Interfaces struct {
 				Wireless []string `json:"wireless"`
+				Other    []string `json:"other"`
+				Tunnel   []string `json:"tunnel"`
 			} `json:"interfaces"`
 		} `json:"bat0"`
 	} `json:"mesh"`
@@ -43,6 +45,9 @@ type SoftwareStruct struct {
 		Base    string `json:"base"`
 		Release string `json:"release"`
 	} `json:"firmware"`
+	StatusPage struct {
+		Api int `json:"api"`
+	} `json:"status-page"`
 }
 
 type HardwareStruct struct {
