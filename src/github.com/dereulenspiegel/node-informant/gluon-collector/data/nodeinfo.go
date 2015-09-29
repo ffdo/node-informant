@@ -69,4 +69,5 @@ type NodeInfo struct {
 type RespondNodeinfo struct {
 	Nodeinfo   *NodeInfo         `json:"nodeinfo"`
 	Statistics *StatisticsStruct `json:"statistics"`
+	Neighbours *NeighbourStruct  `json:"neighbours"`
 }

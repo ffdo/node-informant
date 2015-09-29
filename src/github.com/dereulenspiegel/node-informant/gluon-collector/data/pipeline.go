@@ -131,6 +131,11 @@ func (j *JsonParsePipe) Process(in chan announced.Response) chan ParsedResponse 
 						Statistics: *respondInfo.Statistics,
 					}
 				}
+				if respondInfo.Neighbours != nil {
+					out <- NeighbourReponse{
+						Neighbours: *respondInfo.Neighbours,
+					}
+				}
 			}
 		}
 	}()

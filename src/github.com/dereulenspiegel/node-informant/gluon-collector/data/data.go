@@ -38,6 +38,22 @@ func (s StatisticsResponse) NodeId() string {
 	return s.Statistics.NodeId
 }
 
+type NeighbourReponse struct {
+	Neighbours NeighbourStruct
+}
+
+func (n NeighbourReponse) Type() string {
+	return "neighbours"
+}
+
+func (n NeighbourReponse) ParsedData() interface{} {
+	return n.Neighbours
+}
+
+func (n NeighbourReponse) NodeId() string {
+	return n.Neighbours.NodeId
+}
+
 type NodeFlags struct {
 	Gateway bool `json:"gateway"`
 	Online  bool `json:"online"`
