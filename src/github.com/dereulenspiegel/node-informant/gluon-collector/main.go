@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -13,12 +12,12 @@ import (
 	"github.com/dereulenspiegel/node-informant/gluon-collector/httpserver"
 )
 
-var ifaceName = flag.String("iface", "", "Interface")
+/*var ifaceName = flag.String("iface", "", "Interface")
 var udpPort = flag.Int("udpPort", 12444, "UDP Port")
 var httpPort = flag.Int("httpPort", 8080, "Http Port")
 var nodeinfoInterval = flag.Int("infoInterval", 600, "Interval between nodeinfo requests")
 var statisticsInterval = flag.Int("statisticsInterval", 300, "Interval between statistics requests")
-var nodesJsonPath = flag.String("nodesjson", "", "Static file with node information")
+var nodesJsonPath = flag.String("nodesjson", "", "Static file with node information")*/
 var configFilePath = flag.String("config", "/etc/node-collector.yaml", "Config file")
 
 type LogPipe struct {
@@ -35,23 +34,14 @@ func (l *LogPipe) Process(in chan announced.Response) chan announced.Response {
 	return out
 }
 
-func Assemble(iface string, announcedPort int, httpListenAddr string) error {
-	log.Printf("Assembling everything, creating requester")
-	requester, err := announced.NewRequester(iface, announcedPort)
-	if err != nil {
-		return err
-	}
-	log.Printf("Creating store and pipes")
-	store := data.NewSimpleInMemoryStore()
-	if *nodesJsonPath != "" {
-		store.LoadNodesFromFile(*nodesJsonPath)
-	}
+func BuildPipelines(requester announced.Requester, store data.ProcessPipe) error {
 	receivePipeline := data.NewReceivePipeline(&data.JsonParsePipe{}, &data.DeflatePipe{})
 	processPipe := data.NewProcessPipeline(store)
 	log.Printf("Adding process pipe end")
 	go func() {
 		processPipe.Dequeue(func(response data.ParsedResponse) {
-			//Do nothing. This is the last step and we do not need to do anything here
+			//Do nothing. This is the last step and we do not need to do anything here,
+			// just pull the chan clean
 		})
 	}()
 	log.Printf("Connecting requester to receive pipeline")
@@ -67,9 +57,32 @@ func Assemble(iface string, announcedPort int, httpListenAddr string) error {
 			processPipe.Enqueue(response)
 		})
 	}()
+	return nil
+}
+
+func Assemble() error {
+	store := data.NewSimpleInMemoryStore()
+	nodesJsonPath, err := conf.Global.String("nodesJsonPath")
+	if err != nil {
+		log.Infof("Loading node information from file %s", nodesJsonPath)
+		store.LoadNodesFromFile(nodesJsonPath)
+	}
+	iface, err := conf.Global.String("announced.interface")
+	if err != nil {
+		return err
+	}
+	requester, err := announced.NewRequester(iface, conf.Global.UInt("announced.port", 12444))
+	if err != nil {
+		return err
+	}
+	err = BuildPipelines(requester, store)
+
 	log.Printf("Setting up request timer")
-	nodeinfoTimer := time.NewTicker(time.Second * time.Duration(*nodeinfoInterval))
-	statisticsTimer := time.NewTicker(time.Second * time.Duration(*statisticsInterval))
+	nodeinfoInterval := conf.Global.UInt("announced.interval.nodeinfo", 1800)
+	statisticsInterval := conf.Global.UInt("announced.interval.statistics", 300)
+
+	nodeinfoTimer := time.NewTicker(time.Second * time.Duration(nodeinfoInterval))
+	statisticsTimer := time.NewTicker(time.Second * time.Duration(statisticsInterval))
 	updateNodesJsonTimer := time.NewTicker(time.Minute * 1)
 	quitChan := make(chan bool)
 	go func() {
@@ -105,6 +118,6 @@ func main() {
 	flag.Parse()
 	conf.ParseConfig(*configFilePath)
 	ConfigureLogger()
-	err := Assemble(*ifaceName, *udpPort, fmt.Sprintf(":%d", *httpPort))
+	err := Assemble()
 	log.Errorf("Error assembling application: %v", err)
 }
