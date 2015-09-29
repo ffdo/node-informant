@@ -44,6 +44,12 @@
 			"branch": "master"
 		},
 		{
+			"importpath": "github.com/olebedev/config",
+			"repository": "https://github.com/olebedev/config",
+			"revision": "ed583f7fafbccbd73013b0379ab29943ab0da34b",
+			"branch": "master"
+		},
+		{
 			"importpath": "github.com/stretchr/testify/assert",
 			"repository": "https://github.com/stretchr/testify",
 			"revision": "bcd32dcc8b1e09b14f55703dcf891fdd82561143",
@@ -55,6 +61,12 @@
 			"repository": "https://github.com/tobi/airbrake-go",
 			"revision": "5b5e269e1bc398d43f67e43dafff3414a59cd5a2",
 			"branch": "master"
+		},
+		{
+			"importpath": "gopkg.in/yaml.v2",
+			"repository": "https://gopkg.in/yaml.v2",
+			"revision": "53feefa2559fb8dfa8d81baad31be332c97d6c77",
+			"branch": "v2"
 		}
 	]
 }

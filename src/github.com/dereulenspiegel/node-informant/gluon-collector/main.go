@@ -8,6 +8,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 
 	"github.com/dereulenspiegel/node-informant/announced"
+	conf "github.com/dereulenspiegel/node-informant/gluon-collector/config"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/httpserver"
 )
@@ -18,6 +19,7 @@ var httpPort = flag.Int("httpPort", 8080, "Http Port")
 var nodeinfoInterval = flag.Int("infoInterval", 600, "Interval between nodeinfo requests")
 var statisticsInterval = flag.Int("statisticsInterval", 300, "Interval between statistics requests")
 var nodesJsonPath = flag.String("nodesjson", "", "Static file with node information")
+var configFilePath = flag.String("config", "/etc/node-collector.yaml", "Config file")
 
 type LogPipe struct {
 }
@@ -86,16 +88,22 @@ func Assemble(iface string, announcedPort int, httpListenAddr string) error {
 	}()
 	requester.Query("GET nodeinfo")
 	requester.Query("GET statistics")
-	httpserver.StartHttpServerBlocking(httpListenAddr, store)
+	httpserver.StartHttpServerBlocking(store)
 	return nil
 }
 
 func ConfigureLogger() {
-	log.SetLevel(log.DebugLevel)
+	lvl, err := log.ParseLevel(conf.Global.UString("logger.level", "debug"))
+	if err != nil {
+		lvl = log.DebugLevel
+		log.Errorf("Error while parsing log level, falling back to Debug: %v", err)
+	}
+	log.SetLevel(lvl)
 }
 
 func main() {
 	flag.Parse()
+	conf.ParseConfig(*configFilePath)
 	ConfigureLogger()
 	err := Assemble(*ifaceName, *udpPort, fmt.Sprintf(":%d", *httpPort))
 	log.Errorf("Error assembling application: %v", err)
