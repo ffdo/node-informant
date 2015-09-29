@@ -1,0 +1,13 @@
+announced:
+  interval:
+    statistics: 300
+    nodeinfo: 1800
+  interface: "bat0"
+  port: 21444
+
+logger:
+  level: "debug"
+
+http:
+  port: 8080
+  address: "[::]"
