@@ -73,6 +73,7 @@ func Assemble() error {
 	}
 	requester, err := announced.NewRequester(iface, conf.Global.UInt("announced.port", 12444))
 	if err != nil {
+		log.Fatalf("Can't create requester: %v", err)
 		return err
 	}
 	err = BuildPipelines(requester, store)
@@ -118,8 +119,11 @@ func ConfigureLogger() {
 
 func main() {
 	flag.Parse()
-	conf.ParseConfig(*configFilePath)
+	err := conf.ParseConfig(*configFilePath)
+	if err != nil {
+		log.Fatalf("Error parsing config file %s: %v", *configFilePath, err)
+	}
 	ConfigureLogger()
-	err := Assemble()
+	err = Assemble()
 	log.Errorf("Error assembling application: %v", err)
 }
