@@ -96,6 +96,8 @@ func Assemble() error {
 				store.UpdateNodesJson()
 			case <-quitChan:
 				nodeinfoTimer.Stop()
+				updateNodesJsonTimer.Stop()
+				statisticsTimer.Stop()
 			}
 		}
 	}()
