@@ -65,7 +65,11 @@ func Assemble() error {
 	nodesJsonPath, err := conf.Global.String("nodesJsonPath")
 	if err != nil {
 		log.Infof("Loading node information from file %s", nodesJsonPath)
-		store.LoadNodesFromFile(nodesJsonPath)
+		err = store.LoadNodesFromFile(nodesJsonPath)
+		log.WithFields(log.Fields{
+			"error": err,
+			"path":  nodesJsonPath,
+		}).Error("Can't node information from file")
 	}
 	iface, err := conf.Global.String("announced.interface")
 	if err != nil {
