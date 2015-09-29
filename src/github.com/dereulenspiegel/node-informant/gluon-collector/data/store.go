@@ -195,10 +195,9 @@ func (s *SimpleInMemoryStore) GetNodeInfoRest(w http.ResponseWriter, r *http.Req
 }
 
 func (s *SimpleInMemoryStore) GetNodesJsonRest(w http.ResponseWriter, r *http.Request) {
-	nodesJson := s.GetNodesJson()
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(nodesJson)
+	w.Write([]byte(s.cachedNodesJson))
 }
 
 func (s *SimpleInMemoryStore) GetNodesJson() NodesJson {
