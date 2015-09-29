@@ -83,6 +83,7 @@ func Assemble() error {
 
 	nodeinfoTimer := time.NewTicker(time.Second * time.Duration(nodeinfoInterval))
 	statisticsTimer := time.NewTicker(time.Second * time.Duration(statisticsInterval))
+	neighbourTimer := time.NewTicker(time.Second * time.Duration(statisticsInterval))
 	updateNodesJsonTimer := time.NewTicker(time.Minute * 1)
 	quitChan := make(chan bool)
 	go func() {
@@ -92,17 +93,21 @@ func Assemble() error {
 				requester.Query("GET nodeinfo")
 			case <-statisticsTimer.C:
 				requester.Query("GET statistics")
+			case <-neighbourTimer.C:
+				requester.Query("GET neighbours")
 			case <-updateNodesJsonTimer.C:
 				store.UpdateNodesJson()
 			case <-quitChan:
 				nodeinfoTimer.Stop()
 				updateNodesJsonTimer.Stop()
 				statisticsTimer.Stop()
+				neighbourTimer.Stop()
 			}
 		}
 	}()
 	requester.Query("GET nodeinfo")
 	requester.Query("GET statistics")
+	requester.Query("GET neighbours")
 	httpserver.StartHttpServerBlocking(store)
 	return nil
 }
