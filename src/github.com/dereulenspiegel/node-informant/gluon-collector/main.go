@@ -31,7 +31,8 @@ func (l *LogPipe) Process(in chan announced.Response) chan announced.Response {
 func BuildPipelines(requester announced.Requester, store *data.SimpleInMemoryStore) error {
 	receivePipeline := data.NewReceivePipeline(&data.JsonParsePipe{}, &data.DeflatePipe{})
 	processPipe := data.NewProcessPipeline(&data.GatewayCollector{Store: store},
-		&data.NodeinfoCollector{Store: store}, &data.StatisticsCollector{Store: store})
+		&data.NodeinfoCollector{Store: store}, &data.StatisticsCollector{Store: store},
+		&data.NeighbourInfoCollector{Store: store})
 	log.Printf("Adding process pipe end")
 	go func() {
 		processPipe.Dequeue(func(response data.ParsedResponse) {

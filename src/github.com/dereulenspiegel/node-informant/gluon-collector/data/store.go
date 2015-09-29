@@ -39,13 +39,15 @@ type SimpleInMemoryStore struct {
 	nodesJsonPath   string
 	cachedNodesJson string
 	gatewayList     map[string]bool
+	neighbourInfos  map[string]NeighbourStruct
 }
 
 func NewSimpleInMemoryStore() *SimpleInMemoryStore {
 	return &SimpleInMemoryStore{
-		nodeinfos:  make(map[string]NodeInfo),
-		statistics: make(map[string]StatisticsStruct),
-		statusInfo: make(map[string]NodeStatusInfo),
+		nodeinfos:      make(map[string]NodeInfo),
+		statistics:     make(map[string]StatisticsStruct),
+		statusInfo:     make(map[string]NodeStatusInfo),
+		neighbourInfos: make(map[string]NeighbourStruct),
 	}
 }
 
@@ -288,6 +290,24 @@ func (s *StatisticsCollector) Process(in chan ParsedResponse) chan ParsedRespons
 			if response.Type() == "statistics" {
 				statistics := response.ParsedData().(StatisticsStruct)
 				s.Store.statistics[statistics.NodeId] = statistics
+			}
+			out <- response
+		}
+	}()
+	return out
+}
+
+type NeighbourInfoCollector struct {
+	Store *SimpleInMemoryStore
+}
+
+func (n *NeighbourInfoCollector) Process(in chan ParsedResponse) chan ParsedResponse {
+	out := make(chan ParsedResponse)
+	go func() {
+		for response := range in {
+			if response.Type() == "neighbours" {
+				neighbours := response.ParsedData().(NeighbourStruct)
+				n.Store.neighbourInfos[neighbours.NodeId] = neighbours
 			}
 			out <- response
 		}
