@@ -38,6 +38,7 @@ type SimpleInMemoryStore struct {
 	statusInfo      map[string]NodeStatusInfo
 	nodesJsonPath   string
 	cachedNodesJson string
+	gatewayList     map[string]bool
 }
 
 func NewSimpleInMemoryStore() *SimpleInMemoryStore {
@@ -79,6 +80,7 @@ func (s *SimpleInMemoryStore) LoadNodesFromFile(path string) error {
 func (s *SimpleInMemoryStore) updateNodeStatusInfo(response ParsedResponse) {
 	info, exists := s.statusInfo[response.NodeId()]
 	now := time.Now().Format(TimeFormat)
+	_, isGw := s.gatewayList[response.NodeId()]
 	if exists {
 		info.Lastseen = now
 		info.Online = true
@@ -87,7 +89,7 @@ func (s *SimpleInMemoryStore) updateNodeStatusInfo(response ParsedResponse) {
 			Firstseen: now,
 			Lastseen:  now,
 			Online:    true,
-			Gateway:   false,
+			Gateway:   isGw,
 		}
 	}
 	s.statusInfo[response.NodeId()] = info
@@ -249,4 +251,28 @@ func (s *SimpleInMemoryStore) UpdateNodesJson() {
 			"path":  s.nodesJsonPath,
 		}).Error("Error writing nodes.json")
 	}
+}
+
+type GatewayCollector struct {
+	Store *SimpleInMemoryStore
+}
+
+func (g *GatewayCollector) Process(in chan ParsedResponse) chan ParsedResponse {
+	out := make(chan ParsedResponse)
+	go func() {
+		for response := range in {
+			if response.Type() == "statistics" {
+				statistics := response.ParsedData().(StatisticsStruct)
+				gateway := statistics.Gateway
+				if gateway != "" {
+					_, exists := g.Store.gatewayList[response.NodeId()]
+					if !exists {
+						g.Store.gatewayList[response.NodeId()] = true
+					}
+				}
+			}
+			out <- response
+		}
+	}()
+	return out
 }
