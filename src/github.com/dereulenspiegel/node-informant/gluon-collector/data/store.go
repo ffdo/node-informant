@@ -28,6 +28,7 @@ type NodeinfoStore interface {
 	GetStatistics(nodeId string) (StatisticsStruct, error)
 	GetNodeinfos() []NodeInfo
 	GetNodeStatusInfo(nodeId string) (NodeStatusInfo, error)
+	GetNodeNeighbours(nodeId string) (NeighbourStruct, error)
 	LoadNodesFromFile(path string) error
 	UpdateNodesJson()
 }
@@ -110,6 +111,15 @@ func (s *SimpleInMemoryStore) GetNodeStatusInfo(nodeId string) (status NodeStatu
 	return
 }
 
+func (s *SimpleInMemoryStore) GetNodeNeighbours(nodeId string) (neighbours NeighbourStruct, err error) {
+	neighbourInfo, exists := s.neighbourInfos[nodeId]
+	if !exists {
+		err = fmt.Errorf("NodeId %s has no neighbour info", nodeId)
+	}
+	neighbours = neighbourInfo
+	return
+}
+
 func (s *SimpleInMemoryStore) GetNodeinfo(nodeId string) (info NodeInfo, err error) {
 	nodeinfo, exists := s.nodeinfos[nodeId]
 	info = nodeinfo
@@ -145,6 +155,7 @@ func (s *SimpleInMemoryStore) Routes() []httpserver.Route {
 		httpserver.Route{"NodeInfos", "GET", "/nodeinfos", s.GetNodeInfosRest},
 		httpserver.Route{"NodeStatistics", "GET", "/statistics/{nodeid}", s.GetNodeStatisticsRest},
 		httpserver.Route{"NodesJson", "GET", "/nodes.json", s.GetNodesJsonRest},
+		httpserver.Route{"NodesNeighbours", "GET", "/neighbours/{nodeid}", s.GetNodeNeighboursRest},
 	}
 	return memoryStoreRoutes
 }
@@ -157,6 +168,20 @@ func (s *SimpleInMemoryStore) GetNodeStatisticsRest(w http.ResponseWriter, r *ht
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(stats)
+	} else {
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(err)
+	}
+}
+
+func (s *SimpleInMemoryStore) GetNodeNeighboursRest(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	nodeid := vars["nodeid"]
+	neighbours, err := s.GetNodeNeighbours(nodeid)
+	if err == nil {
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(neighbours)
 	} else {
 		w.WriteHeader(http.StatusNotFound)
 		json.NewEncoder(w).Encode(err)
