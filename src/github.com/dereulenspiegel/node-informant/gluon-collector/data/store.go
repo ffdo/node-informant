@@ -95,24 +95,6 @@ func (s *SimpleInMemoryStore) updateNodeStatusInfo(response ParsedResponse) {
 	s.statusInfo[response.NodeId()] = info
 }
 
-func (s *SimpleInMemoryStore) Process(in chan ParsedResponse) chan ParsedResponse {
-	out := make(chan ParsedResponse)
-	go func() {
-		for response := range in {
-			s.updateNodeStatusInfo(response)
-			if response.Type() == "nodeinfo" {
-				nodeinfo := response.ParsedData().(NodeInfo)
-				s.nodeinfos[nodeinfo.NodeId] = nodeinfo
-			}
-			if response.Type() == "statistics" {
-				statistics := response.ParsedData().(StatisticsStruct)
-				s.statistics[statistics.NodeId] = statistics
-			}
-		}
-	}()
-	return out
-}
-
 func (s *SimpleInMemoryStore) GetNodeStatusInfo(nodeId string) (status NodeStatusInfo, err error) {
 	stat, exists := s.statusInfo[nodeId]
 	if !exists {
@@ -270,6 +252,42 @@ func (g *GatewayCollector) Process(in chan ParsedResponse) chan ParsedResponse {
 						g.Store.gatewayList[response.NodeId()] = true
 					}
 				}
+			}
+			out <- response
+		}
+	}()
+	return out
+}
+
+type NodeinfoCollector struct {
+	Store *SimpleInMemoryStore
+}
+
+func (n *NodeinfoCollector) Process(in chan ParsedResponse) chan ParsedResponse {
+	out := make(chan ParsedResponse)
+	go func() {
+		for response := range in {
+			if response.Type() == "nodeinfo" {
+				nodeinfo := response.ParsedData().(NodeInfo)
+				n.Store.nodeinfos[nodeinfo.NodeId] = nodeinfo
+			}
+			out <- response
+		}
+	}()
+	return out
+}
+
+type StatisticsCollector struct {
+	Store *SimpleInMemoryStore
+}
+
+func (s *StatisticsCollector) Process(in chan ParsedResponse) chan ParsedResponse {
+	out := make(chan ParsedResponse)
+	go func() {
+		for response := range in {
+			if response.Type() == "statistics" {
+				statistics := response.ParsedData().(StatisticsStruct)
+				s.Store.statistics[statistics.NodeId] = statistics
 			}
 			out <- response
 		}

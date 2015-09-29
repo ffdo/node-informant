@@ -12,12 +12,6 @@ import (
 	"github.com/dereulenspiegel/node-informant/gluon-collector/httpserver"
 )
 
-/*var ifaceName = flag.String("iface", "", "Interface")
-var udpPort = flag.Int("udpPort", 12444, "UDP Port")
-var httpPort = flag.Int("httpPort", 8080, "Http Port")
-var nodeinfoInterval = flag.Int("infoInterval", 600, "Interval between nodeinfo requests")
-var statisticsInterval = flag.Int("statisticsInterval", 300, "Interval between statistics requests")
-var nodesJsonPath = flag.String("nodesjson", "", "Static file with node information")*/
 var configFilePath = flag.String("config", "/etc/node-collector.yaml", "Config file")
 
 type LogPipe struct {
@@ -34,9 +28,10 @@ func (l *LogPipe) Process(in chan announced.Response) chan announced.Response {
 	return out
 }
 
-func BuildPipelines(requester announced.Requester, store data.ProcessPipe) error {
+func BuildPipelines(requester announced.Requester, store *data.SimpleInMemoryStore) error {
 	receivePipeline := data.NewReceivePipeline(&data.JsonParsePipe{}, &data.DeflatePipe{})
-	processPipe := data.NewProcessPipeline(&data.GatewayCollector{Store: store.(*data.SimpleInMemoryStore)}, store)
+	processPipe := data.NewProcessPipeline(&data.GatewayCollector{Store: store},
+		&data.NodeinfoCollector{Store: store}, &data.StatisticsCollector{Store: store})
 	log.Printf("Adding process pipe end")
 	go func() {
 		processPipe.Dequeue(func(response data.ParsedResponse) {
