@@ -71,3 +71,23 @@ type NodesJson struct {
 	Version   int                      `json:"version"`
 	Nodes     map[string]NodesJsonNode `json:"nodes"`
 }
+
+type GraphNode struct {
+	Id     string `json:"id"`
+	NodeId string `json:"node_id"`
+}
+
+type GraphLink struct {
+	Bidirect bool    `json:"bidirect"`
+	Source   int     `json:"source"`
+	Target   int     `json:"target"`
+	Tq       float64 `json:"tq"`
+	Vpn      bool    `json:"vpn"`
+}
+
+type GraphJson struct {
+	Multigraph bool        `json:"multigraph"`
+	Nodes      []GraphNode `json:"nodes"`
+	Directed   bool        `json:"directed"`
+	Links      []GraphLink `json:"links"`
+}
