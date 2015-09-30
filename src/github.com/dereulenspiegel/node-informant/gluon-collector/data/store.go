@@ -148,8 +148,8 @@ func (s *SimpleInMemoryStore) GetStatistics(nodeId string) (Statistics Statistic
 
 func (s *SimpleInMemoryStore) Routes() []httpserver.Route {
 	var memoryStoreRoutes = []httpserver.Route{
-		httpserver.Route{"NodeInfo", "GET", "/Nodeinfos/{nodeid}", s.GetNodeInfoRest},
-		httpserver.Route{"Nodeinfos", "GET", "/Nodeinfos", s.GetNodeinfosRest},
+		httpserver.Route{"NodeInfo", "GET", "/nodeinfos/{nodeid}", s.GetNodeInfoRest},
+		httpserver.Route{"Nodeinfos", "GET", "/nodeinfos", s.GetNodeinfosRest},
 		httpserver.Route{"NodeStatistics", "GET", "/Statistics/{nodeid}", s.GetNodeStatisticsRest},
 		httpserver.Route{"NodesJson", "GET", "/nodes.json", s.GetNodesJsonRest},
 		httpserver.Route{"NodesNeighbours", "GET", "/neighbours/{nodeid}", s.GetNodeNeighboursRest},
