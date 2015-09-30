@@ -10,7 +10,10 @@ type ScheduledJob struct {
 	method   func()
 }
 
-func NewJob(interval time.Duration, job func()) *ScheduledJob {
+func NewJob(interval time.Duration, job func(), fireNow bool) *ScheduledJob {
+	if fireNow {
+		go job()
+	}
 	sJob := &ScheduledJob{
 		ticker:   time.NewTicker(interval),
 		method:   job,

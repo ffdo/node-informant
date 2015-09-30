@@ -21,7 +21,7 @@ func TestJobScheduling(t *testing.T) {
 		executed = true
 		now = time.Now()
 		executionCount = executionCount + 1
-	})
+	}, false)
 	time.Sleep(time.Second * 3)
 	job.Stop()
 	assert.True(executed)
