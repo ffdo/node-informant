@@ -26,9 +26,27 @@
 			"branch": "master"
 		},
 		{
+			"importpath": "github.com/codegangsta/inject",
+			"repository": "https://github.com/codegangsta/inject",
+			"revision": "33e0aa1cb7c019ccc3fbe049a8262a6403d30504",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/codegangsta/negroni",
+			"repository": "https://github.com/codegangsta/negroni",
+			"revision": "c7477ad8e330bef55bf1ebe300cf8aa67c492d1b",
+			"branch": "master"
+		},
+		{
 			"importpath": "github.com/getsentry/raven-go",
 			"repository": "https://github.com/getsentry/raven-go",
 			"revision": "7dd4b006600db712085f8508ac428894579eeabb",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/go-martini/martini",
+			"repository": "https://github.com/go-martini/martini",
+			"revision": "9987fc59f060a063247d22472c2fb48654bac5f6",
 			"branch": "master"
 		},
 		{
@@ -44,9 +62,33 @@
 			"branch": "master"
 		},
 		{
+			"importpath": "github.com/justinas/alice",
+			"repository": "https://github.com/justinas/alice",
+			"revision": "82db91fe6d1db4c070fed544cb5d0b5cc08fe276",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/martini-contrib/render",
+			"repository": "https://github.com/martini-contrib/render",
+			"revision": "ec18f8345a1181146728238980606fb1d6f40e8c",
+			"branch": "master"
+		},
+		{
 			"importpath": "github.com/olebedev/config",
 			"repository": "https://github.com/olebedev/config",
 			"revision": "ed583f7fafbccbd73013b0379ab29943ab0da34b",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/oxtoacart/bpool",
+			"repository": "https://github.com/oxtoacart/bpool",
+			"revision": "4e1c5567d7c2dd59fa4c7c83d34c2f3528b025d6",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/rs/cors",
+			"repository": "https://github.com/rs/cors",
+			"revision": "eb527c8097e0f19a3ff7b253a3fe70545070f420",
 			"branch": "master"
 		},
 		{
@@ -60,6 +102,12 @@
 			"importpath": "github.com/tobi/airbrake-go",
 			"repository": "https://github.com/tobi/airbrake-go",
 			"revision": "5b5e269e1bc398d43f67e43dafff3414a59cd5a2",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/zenazn/goji",
+			"repository": "https://github.com/zenazn/goji",
+			"revision": "46b46e00f46dda650e04f0bceeb7c40732cd5988",
 			"branch": "master"
 		},
 		{
