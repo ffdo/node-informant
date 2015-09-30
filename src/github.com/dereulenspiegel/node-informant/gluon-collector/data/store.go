@@ -23,7 +23,7 @@ type NodeStatusInfo struct {
 	Gateway   bool
 }
 
-type NodeinfoStore interface {
+type Nodeinfostore interface {
 	GetNodeinfo(nodeId string) (NodeInfo, error)
 	GetStatistics(nodeId string) (StatisticsStruct, error)
 	GetNodeinfos() []NodeInfo
@@ -34,27 +34,27 @@ type NodeinfoStore interface {
 }
 
 type SimpleInMemoryStore struct {
-	nodeinfos       map[string]NodeInfo
-	statistics      map[string]StatisticsStruct
-	statusInfo      map[string]NodeStatusInfo
-	nodesJsonPath   string
-	cachedNodesJson string
-	gatewayList     map[string]bool
-	neighbourInfos  map[string]NeighbourStruct
+	Nodeinfos       map[string]NodeInfo
+	Statistics      map[string]StatisticsStruct
+	StatusInfo      map[string]NodeStatusInfo
+	NodesJsonPath   string
+	CachedNodesJson string
+	GatewayList     map[string]bool
+	NeighbourInfos  map[string]NeighbourStruct
 }
 
 func NewSimpleInMemoryStore() *SimpleInMemoryStore {
 	return &SimpleInMemoryStore{
-		nodeinfos:      make(map[string]NodeInfo),
-		statistics:     make(map[string]StatisticsStruct),
-		statusInfo:     make(map[string]NodeStatusInfo),
-		neighbourInfos: make(map[string]NeighbourStruct),
-		gatewayList:    make(map[string]bool),
+		Nodeinfos:      make(map[string]NodeInfo),
+		Statistics:     make(map[string]StatisticsStruct),
+		StatusInfo:     make(map[string]NodeStatusInfo),
+		NeighbourInfos: make(map[string]NeighbourStruct),
+		GatewayList:    make(map[string]bool),
 	}
 }
 
 func (s *SimpleInMemoryStore) LoadNodesFromFile(path string) error {
-	s.nodesJsonPath = path
+	s.NodesJsonPath = path
 	nodesFile, err := os.Open(path)
 	defer nodesFile.Close()
 	if err != nil {
@@ -66,7 +66,7 @@ func (s *SimpleInMemoryStore) LoadNodesFromFile(path string) error {
 		return err
 	}
 	for nodeId, nodeJsonInfo := range nodesJson.Nodes {
-		nodeInfos := nodeJsonInfo.Nodeinfo
+		Nodeinfos := nodeJsonInfo.Nodeinfo
 		nodeStats := nodeJsonInfo.Statistics
 		nodeStatus := NodeStatusInfo{
 			Firstseen: nodeJsonInfo.Firstseen,
@@ -74,17 +74,17 @@ func (s *SimpleInMemoryStore) LoadNodesFromFile(path string) error {
 			Online:    nodeJsonInfo.Flags.Online,
 			Gateway:   nodeJsonInfo.Flags.Gateway,
 		}
-		s.nodeinfos[nodeId] = nodeInfos
-		s.statistics[nodeId] = nodeStats
-		s.statusInfo[nodeId] = nodeStatus
+		s.Nodeinfos[nodeId] = Nodeinfos
+		s.Statistics[nodeId] = nodeStats
+		s.StatusInfo[nodeId] = nodeStatus
 	}
 	return nil
 }
 
 func (s *SimpleInMemoryStore) updateNodeStatusInfo(response ParsedResponse) {
-	info, exists := s.statusInfo[response.NodeId()]
+	info, exists := s.StatusInfo[response.NodeId()]
 	now := time.Now().Format(TimeFormat)
-	_, isGw := s.gatewayList[response.NodeId()]
+	_, isGw := s.GatewayList[response.NodeId()]
 	if exists {
 		info.Lastseen = now
 		info.Online = true
@@ -96,11 +96,11 @@ func (s *SimpleInMemoryStore) updateNodeStatusInfo(response ParsedResponse) {
 			Gateway:   isGw,
 		}
 	}
-	s.statusInfo[response.NodeId()] = info
+	s.StatusInfo[response.NodeId()] = info
 }
 
 func (s *SimpleInMemoryStore) GetNodeStatusInfo(nodeId string) (status NodeStatusInfo, err error) {
-	stat, exists := s.statusInfo[nodeId]
+	stat, exists := s.StatusInfo[nodeId]
 	if !exists {
 		err = fmt.Errorf("NodeId %s has no status info", nodeId)
 	}
@@ -109,7 +109,7 @@ func (s *SimpleInMemoryStore) GetNodeStatusInfo(nodeId string) (status NodeStatu
 }
 
 func (s *SimpleInMemoryStore) GetNodeNeighbours(nodeId string) (neighbours NeighbourStruct, err error) {
-	neighbourInfo, exists := s.neighbourInfos[nodeId]
+	neighbourInfo, exists := s.NeighbourInfos[nodeId]
 	if !exists {
 		err = fmt.Errorf("NodeId %s has no neighbour info", nodeId)
 	}
@@ -118,7 +118,7 @@ func (s *SimpleInMemoryStore) GetNodeNeighbours(nodeId string) (neighbours Neigh
 }
 
 func (s *SimpleInMemoryStore) GetNodeinfo(nodeId string) (info NodeInfo, err error) {
-	nodeinfo, exists := s.nodeinfos[nodeId]
+	nodeinfo, exists := s.Nodeinfos[nodeId]
 	info = nodeinfo
 	if !exists {
 		err = fmt.Errorf("NodeId %s does not exist", nodeId)
@@ -128,29 +128,29 @@ func (s *SimpleInMemoryStore) GetNodeinfo(nodeId string) (info NodeInfo, err err
 }
 
 func (s *SimpleInMemoryStore) GetNodeinfos() []NodeInfo {
-	nodeinfos := make([]NodeInfo, len(s.nodeinfos))
+	Nodeinfos := make([]NodeInfo, len(s.Nodeinfos))
 	counter := 0
-	for _, nodeinfo := range s.nodeinfos {
-		nodeinfos[counter] = nodeinfo
+	for _, nodeinfo := range s.Nodeinfos {
+		Nodeinfos[counter] = nodeinfo
 		counter++
 	}
-	return nodeinfos
+	return Nodeinfos
 }
 
-func (s *SimpleInMemoryStore) GetStatistics(nodeId string) (statistics StatisticsStruct, err error) {
-	stats, exists := s.statistics[nodeId]
-	statistics = stats
+func (s *SimpleInMemoryStore) GetStatistics(nodeId string) (Statistics StatisticsStruct, err error) {
+	stats, exists := s.Statistics[nodeId]
+	Statistics = stats
 	if !exists {
-		err = fmt.Errorf("NodeId %s has no statistics", nodeId)
+		err = fmt.Errorf("NodeId %s has no Statistics", nodeId)
 	}
 	return
 }
 
 func (s *SimpleInMemoryStore) Routes() []httpserver.Route {
 	var memoryStoreRoutes = []httpserver.Route{
-		httpserver.Route{"NodeInfo", "GET", "/nodeinfos/{nodeid}", s.GetNodeInfoRest},
-		httpserver.Route{"NodeInfos", "GET", "/nodeinfos", s.GetNodeInfosRest},
-		httpserver.Route{"NodeStatistics", "GET", "/statistics/{nodeid}", s.GetNodeStatisticsRest},
+		httpserver.Route{"NodeInfo", "GET", "/Nodeinfos/{nodeid}", s.GetNodeInfoRest},
+		httpserver.Route{"Nodeinfos", "GET", "/Nodeinfos", s.GetNodeinfosRest},
+		httpserver.Route{"NodeStatistics", "GET", "/Statistics/{nodeid}", s.GetNodeStatisticsRest},
 		httpserver.Route{"NodesJson", "GET", "/nodes.json", s.GetNodesJsonRest},
 		httpserver.Route{"NodesNeighbours", "GET", "/neighbours/{nodeid}", s.GetNodeNeighboursRest},
 	}
@@ -185,11 +185,11 @@ func (s *SimpleInMemoryStore) GetNodeNeighboursRest(w http.ResponseWriter, r *ht
 	}
 }
 
-func (s *SimpleInMemoryStore) GetNodeInfosRest(w http.ResponseWriter, r *http.Request) {
-	nodeinfos := s.GetNodeinfos()
+func (s *SimpleInMemoryStore) GetNodeinfosRest(w http.ResponseWriter, r *http.Request) {
+	Nodeinfos := s.GetNodeinfos()
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(nodeinfos)
+	json.NewEncoder(w).Encode(Nodeinfos)
 }
 
 func (s *SimpleInMemoryStore) GetNodeInfoRest(w http.ResponseWriter, r *http.Request) {
@@ -209,15 +209,15 @@ func (s *SimpleInMemoryStore) GetNodeInfoRest(w http.ResponseWriter, r *http.Req
 func (s *SimpleInMemoryStore) GetNodesJsonRest(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(s.cachedNodesJson))
+	w.Write([]byte(s.CachedNodesJson))
 }
 
 func (s *SimpleInMemoryStore) GetNodesJson() NodesJson {
 	timestamp := time.Now().Format(TimeFormat)
 	nodes := make(map[string]NodesJsonNode)
-	for nodeId, nodeInfo := range s.nodeinfos {
-		stats := s.statistics[nodeId]
-		status := s.statusInfo[nodeId]
+	for nodeId, nodeInfo := range s.Nodeinfos {
+		stats := s.Statistics[nodeId]
+		status := s.StatusInfo[nodeId]
 		flags := NodeFlags{
 			Online:  status.Online,
 			Gateway: status.Gateway,
@@ -246,19 +246,19 @@ func (s *SimpleInMemoryStore) UpdateNodesJson() {
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error": err,
-			"path":  s.nodesJsonPath,
+			"path":  s.NodesJsonPath,
 		}).Error("Error encoding json")
 		return
 	}
-	s.cachedNodesJson = string(data)
-	if s.nodesJsonPath == "" {
+	s.CachedNodesJson = string(data)
+	if s.NodesJsonPath == "" {
 		return
 	}
-	err = ioutil.WriteFile(s.nodesJsonPath, data, 0644)
+	err = ioutil.WriteFile(s.NodesJsonPath, data, 0644)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error": err,
-			"path":  s.nodesJsonPath,
+			"path":  s.NodesJsonPath,
 		}).Error("Error writing nodes.json")
 	}
 }

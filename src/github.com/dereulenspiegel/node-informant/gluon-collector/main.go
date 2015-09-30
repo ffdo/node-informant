@@ -13,6 +13,7 @@ import (
 	conf "github.com/dereulenspiegel/node-informant/gluon-collector/config"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/httpserver"
+	"github.com/dereulenspiegel/node-informant/gluon-collector/pipeline"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/scheduler"
 )
 
@@ -47,10 +48,10 @@ func (l *LogPipe) Process(in chan announced.Response) chan announced.Response {
 }
 
 func BuildPipelines(requester announced.Requester, store *data.SimpleInMemoryStore) error {
-	receivePipeline := data.NewReceivePipeline(&data.JsonParsePipe{}, &data.DeflatePipe{})
-	processPipe := data.NewProcessPipeline(&data.GatewayCollector{Store: store},
-		&data.NodeinfoCollector{Store: store}, &data.StatisticsCollector{Store: store},
-		&data.NeighbourInfoCollector{Store: store})
+	receivePipeline := data.NewReceivePipeline(&pipeline.JsonParsePipe{}, &pipeline.DeflatePipe{})
+	processPipe := data.NewProcessPipeline(&pipeline.GatewayCollector{Store: store},
+		&pipeline.NodeinfoCollector{Store: store}, &pipeline.StatisticsCollector{Store: store},
+		&pipeline.NeighbourInfoCollector{Store: store})
 	log.Printf("Adding process pipe end")
 	go func() {
 		processPipe.Dequeue(func(response data.ParsedResponse) {

@@ -14,6 +14,7 @@ import (
 
 	"github.com/dereulenspiegel/node-informant/announced"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
+	"github.com/dereulenspiegel/node-informant/gluon-collector/pipeline"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -83,10 +84,10 @@ func TestCompletePipe(t *testing.T) {
 	assert.Nil(err)
 
 	store := data.NewSimpleInMemoryStore()
-	receivePipeline := data.NewReceivePipeline(&data.JsonParsePipe{}, &data.DeflatePipe{})
-	processPipe := data.NewProcessPipeline(&data.GatewayCollector{Store: store},
-		&data.NodeinfoCollector{Store: store}, &data.StatisticsCollector{Store: store},
-		&data.NeighbourInfoCollector{Store: store})
+	receivePipeline := data.NewReceivePipeline(&pipeline.JsonParsePipe{}, &pipeline.DeflatePipe{})
+	processPipe := data.NewProcessPipeline(&pipeline.GatewayCollector{Store: store},
+		&pipeline.NodeinfoCollector{Store: store}, &pipeline.StatisticsCollector{Store: store},
+		&pipeline.NeighbourInfoCollector{Store: store})
 
 	i := 0
 	go func() {

@@ -24,9 +24,9 @@ func FindInLinks(links []*GraphLink, sourceIndex, targetIndex int) (link *GraphL
 
 func (g *GraphGenerator) GenerateGraphJson() GraphJson {
 	nodeTable := make(map[string]*GraphNode)
-	log.Printf("We have %d neighbour discovery packets", len(g.Store.neighbourInfos))
+
 	y := 0
-	for nodeId, neighbourInfo := range g.Store.neighbourInfos {
+	for nodeId, neighbourInfo := range g.Store.NeighbourInfos {
 		for mac, _ := range neighbourInfo.Batdv {
 			nodeTable[mac] = &GraphNode{
 				Id:     mac,
@@ -35,8 +35,6 @@ func (g *GraphGenerator) GenerateGraphJson() GraphJson {
 			y = y + 1
 		}
 	}
-	log.Printf("iterated over %d entries", y)
-	log.Printf("Node table has %d entries", len(nodeTable))
 
 	nodeList := make([]*GraphNode, 0, len(nodeTable))
 	i := 0
@@ -45,11 +43,9 @@ func (g *GraphGenerator) GenerateGraphJson() GraphJson {
 		nodeList = append(nodeList, item)
 		i = i + 1
 	}
-	log.Printf("Node list has %d entries", len(nodeList))
+	allLinks := make([]*GraphLink, 0, len(g.Store.NeighbourInfos)*5)
 
-	allLinks := make([]*GraphLink, 0, len(g.Store.neighbourInfos)*5)
-
-	for _, neighbours := range g.Store.neighbourInfos {
+	for _, neighbours := range g.Store.NeighbourInfos {
 		for ownMac, neighbour := range neighbours.Batdv {
 			for peerMac, linkInfo := range neighbour.Neighbours {
 				source, sourceExists := nodeTable[ownMac]
@@ -58,7 +54,7 @@ func (g *GraphGenerator) GenerateGraphJson() GraphJson {
 					log.WithFields(log.Fields{
 						"source-mac": ownMac,
 						"target-mac": peerMac,
-					}).Warning("Tried to build link to unknown peer")
+					}).Debug("Tried to build link to unknown peer")
 					continue
 				}
 				link := &GraphLink{
@@ -71,8 +67,8 @@ func (g *GraphGenerator) GenerateGraphJson() GraphJson {
 		}
 	}
 
-	bidirectionalLinks := make([]*GraphLink, 0, len(g.Store.neighbourInfos)*5)
-	unidirectionalLinks := make([]*GraphLink, 0, len(g.Store.neighbourInfos))
+	bidirectionalLinks := make([]*GraphLink, 0, len(g.Store.NeighbourInfos)*5)
+	unidirectionalLinks := make([]*GraphLink, 0, len(g.Store.NeighbourInfos))
 	for _, link := range allLinks {
 		_, err := FindInLinks(allLinks, link.Target, link.Source)
 		if err != nil {
@@ -90,7 +86,7 @@ func (g *GraphGenerator) GenerateGraphJson() GraphJson {
 	allLinks = make([]*GraphLink, 0, len(bidirectionalLinks)+len(unidirectionalLinks))
 	allLinks = append(allLinks, bidirectionalLinks...)
 	allLinks = append(allLinks, unidirectionalLinks...)
-	log.Printf("All links %v", allLinks)
+
 	for _, link := range allLinks {
 		if link == nil {
 			log.Warnf("Link is nil!")
@@ -98,8 +94,8 @@ func (g *GraphGenerator) GenerateGraphJson() GraphJson {
 		}
 		source := nodeList[link.Source]
 		target := nodeList[link.Target]
-		_, sourceGW := g.Store.gatewayList[source.Id]
-		_, targetGW := g.Store.gatewayList[target.Id]
+		_, sourceGW := g.Store.GatewayList[source.Id]
+		_, targetGW := g.Store.GatewayList[target.Id]
 		if sourceGW || targetGW {
 			link.Vpn = true
 		}

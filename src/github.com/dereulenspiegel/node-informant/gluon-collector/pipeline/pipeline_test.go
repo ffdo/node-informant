@@ -1,4 +1,4 @@
-package data
+package pipeline
 
 import (
 	"net"
@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/dereulenspiegel/node-informant/announced"
+	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -26,7 +27,7 @@ func TestDeflatingReceivePipeline(t *testing.T) {
 	receivePipeline.Enqueue(testPacket2)
 	var receivedPackets = 0
 	go func() {
-		receivePipeline.Dequeue(func(response ParsedResponse) {
+		receivePipeline.Dequeue(func(response data.ParsedResponse) {
 			receivedPackets = receivedPackets + 1
 		})
 	}()
