@@ -11,11 +11,19 @@ func TestJobScheduling(t *testing.T) {
 	assert := assert.New(t)
 
 	executed := false
-
+	now := time.Now()
+	executionCount := 0
 	job := NewJob(time.Second*1, func() {
+		then := time.Now()
+		diff := then.Unix() - now.Unix()
+		assert.False(diff < 1, "Less than a second has passed. Diff %d", diff)
+		assert.False(diff >= 2, "Two or more seconds have passed. Diff %d", diff)
 		executed = true
+		now = time.Now()
+		executionCount = executionCount + 1
 	})
-	time.Sleep(time.Second * 2)
+	time.Sleep(time.Second * 3)
 	job.Stop()
 	assert.True(executed)
+	assert.True(2 < executionCount)
 }
