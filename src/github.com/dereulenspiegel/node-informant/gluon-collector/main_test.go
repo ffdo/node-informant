@@ -84,8 +84,8 @@ func TestCompletePipe(t *testing.T) {
 	assert.Nil(err)
 
 	store := data.NewSimpleInMemoryStore()
-	receivePipeline := data.NewReceivePipeline(&pipeline.JsonParsePipe{}, &pipeline.DeflatePipe{})
-	processPipe := data.NewProcessPipeline(&pipeline.GatewayCollector{Store: store},
+	receivePipeline := pipeline.NewReceivePipeline(&pipeline.JsonParsePipe{}, &pipeline.DeflatePipe{})
+	processPipe := pipeline.NewProcessPipeline(&pipeline.GatewayCollector{Store: store},
 		&pipeline.NodeinfoCollector{Store: store}, &pipeline.StatisticsCollector{Store: store},
 		&pipeline.NeighbourInfoCollector{Store: store})
 

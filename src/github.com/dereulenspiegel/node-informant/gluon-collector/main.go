@@ -48,8 +48,8 @@ func (l *LogPipe) Process(in chan announced.Response) chan announced.Response {
 }
 
 func BuildPipelines(requester announced.Requester, store *data.SimpleInMemoryStore) error {
-	receivePipeline := data.NewReceivePipeline(&pipeline.JsonParsePipe{}, &pipeline.DeflatePipe{})
-	processPipe := data.NewProcessPipeline(&pipeline.GatewayCollector{Store: store},
+	receivePipeline := pipeline.NewReceivePipeline(&pipeline.JsonParsePipe{}, &pipeline.DeflatePipe{})
+	processPipe := pipeline.NewProcessPipeline(&pipeline.GatewayCollector{Store: store},
 		&pipeline.NodeinfoCollector{Store: store}, &pipeline.StatisticsCollector{Store: store},
 		&pipeline.NeighbourInfoCollector{Store: store})
 	log.Printf("Adding process pipe end")
