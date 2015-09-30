@@ -13,6 +13,7 @@ import (
 	conf "github.com/dereulenspiegel/node-informant/gluon-collector/config"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/httpserver"
+	"github.com/dereulenspiegel/node-informant/gluon-collector/scheduler"
 )
 
 var configFilePath = flag.String("config", "/etc/node-collector.yaml", "Config file")
@@ -99,33 +100,22 @@ func Assemble() error {
 	nodeinfoInterval := conf.Global.UInt("announced.interval.nodeinfo", 1800)
 	statisticsInterval := conf.Global.UInt("announced.interval.statistics", 300)
 
-	nodeinfoTimer := time.NewTicker(time.Second * time.Duration(nodeinfoInterval))
-	statisticsTimer := time.NewTicker(time.Second * time.Duration(statisticsInterval))
-	neighbourTimer := time.NewTicker(time.Second * time.Duration(statisticsInterval))
-	updateNodesJsonTimer := time.NewTicker(time.Minute * 1)
-	quitChan := make(chan bool)
-	go func() {
-		for {
-			select {
-			case <-nodeinfoTimer.C:
-				requester.Query("GET nodeinfo")
-			case <-statisticsTimer.C:
-				requester.Query("GET statistics")
-			case <-neighbourTimer.C:
-				requester.Query("GET neighbours")
-			case <-updateNodesJsonTimer.C:
-				store.UpdateNodesJson()
-			case <-quitChan:
-				nodeinfoTimer.Stop()
-				updateNodesJsonTimer.Stop()
-				statisticsTimer.Stop()
-				neighbourTimer.Stop()
-			}
-		}
-	}()
-	requester.Query("GET nodeinfo")
-	requester.Query("GET statistics")
-	requester.Query("GET neighbours")
+	scheduler.NewJob(time.Second*time.Duration(nodeinfoInterval), func() {
+		requester.Query("GET nodeinfo")
+	}, true)
+
+	scheduler.NewJob(time.Second*time.Duration(statisticsInterval), func() {
+		requester.Query("GET statistics")
+	}, true)
+
+	scheduler.NewJob(time.Second*time.Duration(statisticsInterval), func() {
+		requester.Query("GET neighbours")
+	}, true)
+
+	scheduler.NewJob(time.Minute*1, func() {
+		store.UpdateNodesJson()
+	}, true)
+
 	httpserver.StartHttpServerBlocking(store)
 	return nil
 }
