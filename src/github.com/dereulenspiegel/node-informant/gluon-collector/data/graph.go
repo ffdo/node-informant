@@ -1,13 +1,18 @@
 package data
 
 import (
+	"encoding/json"
 	"fmt"
+	"net/http"
 
 	log "github.com/Sirupsen/logrus"
+
+	"github.com/dereulenspiegel/node-informant/gluon-collector/httpserver"
 )
 
 type GraphGenerator struct {
-	Store *SimpleInMemoryStore
+	Store            *SimpleInMemoryStore
+	cachedJsonString string
 }
 
 func FindInLinks(links []*GraphLink, sourceIndex, targetIndex int) (link *GraphLink, err error) {
@@ -113,4 +118,29 @@ func (g *GraphGenerator) GenerateGraphJson() GraphJson {
 		Version: 1,
 	}
 	return graphJson
+}
+
+func (g *GraphGenerator) UpdateGraphJson() {
+	graph := g.GenerateGraphJson()
+	jsonBytes, err := json.Marshal(graph)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+		}).Error("Failed to marshal graph.json")
+		return
+	}
+	g.cachedJsonString = string(jsonBytes)
+}
+
+func (g *GraphGenerator) GetGraphJsonRest(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(g.cachedJsonString))
+}
+
+func (g *GraphGenerator) Routes() []httpserver.Route {
+	var graphRoutes = []httpserver.Route{
+		httpserver.Route{"GraphJson", "GET", "/graph.json", g.GetGraphJsonRest},
+	}
+	return graphRoutes
 }

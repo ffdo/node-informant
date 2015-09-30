@@ -97,6 +97,8 @@ func Assemble() error {
 	}
 	err = BuildPipelines(requester, store)
 
+	graphGenerator := &data.GraphGenerator{Store: store}
+
 	log.Printf("Setting up request timer")
 	nodeinfoInterval := conf.Global.UInt("announced.interval.nodeinfo", 1800)
 	statisticsInterval := conf.Global.UInt("announced.interval.statistics", 300)
@@ -114,10 +116,14 @@ func Assemble() error {
 	}, true)
 
 	scheduler.NewJob(time.Minute*1, func() {
-		store.UpdateNodesJson()
-	}, true)
+		graphGenerator.UpdateGraphJson()
+	}, false)
 
-	httpserver.StartHttpServerBlocking(store)
+	scheduler.NewJob(time.Minute*1, func() {
+		store.UpdateNodesJson()
+	}, false)
+
+	httpserver.StartHttpServerBlocking(store, graphGenerator)
 	return nil
 }
 
