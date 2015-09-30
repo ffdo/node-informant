@@ -3,13 +3,14 @@ package main
 import (
 	"encoding/json"
 	"io/ioutil"
-	"log"
 	"net"
 	"os"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
 
 	"github.com/dereulenspiegel/node-informant/announced"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
@@ -76,6 +77,7 @@ func LoadTestData() error {
 }
 
 func TestCompletePipe(t *testing.T) {
+	log.SetLevel(log.PanicLevel)
 	assert := assert.New(t)
 	err := LoadTestData()
 	assert.Nil(err)
