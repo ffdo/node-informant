@@ -95,14 +95,12 @@ func TestCompletePipe(t *testing.T) {
 
 	//Connect the receive to the process pipeline
 	go func() {
-		log.Printf("Connecting receive to process pipeline")
 		receivePipeline.Dequeue(func(response data.ParsedResponse) {
 			processPipe.Enqueue(response)
 		})
 	}()
 
 	go func() {
-		log.Printf("Connecting requester to receive pipeline")
 		for _, response := range testData {
 			receivePipeline.Enqueue(response)
 		}
@@ -113,4 +111,10 @@ func TestCompletePipe(t *testing.T) {
 	receivePipeline.Close()
 	processPipe.Close()
 	assert.Equal(len(testData), i)
+
+	graphGenerator := &data.GraphGenerator{Store: store}
+	graph := graphGenerator.GenerateGraphJson()
+	assert.NotNil(graph)
+	assert.Equal(232, len(graph.Batadv.Nodes))
+	assert.Equal(11, len(graph.Batadv.Links))
 }

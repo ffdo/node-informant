@@ -1,12 +1,16 @@
 package data
 
-import "fmt"
+import (
+	"fmt"
+
+	log "github.com/Sirupsen/logrus"
+)
 
 type GraphGenerator struct {
 	Store *SimpleInMemoryStore
 }
 
-func FindInLinks(links []GraphLink, sourceIndex, targetIndex int) (link GraphLink, err error) {
+func FindInLinks(links []*GraphLink, sourceIndex, targetIndex int) (link *GraphLink, err error) {
 	for _, item := range links {
 		if item.Source == sourceIndex && item.Target == targetIndex {
 			link = item
@@ -18,32 +22,48 @@ func FindInLinks(links []GraphLink, sourceIndex, targetIndex int) (link GraphLin
 	return
 }
 
-func (g *GraphGenerator) GenerateGraphJson() {
-	nodeTable := make(map[string]GraphNode)
-	i := 0
-	for nodeId, _ := range g.Store.neighbourInfos {
-		nodeinfo := g.Store.nodeinfos[nodeId]
-		nodeTable[nodeinfo.Network.Mac] = GraphNode{
-			Id:      nodeinfo.Network.Mac,
-			NodeId:  nodeId,
-			tableId: i,
+func (g *GraphGenerator) GenerateGraphJson() GraphJson {
+	nodeTable := make(map[string]*GraphNode)
+	log.Printf("We have %d neighbour discovery packets", len(g.Store.neighbourInfos))
+	y := 0
+	for nodeId, neighbourInfo := range g.Store.neighbourInfos {
+		for mac, _ := range neighbourInfo.Batdv {
+			nodeTable[mac] = &GraphNode{
+				Id:     mac,
+				NodeId: nodeId,
+			}
+			y = y + 1
 		}
+	}
+	log.Printf("iterated over %d entries", y)
+	log.Printf("Node table has %d entries", len(nodeTable))
+
+	nodeList := make([]*GraphNode, 0, len(nodeTable))
+	i := 0
+	for _, item := range nodeTable {
+		item.tableId = i
+		nodeList = append(nodeList, item)
 		i = i + 1
 	}
+	log.Printf("Node list has %d entries", len(nodeList))
 
-	nodeList := make([]GraphNode, len(nodeTable))
-	for _, item := range nodeTable {
-		nodeList[item.tableId] = item
-	}
-
-	allLinks := make([]GraphLink, 0, len(g.Store.neighbourInfos)*5)
+	allLinks := make([]*GraphLink, 0, len(g.Store.neighbourInfos)*5)
 
 	for _, neighbours := range g.Store.neighbourInfos {
 		for ownMac, neighbour := range neighbours.Batdv {
 			for peerMac, linkInfo := range neighbour.Neighbours {
-				link := GraphLink{
-					Source: nodeTable[ownMac].tableId,
-					Target: nodeTable[peerMac].tableId,
+				source, sourceExists := nodeTable[ownMac]
+				target, targetExists := nodeTable[peerMac]
+				if !sourceExists || !targetExists {
+					log.WithFields(log.Fields{
+						"source-mac": ownMac,
+						"target-mac": peerMac,
+					}).Warning("Tried to build link to unknown peer")
+					continue
+				}
+				link := &GraphLink{
+					Source: source.tableId,
+					Target: target.tableId,
 					Tq:     float64(linkInfo.Tq),
 				}
 				allLinks = append(allLinks, link)
@@ -51,23 +71,31 @@ func (g *GraphGenerator) GenerateGraphJson() {
 		}
 	}
 
-	bidirectionalLinks := make([]GraphLink, 0, len(g.Store.neighbourInfos)*5)
-	unidirectionalLinks := make([]GraphLink, 0, len(g.Store.neighbourInfos))
+	bidirectionalLinks := make([]*GraphLink, 0, len(g.Store.neighbourInfos)*5)
+	unidirectionalLinks := make([]*GraphLink, 0, len(g.Store.neighbourInfos))
 	for _, link := range allLinks {
 		_, err := FindInLinks(allLinks, link.Target, link.Source)
 		if err != nil {
+			link.Bidirect = false
 			unidirectionalLinks = append(unidirectionalLinks, link)
 		} else {
 			link.Bidirect = true
-			bidirectionalLinks = append(bidirectionalLinks, link)
+			_, err := FindInLinks(allLinks, link.Source, link.Target)
+			if err != nil {
+				bidirectionalLinks = append(bidirectionalLinks, link)
+			}
 		}
 	}
 
-	allLinks = make([]GraphLink, len(bidirectionalLinks)+len(unidirectionalLinks))
+	allLinks = make([]*GraphLink, 0, len(bidirectionalLinks)+len(unidirectionalLinks))
 	allLinks = append(allLinks, bidirectionalLinks...)
 	allLinks = append(allLinks, unidirectionalLinks...)
-
+	log.Printf("All links %v", allLinks)
 	for _, link := range allLinks {
+		if link == nil {
+			log.Warnf("Link is nil!")
+			continue
+		}
 		source := nodeList[link.Source]
 		target := nodeList[link.Target]
 		_, sourceGW := g.Store.gatewayList[source.Id]
@@ -76,4 +104,17 @@ func (g *GraphGenerator) GenerateGraphJson() {
 			link.Vpn = true
 		}
 	}
+
+	batGraph := BatadvGraph{
+		Multigraph: false,
+		Directed:   false,
+		Links:      allLinks,
+		Nodes:      nodeList,
+	}
+
+	graphJson := GraphJson{
+		Batadv:  batGraph,
+		Version: 1,
+	}
+	return graphJson
 }

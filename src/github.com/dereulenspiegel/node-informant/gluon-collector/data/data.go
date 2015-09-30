@@ -87,12 +87,13 @@ type GraphLink struct {
 }
 
 type BatadvGraph struct {
-	Multigraph bool        `json:"multigraph"`
-	Nodes      []GraphNode `json:"nodes"`
-	Directed   bool        `json:"directed"`
-	Links      []GraphLink `json:"links"`
+	Multigraph bool         `json:"multigraph"`
+	Nodes      []*GraphNode `json:"nodes"`
+	Directed   bool         `json:"directed"`
+	Links      []*GraphLink `json:"links"`
 }
 
 type GraphJson struct {
-	Batadv BatadvGraph `json:"batadv"`
+	Batadv  BatadvGraph `json:"batadv"`
+	Version uint64      `json:"version"`
 }
