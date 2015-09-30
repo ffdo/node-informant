@@ -60,6 +60,11 @@ type ProcessPipeline struct {
 	tail chan ParsedResponse
 }
 
+func (pipeline *ProcessPipeline) Close() {
+	close(pipeline.head)
+	close(pipeline.tail)
+}
+
 func (pipeline *ProcessPipeline) Enqueue(response ParsedResponse) {
 	pipeline.head <- response
 }
@@ -93,8 +98,9 @@ func (d *DeflatePipe) Process(in chan announced.Response) chan announced.Respons
 			decompressedData, err := utils.Deflate(response.Payload)
 			if err != nil {
 				log.WithFields(log.Fields{
-					"error":  err,
-					"client": response.ClientAddr,
+					"error":   err,
+					"client":  response.ClientAddr,
+					"payload": response.Payload,
 				}).Error("Error deflating response")
 			} else {
 				response.Payload = decompressedData

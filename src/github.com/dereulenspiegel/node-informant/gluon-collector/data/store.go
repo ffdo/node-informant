@@ -49,6 +49,7 @@ func NewSimpleInMemoryStore() *SimpleInMemoryStore {
 		statistics:     make(map[string]StatisticsStruct),
 		statusInfo:     make(map[string]NodeStatusInfo),
 		neighbourInfos: make(map[string]NeighbourStruct),
+		gatewayList:    make(map[string]bool),
 	}
 }
 
@@ -96,10 +97,6 @@ func (s *SimpleInMemoryStore) updateNodeStatusInfo(response ParsedResponse) {
 		}
 	}
 	s.statusInfo[response.NodeId()] = info
-}
-
-func (s *SimpleInMemoryStore) GetGraphData() {
-
 }
 
 func (s *SimpleInMemoryStore) GetNodeStatusInfo(nodeId string) (status NodeStatusInfo, err error) {

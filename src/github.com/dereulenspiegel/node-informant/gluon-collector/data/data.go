@@ -73,8 +73,9 @@ type NodesJson struct {
 }
 
 type GraphNode struct {
-	Id     string `json:"id"`
-	NodeId string `json:"node_id"`
+	Id      string `json:"id"`
+	NodeId  string `json:"node_id"`
+	tableId int
 }
 
 type GraphLink struct {
@@ -85,9 +86,13 @@ type GraphLink struct {
 	Vpn      bool    `json:"vpn"`
 }
 
-type GraphJson struct {
+type BatadvGraph struct {
 	Multigraph bool        `json:"multigraph"`
 	Nodes      []GraphNode `json:"nodes"`
 	Directed   bool        `json:"directed"`
 	Links      []GraphLink `json:"links"`
+}
+
+type GraphJson struct {
+	Batadv BatadvGraph `json:"batadv"`
 }

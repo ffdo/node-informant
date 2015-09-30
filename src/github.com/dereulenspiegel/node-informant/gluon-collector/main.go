@@ -1,7 +1,10 @@
 package main
 
 import (
+	"bufio"
 	"flag"
+	"fmt"
+	"os"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -15,13 +18,27 @@ import (
 var configFilePath = flag.String("config", "/etc/node-collector.yaml", "Config file")
 
 type LogPipe struct {
+	logFile *bufio.Writer
+}
+
+func NewLogPipe() *LogPipe {
+	logFile, err := os.Create("/opt/rawdata.log")
+	if err != nil {
+		log.Fatalf("Cannot open raw data logfile")
+	}
+	writer := bufio.NewWriter(logFile)
+	return &LogPipe{logFile: writer}
 }
 
 func (l *LogPipe) Process(in chan announced.Response) chan announced.Response {
 	out := make(chan announced.Response)
 	go func() {
 		for response := range in {
-			log.Debugf("Received packet from %#v: %#v", response.ClientAddr, response.Payload)
+			_, err := l.logFile.WriteString(fmt.Sprintf("%s|", response.String()))
+			l.logFile.Flush()
+			if err != nil {
+				log.Fatalf("Can't write to logfile: %v", err)
+			}
 			out <- response
 		}
 	}()
