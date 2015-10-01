@@ -57,14 +57,14 @@ type HardwareStruct struct {
 }
 
 type NodeInfo struct {
-	NodeId   string         `json:"node_id"`
-	Network  NetworkStruct  `json:"network"`
-	Owner    *OwnerStruct   `json:"owner,omitempty"`
-	System   SystemStruct   `json:"system"`
-	Hostname string         `json:"hostname"`
-	Location LocationStruct `json:"location"`
-	Software SoftwareStruct `json:"software"`
-	Hardware HardwareStruct `json:"hardware"`
+	NodeId   string          `json:"node_id"`
+	Network  NetworkStruct   `json:"network"`
+	Owner    *OwnerStruct    `json:"owner,omitempty"`
+	System   SystemStruct    `json:"system"`
+	Hostname string          `json:"hostname"`
+	Location *LocationStruct `json:"location,omitempty"`
+	Software SoftwareStruct  `json:"software"`
+	Hardware HardwareStruct  `json:"hardware"`
 }
 
 type RespondNodeinfo struct {

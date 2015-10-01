@@ -12,7 +12,7 @@ type DataLoader struct {
 	NodesJsonPath string
 }
 
-func convertFromMeshviewerStatistics(nodeId string, in StatisticsStruct) data.StatisticsStruct {
+func convertFromMeshviewerStatistics(nodeId string, in *StatisticsStruct) *data.StatisticsStruct {
 	clients := data.ClientStatistics{
 		Wifi:  in.Clients,
 		Total: in.Clients,
@@ -21,7 +21,7 @@ func convertFromMeshviewerStatistics(nodeId string, in StatisticsStruct) data.St
 		Total: 100,
 		Free:  uint64((float64(100) * in.MemoryUsage)),
 	}
-	return data.StatisticsStruct{
+	return &data.StatisticsStruct{
 		NodeId:      nodeId,
 		Traffic:     *in.Traffic,
 		Clients:     clients,

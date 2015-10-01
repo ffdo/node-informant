@@ -79,7 +79,7 @@ func LoadTestData() error {
 }
 
 func TestCompletePipe(t *testing.T) {
-	log.SetLevel(log.PanicLevel)
+	log.SetLevel(log.WarnLevel)
 	assert := assert.New(t)
 	err := LoadTestData()
 	assert.Nil(err)
@@ -117,8 +117,13 @@ func TestCompletePipe(t *testing.T) {
 	assert.Equal(len(testData), i)
 
 	graphGenerator := &meshviewer.GraphGenerator{Store: store}
+	nodesGenerator := &meshviewer.NodesJsonGenerator{Store: store}
 	graph := graphGenerator.GenerateGraphJson()
 	assert.NotNil(graph)
 	assert.Equal(232, len(graph.Batadv.Nodes))
 	assert.Equal(11, len(graph.Batadv.Links))
+
+	nodes := nodesGenerator.GetNodesJson()
+	assert.NotNil(nodes)
+	nodesGenerator.UpdateNodesJson()
 }

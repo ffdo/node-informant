@@ -23,7 +23,7 @@ func (n NodeinfoResponse) NodeId() string {
 }
 
 type StatisticsResponse struct {
-	Statistics StatisticsStruct
+	Statistics *StatisticsStruct
 }
 
 func (s StatisticsResponse) Type() string {
@@ -39,7 +39,7 @@ func (s StatisticsResponse) NodeId() string {
 }
 
 type NeighbourReponse struct {
-	Neighbours NeighbourStruct
+	Neighbours *NeighbourStruct
 }
 
 func (n NeighbourReponse) Type() string {

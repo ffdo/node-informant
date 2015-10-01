@@ -31,12 +31,12 @@ func (j *JsonParsePipe) Process(in chan announced.Response) chan data.ParsedResp
 				}
 				if respondInfo.Statistics != nil {
 					out <- data.StatisticsResponse{
-						Statistics: *respondInfo.Statistics,
+						Statistics: respondInfo.Statistics,
 					}
 				}
 				if respondInfo.Neighbours != nil {
 					out <- data.NeighbourReponse{
-						Neighbours: *respondInfo.Neighbours,
+						Neighbours: respondInfo.Neighbours,
 					}
 				}
 			}

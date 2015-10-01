@@ -18,11 +18,11 @@ type NodeFlags struct {
 	Online  bool `json:"online"`
 }
 type NodesJsonNode struct {
-	Nodeinfo   data.NodeInfo    `json:"nodeinfo"`
-	Statistics StatisticsStruct `json:"statistics"`
-	Flags      NodeFlags        `json:"flags"`
-	Lastseen   string           `json:"lastseen"`
-	Firstseen  string           `json:"firstseen"`
+	Nodeinfo   data.NodeInfo     `json:"nodeinfo"`
+	Statistics *StatisticsStruct `json:"statistics"`
+	Flags      NodeFlags         `json:"flags"`
+	Lastseen   string            `json:"lastseen"`
+	Firstseen  string            `json:"firstseen"`
 }
 
 type NodesJson struct {
@@ -49,14 +49,15 @@ func (n *NodesJsonGenerator) GetNodesJsonRest(w http.ResponseWriter, r *http.Req
 	w.Write([]byte(n.CachedNodesJson))
 }
 
-func convertToMeshviewerStatistics(in data.StatisticsStruct) StatisticsStruct {
-	return StatisticsStruct{
+func convertToMeshviewerStatistics(in *data.StatisticsStruct) *StatisticsStruct {
+	return &StatisticsStruct{
 		Clients:     in.Clients.Total,
 		Gateway:     in.Gateway,
 		Loadavg:     in.LoadAverage,
-		MemoryUsage: (float64(in.Memory.Total) / float64(in.Memory.Free)),
+		MemoryUsage: (float64(in.Memory.Free) / float64(in.Memory.Total)),
 		RootfsUsage: in.RootFsUsage,
 		Traffic:     &in.Traffic,
+		Uptime:      in.Uptime,
 	}
 }
 
@@ -64,7 +65,12 @@ func (n *NodesJsonGenerator) GetNodesJson() NodesJson {
 	timestamp := time.Now().Format(TimeFormat)
 	nodes := make(map[string]NodesJsonNode)
 	for nodeId, nodeInfo := range n.Store.Nodeinfos {
-		stats := n.Store.Statistics[nodeId]
+		var stats *StatisticsStruct = nil
+		if storedStats, statsExist := n.Store.Statistics[nodeId]; statsExist {
+			stats = convertToMeshviewerStatistics(storedStats)
+		} else {
+			stats = &StatisticsStruct{}
+		}
 		status := n.Store.StatusInfo[nodeId]
 		flags := NodeFlags{
 			Online:  status.Online,
@@ -72,7 +78,7 @@ func (n *NodesJsonGenerator) GetNodesJson() NodesJson {
 		}
 		node := NodesJsonNode{
 			Nodeinfo:   nodeInfo,
-			Statistics: convertToMeshviewerStatistics(stats),
+			Statistics: stats,
 			Lastseen:   status.Lastseen,
 			Firstseen:  status.Firstseen,
 			Flags:      flags,
@@ -93,9 +99,11 @@ func (n *NodesJsonGenerator) UpdateNodesJson() {
 	data, err := json.Marshal(&nodesJson)
 	if err != nil {
 		log.WithFields(log.Fields{
-			"error": err,
-			"path":  n.Store.NodesJsonPath,
-		}).Error("Error encoding json")
+			"error":  err,
+			"path":   n.Store.NodesJsonPath,
+			"value":  err.(*json.UnsupportedValueError).Value,
+			"string": err.(*json.UnsupportedValueError).Str,
+		}).Errorf("Error encoding nodes.json")
 		return
 	}
 	n.CachedNodesJson = string(data)

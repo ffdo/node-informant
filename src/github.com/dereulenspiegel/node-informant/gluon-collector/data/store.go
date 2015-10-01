@@ -30,20 +30,20 @@ type Nodeinfostore interface {
 
 type SimpleInMemoryStore struct {
 	Nodeinfos       map[string]NodeInfo
-	Statistics      map[string]StatisticsStruct
+	Statistics      map[string]*StatisticsStruct
 	StatusInfo      map[string]NodeStatusInfo
 	NodesJsonPath   string
 	CachedNodesJson string
 	GatewayList     map[string]bool
-	NeighbourInfos  map[string]NeighbourStruct
+	NeighbourInfos  map[string]*NeighbourStruct
 }
 
 func NewSimpleInMemoryStore() *SimpleInMemoryStore {
 	return &SimpleInMemoryStore{
 		Nodeinfos:      make(map[string]NodeInfo),
-		Statistics:     make(map[string]StatisticsStruct),
+		Statistics:     make(map[string]*StatisticsStruct),
 		StatusInfo:     make(map[string]NodeStatusInfo),
-		NeighbourInfos: make(map[string]NeighbourStruct),
+		NeighbourInfos: make(map[string]*NeighbourStruct),
 		GatewayList:    make(map[string]bool),
 	}
 }
@@ -80,7 +80,7 @@ func (s *SimpleInMemoryStore) GetNodeNeighbours(nodeId string) (neighbours Neigh
 	if !exists {
 		err = fmt.Errorf("NodeId %s has no neighbour info", nodeId)
 	}
-	neighbours = neighbourInfo
+	neighbours = *neighbourInfo
 	return
 }
 
@@ -106,7 +106,7 @@ func (s *SimpleInMemoryStore) GetNodeinfos() []NodeInfo {
 
 func (s *SimpleInMemoryStore) GetStatistics(nodeId string) (Statistics StatisticsStruct, err error) {
 	stats, exists := s.Statistics[nodeId]
-	Statistics = stats
+	Statistics = *stats
 	if !exists {
 		err = fmt.Errorf("NodeId %s has no Statistics", nodeId)
 	}

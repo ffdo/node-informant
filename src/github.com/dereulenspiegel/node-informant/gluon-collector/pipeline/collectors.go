@@ -15,7 +15,7 @@ func (g *GatewayCollector) Process(in chan data.ParsedResponse) chan data.Parsed
 	go func() {
 		for response := range in {
 			if response.Type() == "statistics" {
-				statistics := response.ParsedData().(data.StatisticsStruct)
+				statistics := response.ParsedData().(*data.StatisticsStruct)
 				gateway := statistics.Gateway
 				if gateway != "" {
 					_, exists := g.Store.GatewayList[response.NodeId()]
@@ -57,7 +57,7 @@ func (s *StatisticsCollector) Process(in chan data.ParsedResponse) chan data.Par
 	go func() {
 		for response := range in {
 			if response.Type() == "statistics" {
-				statistics := response.ParsedData().(data.StatisticsStruct)
+				statistics := response.ParsedData().(*data.StatisticsStruct)
 				s.Store.Statistics[statistics.NodeId] = statistics
 			}
 			out <- response
@@ -75,7 +75,7 @@ func (n *NeighbourInfoCollector) Process(in chan data.ParsedResponse) chan data.
 	go func() {
 		for response := range in {
 			if response.Type() == "neighbours" {
-				neighbours := response.ParsedData().(data.NeighbourStruct)
+				neighbours := response.ParsedData().(*data.NeighbourStruct)
 				n.Store.NeighbourInfos[neighbours.NodeId] = neighbours
 			}
 			out <- response

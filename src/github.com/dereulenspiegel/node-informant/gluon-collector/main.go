@@ -173,12 +173,10 @@ func Assemble() error {
 	scheduler.NewJob(time.Second*time.Duration(nodeinfoInterval), func() {
 		requester.Query("GET nodeinfo")
 	}, true)
-
+	time.Sleep(time.Second * 5)
 	scheduler.NewJob(time.Second*time.Duration(statisticsInterval), func() {
 		requester.Query("GET statistics")
-	}, true)
-
-	scheduler.NewJob(time.Second*time.Duration(statisticsInterval), func() {
+		time.Sleep(time.Second * 5)
 		requester.Query("GET neighbours")
 	}, true)
 

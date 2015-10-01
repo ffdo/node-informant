@@ -43,5 +43,6 @@ type StatisticsStruct struct {
 	Loadavg     float64             `json:"loadavg"`
 	MemoryUsage float64             `json:"memory_usage"`
 	RootfsUsage float64             `json:"rootfs_usage"`
+	Uptime      float64             `json:"uptime"`
 	Traffic     *data.TrafficStruct `json:"traffic"`
 }
