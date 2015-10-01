@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"os"
 	"time"
 
@@ -13,6 +15,7 @@ import (
 	conf "github.com/dereulenspiegel/node-informant/gluon-collector/config"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/httpserver"
+	"github.com/dereulenspiegel/node-informant/gluon-collector/meshviewer"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/pipeline"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/scheduler"
 )
@@ -21,6 +24,68 @@ var configFilePath = flag.String("config", "/etc/node-collector.yaml", "Config f
 
 type LogPipe struct {
 	logFile *bufio.Writer
+}
+
+type FakeGraphJson struct{}
+
+func (f *FakeGraphJson) FakeGraphJson(w http.ResponseWriter, r *http.Request) {
+	file, err := os.Open("/srv/ffmap-data/graph.json")
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+		}).Error("Error opening graph.json")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	dataBytes, err := ioutil.ReadAll(file)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+		}).Error("Error reading graph.json")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
+	w.Write(dataBytes)
+}
+
+func (f *FakeGraphJson) Routes() []httpserver.Route {
+	fakeRoutes := []httpserver.Route{
+		httpserver.Route{"GraphJson", "GET", "/graph.json", f.FakeGraphJson},
+	}
+	return fakeRoutes
+}
+
+type FakeNodesJson struct{}
+
+func (f *FakeNodesJson) FakeNodesJson(w http.ResponseWriter, r *http.Request) {
+	file, err := os.Open("/srv/ffmap-data/nodes.json")
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+		}).Error("Error opening nodes.json")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	dataBytes, err := ioutil.ReadAll(file)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+		}).Error("Error reading nodes.json")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
+	w.Write(dataBytes)
+}
+
+func (f *FakeNodesJson) Routes() []httpserver.Route {
+	fakeRoutes := []httpserver.Route{
+		httpserver.Route{"NodesJson", "GET", "/nodes.json", f.FakeNodesJson},
+	}
+	return fakeRoutes
 }
 
 func NewLogPipe() *LogPipe {
@@ -51,7 +116,7 @@ func BuildPipelines(requester announced.Requester, store *data.SimpleInMemorySto
 	receivePipeline := pipeline.NewReceivePipeline(&pipeline.JsonParsePipe{}, &pipeline.DeflatePipe{})
 	processPipe := pipeline.NewProcessPipeline(&pipeline.GatewayCollector{Store: store},
 		&pipeline.NodeinfoCollector{Store: store}, &pipeline.StatisticsCollector{Store: store},
-		&pipeline.NeighbourInfoCollector{Store: store})
+		&pipeline.NeighbourInfoCollector{Store: store}, &pipeline.StatusInfoCollector{Store: store})
 	log.Printf("Adding process pipe end")
 	go func() {
 		processPipe.Dequeue(func(response data.ParsedResponse) {
@@ -80,7 +145,8 @@ func Assemble() error {
 	nodesJsonPath, err := conf.Global.String("nodesJsonPath")
 	if err != nil {
 		log.Infof("Loading node information from file %s", nodesJsonPath)
-		err = store.LoadNodesFromFile(nodesJsonPath)
+		loader := &meshviewer.DataLoader{Store: store}
+		err = loader.LoadNodesFromFile(nodesJsonPath)
 		log.WithFields(log.Fields{
 			"error": err,
 			"path":  nodesJsonPath,
@@ -97,7 +163,8 @@ func Assemble() error {
 	}
 	err = BuildPipelines(requester, store)
 
-	graphGenerator := &data.GraphGenerator{Store: store}
+	graphGenerator := &meshviewer.GraphGenerator{Store: store}
+	nodesGenerator := &meshviewer.NodesJsonGenerator{Store: store}
 
 	log.Printf("Setting up request timer")
 	nodeinfoInterval := conf.Global.UInt("announced.interval.nodeinfo", 1800)
@@ -120,10 +187,10 @@ func Assemble() error {
 	}, false)
 
 	scheduler.NewJob(time.Minute*1, func() {
-		store.UpdateNodesJson()
+		nodesGenerator.UpdateNodesJson()
 	}, false)
 
-	httpserver.StartHttpServerBlocking(store, graphGenerator)
+	httpserver.StartHttpServerBlocking(store, graphGenerator, nodesGenerator)
 	return nil
 }
 

@@ -1,4 +1,4 @@
-package data
+package meshviewer
 
 import (
 	"encoding/json"
@@ -7,11 +7,39 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 
+	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/httpserver"
 )
 
+type GraphNode struct {
+	Id      string `json:"id"`
+	NodeId  string `json:"node_id"`
+	tableId int
+}
+
+type GraphLink struct {
+	Bidirect bool    `json:"bidirect"`
+	Source   int     `json:"source"`
+	Target   int     `json:"target"`
+	Tq       float64 `json:"tq"`
+	Vpn      bool    `json:"vpn"`
+}
+
+type BatadvGraph struct {
+	Multigraph bool          `json:"multigraph"`
+	Nodes      []*GraphNode  `json:"nodes"`
+	Directed   bool          `json:"directed"`
+	Links      []*GraphLink  `json:"links"`
+	Graph      []interface{} `json:"graph"`
+}
+
+type GraphJson struct {
+	Batadv  BatadvGraph `json:"batadv"`
+	Version uint64      `json:"version"`
+}
+
 type GraphGenerator struct {
-	Store            *SimpleInMemoryStore
+	Store            *data.SimpleInMemoryStore
 	cachedJsonString string
 }
 
@@ -111,6 +139,7 @@ func (g *GraphGenerator) GenerateGraphJson() GraphJson {
 		Directed:   false,
 		Links:      allLinks,
 		Nodes:      nodeList,
+		Graph:      make([]interface{}, 0, 1),
 	}
 
 	graphJson := GraphJson{

@@ -3,12 +3,7 @@ package data
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
-	"os"
-	"time"
-
-	log "github.com/Sirupsen/logrus"
 
 	"github.com/dereulenspiegel/node-informant/gluon-collector/httpserver"
 	"github.com/gorilla/mux"
@@ -53,35 +48,7 @@ func NewSimpleInMemoryStore() *SimpleInMemoryStore {
 	}
 }
 
-func (s *SimpleInMemoryStore) LoadNodesFromFile(path string) error {
-	s.NodesJsonPath = path
-	nodesFile, err := os.Open(path)
-	defer nodesFile.Close()
-	if err != nil {
-		return err
-	}
-	jsonParser := json.NewDecoder(nodesFile)
-	nodesJson := &NodesJson{}
-	if err = jsonParser.Decode(nodesJson); err != nil {
-		return err
-	}
-	for nodeId, nodeJsonInfo := range nodesJson.Nodes {
-		Nodeinfos := nodeJsonInfo.Nodeinfo
-		nodeStats := nodeJsonInfo.Statistics
-		nodeStatus := NodeStatusInfo{
-			Firstseen: nodeJsonInfo.Firstseen,
-			Lastseen:  nodeJsonInfo.Lastseen,
-			Online:    nodeJsonInfo.Flags.Online,
-			Gateway:   nodeJsonInfo.Flags.Gateway,
-		}
-		s.Nodeinfos[nodeId] = Nodeinfos
-		s.Statistics[nodeId] = nodeStats
-		s.StatusInfo[nodeId] = nodeStatus
-	}
-	return nil
-}
-
-func (s *SimpleInMemoryStore) updateNodeStatusInfo(response ParsedResponse) {
+/*func (s *SimpleInMemoryStore) updateNodeStatusInfo(response ParsedResponse) {
 	info, exists := s.StatusInfo[response.NodeId()]
 	now := time.Now().Format(TimeFormat)
 	_, isGw := s.GatewayList[response.NodeId()]
@@ -97,7 +64,7 @@ func (s *SimpleInMemoryStore) updateNodeStatusInfo(response ParsedResponse) {
 		}
 	}
 	s.StatusInfo[response.NodeId()] = info
-}
+}*/
 
 func (s *SimpleInMemoryStore) GetNodeStatusInfo(nodeId string) (status NodeStatusInfo, err error) {
 	stat, exists := s.StatusInfo[nodeId]
@@ -151,7 +118,6 @@ func (s *SimpleInMemoryStore) Routes() []httpserver.Route {
 		httpserver.Route{"NodeInfo", "GET", "/nodeinfos/{nodeid}", s.GetNodeInfoRest},
 		httpserver.Route{"Nodeinfos", "GET", "/nodeinfos", s.GetNodeinfosRest},
 		httpserver.Route{"NodeStatistics", "GET", "/Statistics/{nodeid}", s.GetNodeStatisticsRest},
-		httpserver.Route{"NodesJson", "GET", "/nodes.json", s.GetNodesJsonRest},
 		httpserver.Route{"NodesNeighbours", "GET", "/neighbours/{nodeid}", s.GetNodeNeighboursRest},
 	}
 	return memoryStoreRoutes
@@ -203,62 +169,5 @@ func (s *SimpleInMemoryStore) GetNodeInfoRest(w http.ResponseWriter, r *http.Req
 	} else {
 		w.WriteHeader(http.StatusNotFound)
 		json.NewEncoder(w).Encode(err)
-	}
-}
-
-func (s *SimpleInMemoryStore) GetNodesJsonRest(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(s.CachedNodesJson))
-}
-
-func (s *SimpleInMemoryStore) GetNodesJson() NodesJson {
-	timestamp := time.Now().Format(TimeFormat)
-	nodes := make(map[string]NodesJsonNode)
-	for nodeId, nodeInfo := range s.Nodeinfos {
-		stats := s.Statistics[nodeId]
-		status := s.StatusInfo[nodeId]
-		flags := NodeFlags{
-			Online:  status.Online,
-			Gateway: status.Gateway,
-		}
-		node := NodesJsonNode{
-			Nodeinfo:   nodeInfo,
-			Statistics: stats,
-			Lastseen:   status.Lastseen,
-			Firstseen:  status.Firstseen,
-			Flags:      flags,
-		}
-		nodes[nodeId] = node
-	}
-	nodesJson := NodesJson{
-		Timestamp: timestamp,
-		Version:   1,
-		Nodes:     nodes,
-	}
-	return nodesJson
-}
-
-func (s *SimpleInMemoryStore) UpdateNodesJson() {
-	nodesJson := s.GetNodesJson()
-
-	data, err := json.Marshal(&nodesJson)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"error": err,
-			"path":  s.NodesJsonPath,
-		}).Error("Error encoding json")
-		return
-	}
-	s.CachedNodesJson = string(data)
-	if s.NodesJsonPath == "" {
-		return
-	}
-	err = ioutil.WriteFile(s.NodesJsonPath, data, 0644)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"error": err,
-			"path":  s.NodesJsonPath,
-		}).Error("Error writing nodes.json")
 	}
 }

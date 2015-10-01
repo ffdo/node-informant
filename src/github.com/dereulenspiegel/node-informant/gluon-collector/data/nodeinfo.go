@@ -6,9 +6,9 @@ type NetworkStruct struct {
 	Mesh      struct {
 		Bat0 struct {
 			Interfaces struct {
-				Wireless []string `json:"wireless"`
-				Other    []string `json:"other"`
-				Tunnel   []string `json:"tunnel"`
+				Wireless []string `json:"wireless,omitempty"`
+				Other    []string `json:"other,omitempty"`
+				Tunnel   []string `json:"tunnel,omitempty"`
 			} `json:"interfaces"`
 		} `json:"bat0"`
 	} `json:"mesh"`
@@ -30,25 +30,25 @@ type LocationStruct struct {
 }
 
 type SoftwareStruct struct {
-	Autoupdater struct {
+	Autoupdater *struct {
 		Enabled bool   `json:"enabled"`
 		Branch  string `json:"branch"`
-	} `json:"autoupdater"`
-	BatmanAdv struct {
+	} `json:"autoupdater,omitempty"`
+	BatmanAdv *struct {
 		Version string `json:"version"`
 		Compat  int    `json:"compat"`
-	} `json:"batman-adv"`
-	Fastd struct {
+	} `json:"batman-adv,omitempty"`
+	Fastd *struct {
 		Enabled bool   `json:"enabled"`
 		Version string `json:"version"`
-	} `json:"fastd"`
-	Firmware struct {
+	} `json:"fastd,omitempty"`
+	Firmware *struct {
 		Base    string `json:"base"`
 		Release string `json:"release"`
-	} `json:"firmware"`
-	StatusPage struct {
+	} `json:"firmware,omitempty"`
+	StatusPage *struct {
 		Api int `json:"api"`
-	} `json:"status-page"`
+	} `json:"status-page,omitempty"`
 }
 
 type HardwareStruct struct {
@@ -59,7 +59,7 @@ type HardwareStruct struct {
 type NodeInfo struct {
 	NodeId   string         `json:"node_id"`
 	Network  NetworkStruct  `json:"network"`
-	Owner    OwnerStruct    `json:"owner"`
+	Owner    *OwnerStruct   `json:"owner,omitempty"`
 	System   SystemStruct   `json:"system"`
 	Hostname string         `json:"hostname"`
 	Location LocationStruct `json:"location"`

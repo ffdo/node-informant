@@ -14,6 +14,7 @@ import (
 
 	"github.com/dereulenspiegel/node-informant/announced"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
+	"github.com/dereulenspiegel/node-informant/gluon-collector/meshviewer"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/pipeline"
 	"github.com/stretchr/testify/assert"
 )
@@ -87,7 +88,7 @@ func TestCompletePipe(t *testing.T) {
 	receivePipeline := pipeline.NewReceivePipeline(&pipeline.JsonParsePipe{}, &pipeline.DeflatePipe{})
 	processPipe := pipeline.NewProcessPipeline(&pipeline.GatewayCollector{Store: store},
 		&pipeline.NodeinfoCollector{Store: store}, &pipeline.StatisticsCollector{Store: store},
-		&pipeline.NeighbourInfoCollector{Store: store})
+		&pipeline.NeighbourInfoCollector{Store: store}, &pipeline.StatusInfoCollector{Store: store})
 
 	i := 0
 	go func() {
@@ -115,7 +116,7 @@ func TestCompletePipe(t *testing.T) {
 	processPipe.Close()
 	assert.Equal(len(testData), i)
 
-	graphGenerator := &data.GraphGenerator{Store: store}
+	graphGenerator := &meshviewer.GraphGenerator{Store: store}
 	graph := graphGenerator.GenerateGraphJson()
 	assert.NotNil(graph)
 	assert.Equal(232, len(graph.Batadv.Nodes))

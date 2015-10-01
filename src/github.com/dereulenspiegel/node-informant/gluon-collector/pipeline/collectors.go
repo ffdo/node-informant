@@ -1,6 +1,10 @@
 package pipeline
 
-import "github.com/dereulenspiegel/node-informant/gluon-collector/data"
+import (
+	"time"
+
+	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
+)
 
 type GatewayCollector struct {
 	Store *data.SimpleInMemoryStore
@@ -74,6 +78,36 @@ func (n *NeighbourInfoCollector) Process(in chan data.ParsedResponse) chan data.
 				neighbours := response.ParsedData().(data.NeighbourStruct)
 				n.Store.NeighbourInfos[neighbours.NodeId] = neighbours
 			}
+			out <- response
+		}
+	}()
+	return out
+}
+
+const TimeFormat string = "2006-01-02T15:04:05"
+
+type StatusInfoCollector struct {
+	Store *data.SimpleInMemoryStore
+}
+
+func (s *StatusInfoCollector) Process(in chan data.ParsedResponse) chan data.ParsedResponse {
+	out := make(chan data.ParsedResponse)
+	go func() {
+		for response := range in {
+			nodeId := response.NodeId()
+			statusInfo, exists := s.Store.StatusInfo[nodeId]
+			if exists {
+				statusInfo.Online = true
+				statusInfo.Lastseen = time.Now().Format(TimeFormat)
+			} else {
+				statusInfo = data.NodeStatusInfo{
+					Online:    true,
+					Firstseen: time.Now().Format(TimeFormat),
+					Lastseen:  time.Now().Format(TimeFormat),
+					Gateway:   false,
+				}
+			}
+			s.Store.StatusInfo[nodeId] = statusInfo
 			out <- response
 		}
 	}()
