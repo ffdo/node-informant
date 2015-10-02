@@ -2,7 +2,6 @@ package meshviewer
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -33,7 +32,7 @@ type NodesJson struct {
 }
 
 type NodesJsonGenerator struct {
-	Store           *data.SimpleInMemoryStore
+	Store           data.Nodeinfostore
 	CachedNodesJson string
 }
 
@@ -50,8 +49,8 @@ func (n *NodesJsonGenerator) GetNodesJsonRest(w http.ResponseWriter, r *http.Req
 	w.Write([]byte(n.CachedNodesJson))
 }
 
-func convertToMeshviewerStatistics(in *data.StatisticsStruct) *StatisticsStruct {
-	return &StatisticsStruct{
+func convertToMeshviewerStatistics(in *data.StatisticsStruct) StatisticsStruct {
+	return StatisticsStruct{
 		Clients:     in.Clients.Total,
 		Gateway:     in.Gateway,
 		Loadavg:     in.LoadAverage,
@@ -86,21 +85,22 @@ func isOnline(status *data.NodeStatusInfo) bool {
 func (n *NodesJsonGenerator) GetNodesJson() NodesJson {
 	timestamp := time.Now().Format(TimeFormat)
 	nodes := make(map[string]NodesJsonNode)
-	for nodeId, nodeInfo := range n.Store.Nodeinfos {
-		var stats *StatisticsStruct = nil
-		if storedStats, statsExist := n.Store.Statistics[nodeId]; statsExist {
-			stats = convertToMeshviewerStatistics(storedStats)
+	for _, nodeInfo := range n.Store.GetNodeInfos() {
+		nodeId := nodeInfo.NodeId
+		var stats StatisticsStruct
+		if storedStats, err := n.Store.GetStatistics(nodeId); err == nil {
+			stats = convertToMeshviewerStatistics(&storedStats)
 		} else {
-			stats = &StatisticsStruct{}
+			stats = StatisticsStruct{}
 		}
-		status := n.Store.StatusInfo[nodeId]
+		status, _ := n.Store.GetNodeStatusInfo(nodeId)
 		flags := NodeFlags{
 			Online:  isOnline(&status),
 			Gateway: status.Gateway,
 		}
 		node := NodesJsonNode{
 			Nodeinfo:   nodeInfo,
-			Statistics: stats,
+			Statistics: &stats,
 			Lastseen:   status.Lastseen,
 			Firstseen:  status.Firstseen,
 			Flags:      flags,
@@ -122,21 +122,19 @@ func (n *NodesJsonGenerator) UpdateNodesJson() {
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error":  err,
-			"path":   n.Store.NodesJsonPath,
 			"value":  err.(*json.UnsupportedValueError).Value,
 			"string": err.(*json.UnsupportedValueError).Str,
 		}).Errorf("Error encoding nodes.json")
 		return
 	}
 	n.CachedNodesJson = string(data)
-	if n.Store.NodesJsonPath == "" {
+	/*if n.Store.NodesJsonPath == "" {
 		return
 	}
 	err = ioutil.WriteFile(n.Store.NodesJsonPath, data, 0644)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error": err,
-			"path":  n.Store.NodesJsonPath,
 		}).Error("Error writing nodes.json")
-	}
+	}*/
 }

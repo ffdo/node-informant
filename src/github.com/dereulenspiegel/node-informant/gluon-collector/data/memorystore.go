@@ -52,10 +52,11 @@ func (s *SimpleInMemoryStore) PutNodeStatusInfo(nodeId string, info NodeStatusIn
 
 func (s *SimpleInMemoryStore) GetStatistics(nodeId string) (Statistics StatisticsStruct, err error) {
 	stats, exists := s.Statistics[nodeId]
-	Statistics = *stats
 	if !exists {
 		err = fmt.Errorf("NodeId %s has no Statistics", nodeId)
+		return
 	}
+	Statistics = *stats
 	return
 }
 
@@ -75,6 +76,7 @@ func (s *SimpleInMemoryStore) GetNodeNeighbours(nodeId string) (neighbours Neigh
 	neighbourInfo, exists := s.NeighbourInfos[nodeId]
 	if !exists {
 		err = fmt.Errorf("NodeId %s has no neighbour info", nodeId)
+		return
 	}
 	neighbours = *neighbourInfo
 	return
@@ -94,11 +96,11 @@ func (s *SimpleInMemoryStore) PutNodeNeighbours(neighbours NeighbourStruct) {
 
 func (s *SimpleInMemoryStore) GetNodeInfo(nodeId string) (info NodeInfo, err error) {
 	nodeinfo, exists := s.Nodeinfos[nodeId]
-	info = nodeinfo
 	if !exists {
 		err = fmt.Errorf("NodeId %s does not exist", nodeId)
 		return
 	}
+	info = nodeinfo
 	return
 }
 
