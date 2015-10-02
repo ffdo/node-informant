@@ -10,8 +10,8 @@ type NodeStatusInfo struct {
 }
 
 type Nodeinfostore interface {
-	GetNodeinfo(nodeId string) (NodeInfo, error)
-	GetNodeinfos() []NodeInfo
+	GetNodeInfo(nodeId string) (NodeInfo, error)
+	GetNodeInfos() []NodeInfo
 	PutNodeInfo(nodeInfo NodeInfo)
 
 	GetStatistics(nodeId string) (StatisticsStruct, error)
@@ -25,4 +25,8 @@ type Nodeinfostore interface {
 	GetNodeNeighbours(nodeId string) (NeighbourStruct, error)
 	GetAllNeighbours() []NeighbourStruct
 	PutNodeNeighbours(neighbours NeighbourStruct)
+
+	PutGateway(mac string)
+	IsGateway(mac string) bool
+	RemoveGateway(mac string)
 }

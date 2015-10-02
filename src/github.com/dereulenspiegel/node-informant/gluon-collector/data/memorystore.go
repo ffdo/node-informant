@@ -92,7 +92,7 @@ func (s *SimpleInMemoryStore) PutNodeNeighbours(neighbours NeighbourStruct) {
 	s.NeighbourInfos[neighbours.NodeId] = &neighbours
 }
 
-func (s *SimpleInMemoryStore) GetNodeinfo(nodeId string) (info NodeInfo, err error) {
+func (s *SimpleInMemoryStore) GetNodeInfo(nodeId string) (info NodeInfo, err error) {
 	nodeinfo, exists := s.Nodeinfos[nodeId]
 	info = nodeinfo
 	if !exists {
@@ -106,12 +106,25 @@ func (s *SimpleInMemoryStore) PutNodeInfo(nodeInfo NodeInfo) {
 	s.Nodeinfos[nodeInfo.NodeId] = nodeInfo
 }
 
-func (s *SimpleInMemoryStore) GetNodeinfos() []NodeInfo {
+func (s *SimpleInMemoryStore) GetNodeInfos() []NodeInfo {
 	list := make([]NodeInfo, 0, len(s.Nodeinfos))
 	for _, nodeinfo := range s.Nodeinfos {
 		list = append(list, nodeinfo)
 	}
 	return list
+}
+
+func (s *SimpleInMemoryStore) PutGateway(mac string) {
+	s.GatewayList[mac] = true
+}
+
+func (s *SimpleInMemoryStore) IsGateway(mac string) bool {
+	isGateway, exists := s.GatewayList[mac]
+	return exists && isGateway
+}
+
+func (s *SimpleInMemoryStore) RemoveGateway(mac string) {
+	delete(s.GatewayList, mac)
 }
 
 func (s *SimpleInMemoryStore) Routes() []httpserver.Route {
@@ -153,7 +166,7 @@ func (s *SimpleInMemoryStore) GetNodeNeighboursRest(w http.ResponseWriter, r *ht
 }
 
 func (s *SimpleInMemoryStore) GetNodeinfosRest(w http.ResponseWriter, r *http.Request) {
-	Nodeinfos := s.GetNodeinfos()
+	Nodeinfos := s.GetNodeInfos()
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(Nodeinfos)
@@ -162,7 +175,7 @@ func (s *SimpleInMemoryStore) GetNodeinfosRest(w http.ResponseWriter, r *http.Re
 func (s *SimpleInMemoryStore) GetNodeInfoRest(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	nodeid := vars["nodeid"]
-	nodeinfo, err := s.GetNodeinfo(nodeid)
+	nodeinfo, err := s.GetNodeInfo(nodeid)
 	if err == nil {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusOK)
