@@ -39,7 +39,7 @@ type GraphJson struct {
 }
 
 type GraphGenerator struct {
-	Store            *data.SimpleInMemoryStore
+	Store            data.Nodeinfostore
 	cachedJsonString string
 }
 
@@ -59,7 +59,9 @@ func (g *GraphGenerator) GenerateGraphJson() GraphJson {
 	nodeTable := make(map[string]*GraphNode)
 
 	y := 0
-	for nodeId, neighbourInfo := range g.Store.NeighbourInfos {
+	allNeighbourInfos := g.Store.GetAllNeighbours()
+	for _, neighbourInfo := range allNeighbourInfos {
+		nodeId := neighbourInfo.NodeId
 		for mac, _ := range neighbourInfo.Batdv {
 			nodeTable[mac] = &GraphNode{
 				Id:     mac,
@@ -76,9 +78,9 @@ func (g *GraphGenerator) GenerateGraphJson() GraphJson {
 		nodeList = append(nodeList, item)
 		i = i + 1
 	}
-	allLinks := make([]*GraphLink, 0, len(g.Store.NeighbourInfos)*5)
+	allLinks := make([]*GraphLink, 0, len(allNeighbourInfos)*5)
 
-	for _, neighbours := range g.Store.NeighbourInfos {
+	for _, neighbours := range allNeighbourInfos {
 		for ownMac, neighbour := range neighbours.Batdv {
 			for peerMac, linkInfo := range neighbour.Neighbours {
 				source, sourceExists := nodeTable[ownMac]
@@ -100,8 +102,8 @@ func (g *GraphGenerator) GenerateGraphJson() GraphJson {
 		}
 	}
 
-	bidirectionalLinks := make([]*GraphLink, 0, len(g.Store.NeighbourInfos)*5)
-	unidirectionalLinks := make([]*GraphLink, 0, len(g.Store.NeighbourInfos))
+	bidirectionalLinks := make([]*GraphLink, 0, len(allNeighbourInfos)*5)
+	unidirectionalLinks := make([]*GraphLink, 0, len(allNeighbourInfos))
 	for _, link := range allLinks {
 		_, err := FindInLinks(allLinks, link.Target, link.Source)
 		if err != nil {
@@ -127,8 +129,8 @@ func (g *GraphGenerator) GenerateGraphJson() GraphJson {
 		}
 		source := nodeList[link.Source]
 		target := nodeList[link.Target]
-		_, sourceGW := g.Store.GatewayList[source.Id]
-		_, targetGW := g.Store.GatewayList[target.Id]
+		sourceGW := g.Store.IsGateway(source.Id)
+		targetGW := g.Store.IsGateway(target.Id)
 		if sourceGW || targetGW {
 			link.Vpn = true
 		}
