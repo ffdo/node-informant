@@ -74,6 +74,12 @@
 			"branch": "master"
 		},
 		{
+			"importpath": "github.com/muesli/cache2go",
+			"repository": "https://github.com/muesli/cache2go",
+			"revision": "19d6d346a0806aaaa143508793dc55d400cfb380",
+			"branch": "master"
+		},
+		{
 			"importpath": "github.com/olebedev/config",
 			"repository": "https://github.com/olebedev/config",
 			"revision": "ed583f7fafbccbd73013b0379ab29943ab0da34b",
