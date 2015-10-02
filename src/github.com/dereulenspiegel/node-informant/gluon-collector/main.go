@@ -165,7 +165,9 @@ func ImportData() {
 
 func main() {
 	flag.Parse()
-	//err := conf.ParseConfig(*configFilePath)
+	if conf.Global == nil {
+		log.Fatal("Configuration couldn't be parsed")
+	}
 	ConfigureLogger()
 	CreateDataStore()
 	if *importPath != "" {
