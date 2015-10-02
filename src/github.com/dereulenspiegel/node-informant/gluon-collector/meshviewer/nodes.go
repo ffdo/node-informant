@@ -7,6 +7,7 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	conf "github.com/dereulenspiegel/node-informant/gluon-collector/config"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/httpserver"
 )
@@ -61,6 +62,27 @@ func convertToMeshviewerStatistics(in *data.StatisticsStruct) *StatisticsStruct 
 	}
 }
 
+func isOnline(status *data.NodeStatusInfo) bool {
+	now := time.Now()
+	lastseen, err := time.Parse(TimeFormat, status.Lastseen)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"err":        err,
+			"timeString": status.Lastseen,
+		}).Error("Error while parsing lastseen time to determine online status")
+	}
+	var updateInterval int = 300
+	if conf.Global != nil {
+		updateInterval = conf.Global.UInt("announced.interval.statistics", 300)
+	}
+	if (now.Unix() - lastseen.Unix()) > int64((updateInterval * 3)) {
+		status.Online = false
+	} else {
+		status.Online = true
+	}
+	return status.Online
+}
+
 func (n *NodesJsonGenerator) GetNodesJson() NodesJson {
 	timestamp := time.Now().Format(TimeFormat)
 	nodes := make(map[string]NodesJsonNode)
@@ -73,7 +95,7 @@ func (n *NodesJsonGenerator) GetNodesJson() NodesJson {
 		}
 		status := n.Store.StatusInfo[nodeId]
 		flags := NodeFlags{
-			Online:  status.Online,
+			Online:  isOnline(&status),
 			Gateway: status.Gateway,
 		}
 		node := NodesJsonNode{
