@@ -18,7 +18,6 @@ import (
 	"github.com/dereulenspiegel/node-informant/gluon-collector/scheduler"
 )
 
-var configFilePath = flag.String("config", "/etc/node-collector.yaml", "Config file")
 var importPath = flag.String("import", "", "Import data from this path")
 var importType = flag.String("importType", "", "The data format to import from, i.e ffmap-backend")
 
@@ -166,15 +165,12 @@ func ImportData() {
 
 func main() {
 	flag.Parse()
-	err := conf.ParseConfig(*configFilePath)
-	if err != nil {
-		log.Fatalf("Error parsing config file %s: %v", *configFilePath, err)
-	}
+	//err := conf.ParseConfig(*configFilePath)
 	ConfigureLogger()
 	CreateDataStore()
 	if *importPath != "" {
 		ImportData()
 	}
-	err = Assemble()
+	err := Assemble()
 	log.Errorf("Error assembling application: %v", err)
 }
