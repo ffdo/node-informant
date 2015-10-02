@@ -4,8 +4,6 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
-	"io/ioutil"
-	"net/http"
 	"os"
 	"time"
 
@@ -21,71 +19,13 @@ import (
 )
 
 var configFilePath = flag.String("config", "/etc/node-collector.yaml", "Config file")
+var importPath = flag.String("import", "", "Import data from this path")
+var importType = flag.String("importType", "", "The data format to import from, i.e ffmap-backend")
+
+var DataStore data.Nodeinfostore
 
 type LogPipe struct {
 	logFile *bufio.Writer
-}
-
-type FakeGraphJson struct{}
-
-func (f *FakeGraphJson) FakeGraphJson(w http.ResponseWriter, r *http.Request) {
-	file, err := os.Open("/srv/ffmap-data/graph.json")
-	if err != nil {
-		log.WithFields(log.Fields{
-			"error": err,
-		}).Error("Error opening graph.json")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	dataBytes, err := ioutil.ReadAll(file)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"error": err,
-		}).Error("Error reading graph.json")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
-	w.Write(dataBytes)
-}
-
-func (f *FakeGraphJson) Routes() []httpserver.Route {
-	fakeRoutes := []httpserver.Route{
-		httpserver.Route{"GraphJson", "GET", "/graph.json", f.FakeGraphJson},
-	}
-	return fakeRoutes
-}
-
-type FakeNodesJson struct{}
-
-func (f *FakeNodesJson) FakeNodesJson(w http.ResponseWriter, r *http.Request) {
-	file, err := os.Open("/srv/ffmap-data/nodes.json")
-	if err != nil {
-		log.WithFields(log.Fields{
-			"error": err,
-		}).Error("Error opening nodes.json")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	dataBytes, err := ioutil.ReadAll(file)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"error": err,
-		}).Error("Error reading nodes.json")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
-	w.Write(dataBytes)
-}
-
-func (f *FakeNodesJson) Routes() []httpserver.Route {
-	fakeRoutes := []httpserver.Route{
-		httpserver.Route{"NodesJson", "GET", "/nodes.json", f.FakeNodesJson},
-	}
-	return fakeRoutes
 }
 
 func NewLogPipe() *LogPipe {
@@ -112,11 +52,11 @@ func (l *LogPipe) Process(in chan announced.Response) chan announced.Response {
 	return out
 }
 
-func BuildPipelines(requester announced.Requester, store *data.SimpleInMemoryStore) error {
+func BuildPipelines(requester announced.Requester) error {
 	receivePipeline := pipeline.NewReceivePipeline(&pipeline.JsonParsePipe{}, &pipeline.DeflatePipe{})
-	processPipe := pipeline.NewProcessPipeline(&pipeline.GatewayCollector{Store: store},
-		&pipeline.NodeinfoCollector{Store: store}, &pipeline.StatisticsCollector{Store: store},
-		&pipeline.NeighbourInfoCollector{Store: store}, &pipeline.StatusInfoCollector{Store: store})
+	processPipe := pipeline.NewProcessPipeline(&pipeline.GatewayCollector{Store: DataStore},
+		&pipeline.NodeinfoCollector{Store: DataStore}, &pipeline.StatisticsCollector{Store: DataStore},
+		&pipeline.NeighbourInfoCollector{Store: DataStore}, &pipeline.StatusInfoCollector{Store: DataStore})
 	log.Printf("Adding process pipe end")
 	go func() {
 		processPipe.Dequeue(func(response data.ParsedResponse) {
@@ -141,17 +81,6 @@ func BuildPipelines(requester announced.Requester, store *data.SimpleInMemorySto
 }
 
 func Assemble() error {
-	store := data.NewSimpleInMemoryStore()
-	nodesJsonPath, err := conf.Global.String("nodesJsonPath")
-	if err != nil {
-		log.Infof("Loading node information from file %s", nodesJsonPath)
-		loader := &meshviewer.FFMapBackendDataLoader{Store: store}
-		err = loader.LoadNodesFromFile(nodesJsonPath)
-		log.WithFields(log.Fields{
-			"error": err,
-			"path":  nodesJsonPath,
-		}).Error("Can't node information from file")
-	}
 	iface, err := conf.Global.String("announced.interface")
 	if err != nil {
 		return err
@@ -161,10 +90,10 @@ func Assemble() error {
 		log.Fatalf("Can't create requester: %v", err)
 		return err
 	}
-	err = BuildPipelines(requester, store)
+	err = BuildPipelines(requester)
 
-	graphGenerator := &meshviewer.GraphGenerator{Store: store}
-	nodesGenerator := &meshviewer.NodesJsonGenerator{Store: store}
+	graphGenerator := &meshviewer.GraphGenerator{Store: DataStore}
+	nodesGenerator := &meshviewer.NodesJsonGenerator{Store: DataStore}
 
 	log.Printf("Setting up request timer")
 	nodeinfoInterval := conf.Global.UInt("announced.interval.nodeinfo", 1800)
@@ -188,7 +117,7 @@ func Assemble() error {
 		nodesGenerator.UpdateNodesJson()
 	}, false)
 
-	httpserver.StartHttpServerBlocking(store, graphGenerator, nodesGenerator)
+	httpserver.StartHttpServerBlocking(graphGenerator, nodesGenerator)
 	return nil
 }
 
@@ -214,6 +143,23 @@ func ConfigureLogger() {
 	}
 }
 
+func CreateDataStore() {
+	DataStore = data.NewSimpleInMemoryStore()
+}
+
+func ImportData() {
+	log.Infof("Loading node information from file %s", *importPath)
+	// TODO choose DataLoader depending on importType
+	loader := &meshviewer.FFMapBackendDataLoader{Store: DataStore}
+	err := loader.LoadNodesFromFile(*importPath)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+			"path":  *importPath,
+		}).Error("Can't node information from file")
+	}
+}
+
 func main() {
 	flag.Parse()
 	err := conf.ParseConfig(*configFilePath)
@@ -221,6 +167,10 @@ func main() {
 		log.Fatalf("Error parsing config file %s: %v", *configFilePath, err)
 	}
 	ConfigureLogger()
+	CreateDataStore()
+	if *importPath != "" {
+		ImportData()
+	}
 	err = Assemble()
 	log.Errorf("Error assembling application: %v", err)
 }
