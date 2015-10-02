@@ -5,6 +5,10 @@ import (
 	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
 )
 
+type Closeable interface {
+	Close()
+}
+
 type ReceivePipe interface {
 	Process(in chan announced.Response) chan announced.Response
 }

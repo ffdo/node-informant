@@ -27,6 +27,7 @@ func (g *GatewayCollector) Process(in chan data.ParsedResponse) chan data.Parsed
 			}
 			out <- response
 		}
+
 	}()
 	return out
 }
@@ -46,6 +47,7 @@ func (n *NodeinfoCollector) Process(in chan data.ParsedResponse) chan data.Parse
 			}
 			out <- response
 		}
+
 	}()
 	return out
 }
@@ -65,6 +67,7 @@ func (s *StatisticsCollector) Process(in chan data.ParsedResponse) chan data.Par
 			}
 			out <- response
 		}
+
 	}()
 	return out
 }
@@ -84,6 +87,7 @@ func (n *NeighbourInfoCollector) Process(in chan data.ParsedResponse) chan data.
 			}
 			out <- response
 		}
+
 	}()
 	return out
 }
@@ -114,6 +118,7 @@ func (s *StatusInfoCollector) Process(in chan data.ParsedResponse) chan data.Par
 			s.Store.PutNodeStatusInfo(nodeId, statusInfo)
 			out <- response
 		}
+
 	}()
 	return out
 }

@@ -15,6 +15,10 @@ const MaxDataGramSize int = 8192
 
 var announcedAddr = &net.UDPAddr{IP: net.ParseIP(MultiCastGroup), Port: Port}
 
+type PacketAnnouncedPacketReceiver interface {
+	Receive(rFunc func(Response))
+}
+
 type Requester struct {
 	unicastConn net.PacketConn
 	queryChan   chan string
@@ -39,8 +43,9 @@ func getIPFromInterface(ifaceName string) (*net.IP, error) {
 	return nil, fmt.Errorf("No valid IPv6 address found on interface")
 }
 
-func NewRequester(ifaceName string, port int) (r Requester, err error) {
+func NewRequester(ifaceName string, port int) (r *Requester, err error) {
 	var lIP *net.IP = &net.IPv6zero
+	r = &Requester{}
 	if ifaceName != "" {
 		lIP, err = getIPFromInterface(ifaceName)
 		if err != nil {
@@ -61,7 +66,7 @@ func NewRequester(ifaceName string, port int) (r Requester, err error) {
 	return
 }
 
-func (r Requester) writeLoop() {
+func (r *Requester) writeLoop() {
 	for queryString := range r.queryChan {
 		buf := []byte(queryString)
 		count, err := r.unicastConn.WriteTo(buf, announcedAddr)
@@ -83,7 +88,7 @@ func (r Requester) writeLoop() {
 	}
 }
 
-func (r Requester) readLoop() {
+func (r *Requester) readLoop() {
 	var socketIsOpen = true
 	var buf []byte = make([]byte, MaxDataGramSize)
 	for socketIsOpen {
@@ -107,12 +112,18 @@ func (r Requester) readLoop() {
 	}
 }
 
-func (r Requester) Close() {
+func (r *Requester) Close() {
 	r.unicastConn.Close()
 	close(r.ReceiveChan)
 	close(r.queryChan)
 }
 
-func (r Requester) Query(queryString string) {
+func (r *Requester) Query(queryString string) {
 	r.queryChan <- queryString
+}
+
+func (r *Requester) Receive(rFunc func(Response)) {
+	for response := range r.ReceiveChan {
+		rFunc(response)
+	}
 }

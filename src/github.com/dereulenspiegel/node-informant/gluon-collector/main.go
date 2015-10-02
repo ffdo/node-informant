@@ -52,23 +52,24 @@ func (l *LogPipe) Process(in chan announced.Response) chan announced.Response {
 	return out
 }
 
-func BuildPipelines(requester announced.Requester) error {
+func BuildPipelines(store data.Nodeinfostore, receiver announced.PacketAnnouncedPacketReceiver, pipeEnd func(response data.ParsedResponse)) ([]pipeline.Closeable, error) {
+
+	closeables := make([]pipeline.Closeable, 0, 2)
+
 	receivePipeline := pipeline.NewReceivePipeline(&pipeline.JsonParsePipe{}, &pipeline.DeflatePipe{})
-	processPipe := pipeline.NewProcessPipeline(&pipeline.GatewayCollector{Store: DataStore},
-		&pipeline.NodeinfoCollector{Store: DataStore}, &pipeline.StatisticsCollector{Store: DataStore},
-		&pipeline.NeighbourInfoCollector{Store: DataStore}, &pipeline.StatusInfoCollector{Store: DataStore})
+	processPipe := pipeline.NewProcessPipeline(&pipeline.GatewayCollector{Store: store},
+		&pipeline.NodeinfoCollector{Store: store}, &pipeline.StatisticsCollector{Store: store},
+		&pipeline.NeighbourInfoCollector{Store: store}, &pipeline.StatusInfoCollector{Store: store})
+	closeables = append(closeables, receivePipeline, processPipe)
 	log.Printf("Adding process pipe end")
 	go func() {
-		processPipe.Dequeue(func(response data.ParsedResponse) {
-			//Do nothing. This is the last step and we do not need to do anything here,
-			// just pull the chan clean
-		})
+		processPipe.Dequeue(pipeEnd)
 	}()
 	log.Printf("Connecting requester to receive pipeline")
 	go func() {
-		for response := range requester.ReceiveChan {
+		receiver.Receive(func(response announced.Response) {
 			receivePipeline.Enqueue(response)
-		}
+		})
 	}()
 	log.Printf("Connecting receive to process pipeline")
 	//Connect the receive to the process pipeline
@@ -77,7 +78,7 @@ func BuildPipelines(requester announced.Requester) error {
 			processPipe.Enqueue(response)
 		})
 	}()
-	return nil
+	return closeables, nil
 }
 
 func Assemble() error {
@@ -90,7 +91,10 @@ func Assemble() error {
 		log.Fatalf("Can't create requester: %v", err)
 		return err
 	}
-	err = BuildPipelines(requester)
+	_, err = BuildPipelines(DataStore, requester, func(response data.ParsedResponse) {
+		//Do nothing. This is the last step and we do not need to do anything here,
+		// just pull the chan clean
+	})
 
 	graphGenerator := &meshviewer.GraphGenerator{Store: DataStore}
 	nodesGenerator := &meshviewer.NodesJsonGenerator{Store: DataStore}

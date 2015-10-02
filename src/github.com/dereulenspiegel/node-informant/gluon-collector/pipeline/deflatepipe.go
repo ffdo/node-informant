@@ -25,6 +25,7 @@ func (d *DeflatePipe) Process(in chan announced.Response) chan announced.Respons
 				out <- response
 			}
 		}
+
 	}()
 	return out
 }

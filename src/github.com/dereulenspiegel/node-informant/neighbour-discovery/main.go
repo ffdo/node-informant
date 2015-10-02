@@ -20,7 +20,7 @@ var requester *announced.Requester
 
 func UseAnnounced() {
 	localRequester, err := announced.NewRequester(*ifaceName, *port)
-	requester = &localRequester
+	requester = localRequester
 	if err != nil {
 		log.Printf("Error creating requester: %v", err)
 		return
