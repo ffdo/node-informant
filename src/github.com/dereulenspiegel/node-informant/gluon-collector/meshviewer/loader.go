@@ -7,8 +7,8 @@ import (
 	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
 )
 
-type DataLoader struct {
-	Store         *data.SimpleInMemoryStore
+type FFMapBackendDataLoader struct {
+	Store         data.Nodeinfostore
 	NodesJsonPath string
 }
 
@@ -31,7 +31,7 @@ func convertFromMeshviewerStatistics(nodeId string, in *StatisticsStruct) *data.
 	}
 }
 
-func (l *DataLoader) LoadNodesFromFile(path string) error {
+func (l *FFMapBackendDataLoader) LoadNodesFromFile(path string) error {
 	l.NodesJsonPath = path
 	nodesFile, err := os.Open(path)
 	defer nodesFile.Close()
@@ -44,7 +44,7 @@ func (l *DataLoader) LoadNodesFromFile(path string) error {
 		return err
 	}
 	for nodeId, nodeJsonInfo := range nodesJson.Nodes {
-		Nodeinfos := nodeJsonInfo.Nodeinfo
+		nodeinfos := nodeJsonInfo.Nodeinfo
 		nodeStats := nodeJsonInfo.Statistics
 		nodeStatus := data.NodeStatusInfo{
 			Firstseen: nodeJsonInfo.Firstseen,
@@ -52,9 +52,9 @@ func (l *DataLoader) LoadNodesFromFile(path string) error {
 			Online:    nodeJsonInfo.Flags.Online,
 			Gateway:   nodeJsonInfo.Flags.Gateway,
 		}
-		l.Store.Nodeinfos[nodeId] = Nodeinfos
-		l.Store.Statistics[nodeId] = convertFromMeshviewerStatistics(nodeId, nodeStats)
-		l.Store.StatusInfo[nodeId] = nodeStatus
+		l.Store.PutNodeInfo(nodeinfos)
+		l.Store.PutStatistics(*convertFromMeshviewerStatistics(nodeId, nodeStats))
+		l.Store.PutNodeStatusInfo(nodeId, nodeStatus)
 	}
 	return nil
 }

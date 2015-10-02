@@ -30,3 +30,7 @@ type Nodeinfostore interface {
 	IsGateway(mac string) bool
 	RemoveGateway(mac string)
 }
+
+type NodeFileImporter interface {
+	LoadNodesFromFile(path string) error
+}

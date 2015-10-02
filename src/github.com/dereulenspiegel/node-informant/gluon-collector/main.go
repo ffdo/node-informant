@@ -145,7 +145,7 @@ func Assemble() error {
 	nodesJsonPath, err := conf.Global.String("nodesJsonPath")
 	if err != nil {
 		log.Infof("Loading node information from file %s", nodesJsonPath)
-		loader := &meshviewer.DataLoader{Store: store}
+		loader := &meshviewer.FFMapBackendDataLoader{Store: store}
 		err = loader.LoadNodesFromFile(nodesJsonPath)
 		log.WithFields(log.Fields{
 			"error": err,
