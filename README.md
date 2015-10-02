@@ -1,4 +1,4 @@
-# Node informant
+# Node informant [![Build Status](https://travis-ci.org/dereulenspiegel/node-collector.svg?branch=master)](https://travis-ci.org/dereulenspiegel/node-collector)
 
 This is a little utility to continuously request data from announced enabled
 nodes. Currently it uses [gb](http://getgb.io/) as build system.
