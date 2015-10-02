@@ -11,5 +11,3 @@ logger:
 http:
   port: 8080
   #address: "[::]"
-
-nodesJsonPath: "/opt/ffmap-data/nodes.json"
