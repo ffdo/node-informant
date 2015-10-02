@@ -199,6 +199,19 @@ func ConfigureLogger() {
 		log.Errorf("Error while parsing log level, falling back to Debug: %v", err)
 	}
 	log.SetLevel(lvl)
+
+	filePath, err := conf.Global.String("logger.file")
+	if err == nil && filePath != "" {
+		file, err := os.Open(filePath)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"err":         err,
+				"logFilePath": filePath,
+			}).Fatal("Can't open logfile")
+		} else {
+			log.SetOutput(file)
+		}
+	}
 }
 
 func main() {
