@@ -5,6 +5,8 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -22,6 +24,7 @@ var importPath = flag.String("import", "", "Import data from this path")
 var importType = flag.String("importType", "", "The data format to import from, i.e ffmap-backend")
 
 var DataStore data.Nodeinfostore
+var Closeables []pipeline.Closeable
 
 type LogPipe struct {
 	logFile *bufio.Writer
@@ -80,21 +83,24 @@ func BuildPipelines(store data.Nodeinfostore, receiver announced.PacketAnnounced
 	return closeables, nil
 }
 
-func Assemble() error {
+func Assemble() ([]pipeline.Closeable, error) {
 	iface, err := conf.Global.String("announced.interface")
 	if err != nil {
-		return err
+		return nil, err
 	}
 	requester, err := announced.NewRequester(iface, conf.Global.UInt("announced.port", 12444))
 	if err != nil {
 		log.Fatalf("Can't create requester: %v", err)
-		return err
+		return nil, err
 	}
-	_, err = BuildPipelines(DataStore, requester, func(response data.ParsedResponse) {
+	closeables, err := BuildPipelines(DataStore, requester, func(response data.ParsedResponse) {
 		//Do nothing. This is the last step and we do not need to do anything here,
 		// just pull the chan clean
 	})
-
+	closeables = append(closeables, requester)
+	if err != nil {
+		return closeables, err
+	}
 	graphGenerator := &meshviewer.GraphGenerator{Store: DataStore}
 	nodesGenerator := &meshviewer.NodesJsonGenerator{Store: DataStore}
 
@@ -121,7 +127,7 @@ func Assemble() error {
 	}, false)
 
 	httpserver.StartHttpServerBlocking(graphGenerator, nodesGenerator)
-	return nil
+	return closeables, nil
 }
 
 func ConfigureLogger() {
@@ -150,6 +156,23 @@ func CreateDataStore() {
 	DataStore = data.NewSimpleInMemoryStore()
 }
 
+func Stop() {
+	for _, c := range Closeables {
+		c.Close()
+	}
+}
+
+func ListenToSig() {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, syscall.SIGHUP, syscall.SIGINT)
+	go func() {
+		for _ = range c {
+			log.Print("Shutting down...")
+			Stop()
+		}
+	}()
+}
+
 func ImportData() {
 	log.Infof("Loading node information from file %s", *importPath)
 	// TODO choose DataLoader depending on importType
@@ -164,6 +187,7 @@ func ImportData() {
 }
 
 func main() {
+	Closeables = make([]pipeline.Closeable, 0, 5)
 	flag.Parse()
 	if conf.Global == nil {
 		log.Fatal("Configuration couldn't be parsed")
@@ -173,6 +197,7 @@ func main() {
 	if *importPath != "" {
 		ImportData()
 	}
-	err := Assemble()
+	closeables, err := Assemble()
+	Closeables = append(Closeables, closeables...)
 	log.Errorf("Error assembling application: %v", err)
 }
