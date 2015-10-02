@@ -19,10 +19,6 @@ func (g *GatewayCollector) Process(in chan data.ParsedResponse) chan data.Parsed
 				gateway := statistics.Gateway
 				if gateway != "" {
 					g.Store.PutGateway(gateway)
-					/*_, exists := g.Store.GatewayList[response.NodeId()]
-					if !exists {
-						g.Store.GatewayList[response.NodeId()] = true
-					}*/
 				}
 			}
 			out <- response
@@ -43,7 +39,6 @@ func (n *NodeinfoCollector) Process(in chan data.ParsedResponse) chan data.Parse
 			if response.Type() == "nodeinfo" {
 				nodeinfo := response.ParsedData().(data.NodeInfo)
 				n.Store.PutNodeInfo(nodeinfo)
-				//n.Store.Nodeinfos[nodeinfo.NodeId] = nodeinfo
 			}
 			out <- response
 		}
@@ -63,7 +58,6 @@ func (s *StatisticsCollector) Process(in chan data.ParsedResponse) chan data.Par
 			if response.Type() == "statistics" {
 				statistics := response.ParsedData().(*data.StatisticsStruct)
 				s.Store.PutStatistics(*statistics)
-				//s.Store.Statistics[statistics.NodeId] = statistics
 			}
 			out <- response
 		}
@@ -83,7 +77,6 @@ func (n *NeighbourInfoCollector) Process(in chan data.ParsedResponse) chan data.
 			if response.Type() == "neighbours" {
 				neighbours := response.ParsedData().(*data.NeighbourStruct)
 				n.Store.PutNodeNeighbours(*neighbours)
-				//n.Store.NeighbourInfos[neighbours.NodeId] = neighbours
 			}
 			out <- response
 		}
