@@ -11,10 +11,18 @@ type NodeStatusInfo struct {
 
 type Nodeinfostore interface {
 	GetNodeinfo(nodeId string) (NodeInfo, error)
-	GetStatistics(nodeId string) (StatisticsStruct, error)
 	GetNodeinfos() []NodeInfo
+	PutNodeInfo(nodeInfo NodeInfo)
+
+	GetStatistics(nodeId string) (StatisticsStruct, error)
+	GetAllStatistics() []StatisticsStruct
+	PutStatistics(statistics StatisticsStruct)
+
 	GetNodeStatusInfo(nodeId string) (NodeStatusInfo, error)
+	GetNodeStatusInfos() []NodeStatusInfo
+	PutNodeStatusInfo(nodeId string, info NodeStatusInfo)
+
 	GetNodeNeighbours(nodeId string) (NeighbourStruct, error)
-	LoadNodesFromFile(path string) error
-	UpdateNodesJson()
+	GetAllNeighbours() []NeighbourStruct
+	PutNodeNeighbours(neighbours NeighbourStruct)
 }

@@ -29,24 +29,6 @@ func NewSimpleInMemoryStore() *SimpleInMemoryStore {
 	}
 }
 
-/*func (s *SimpleInMemoryStore) updateNodeStatusInfo(response ParsedResponse) {
-	info, exists := s.StatusInfo[response.NodeId()]
-	now := time.Now().Format(TimeFormat)
-	_, isGw := s.GatewayList[response.NodeId()]
-	if exists {
-		info.Lastseen = now
-		info.Online = true
-	} else {
-		info = NodeStatusInfo{
-			Firstseen: now,
-			Lastseen:  now,
-			Online:    true,
-			Gateway:   isGw,
-		}
-	}
-	s.StatusInfo[response.NodeId()] = info
-}*/
-
 func (s *SimpleInMemoryStore) GetNodeStatusInfo(nodeId string) (status NodeStatusInfo, err error) {
 	stat, exists := s.StatusInfo[nodeId]
 	if !exists {
@@ -56,6 +38,39 @@ func (s *SimpleInMemoryStore) GetNodeStatusInfo(nodeId string) (status NodeStatu
 	return
 }
 
+func (s *SimpleInMemoryStore) GetNodeStatusInfos() []NodeStatusInfo {
+	list := make([]NodeStatusInfo, 0, len(s.StatusInfo))
+	for _, status := range s.StatusInfo {
+		list = append(list, status)
+	}
+	return list
+}
+
+func (s *SimpleInMemoryStore) PutNodeStatusInfo(nodeId string, info NodeStatusInfo) {
+	s.StatusInfo[nodeId] = info
+}
+
+func (s *SimpleInMemoryStore) GetStatistics(nodeId string) (Statistics StatisticsStruct, err error) {
+	stats, exists := s.Statistics[nodeId]
+	Statistics = *stats
+	if !exists {
+		err = fmt.Errorf("NodeId %s has no Statistics", nodeId)
+	}
+	return
+}
+
+func (s *SimpleInMemoryStore) GetAllStatistics() []StatisticsStruct {
+	list := make([]StatisticsStruct, 0, len(s.Statistics))
+	for _, statistics := range s.Statistics {
+		list = append(list, *statistics)
+	}
+	return list
+}
+
+func (s *SimpleInMemoryStore) PutStatistics(statistics StatisticsStruct) {
+	s.Statistics[statistics.NodeId] = &statistics
+}
+
 func (s *SimpleInMemoryStore) GetNodeNeighbours(nodeId string) (neighbours NeighbourStruct, err error) {
 	neighbourInfo, exists := s.NeighbourInfos[nodeId]
 	if !exists {
@@ -63,6 +78,18 @@ func (s *SimpleInMemoryStore) GetNodeNeighbours(nodeId string) (neighbours Neigh
 	}
 	neighbours = *neighbourInfo
 	return
+}
+
+func (s *SimpleInMemoryStore) GetAllNeighbours() []NeighbourStruct {
+	list := make([]NeighbourStruct, 0, len(s.NeighbourInfos))
+	for _, neighbour := range s.NeighbourInfos {
+		list = append(list, *neighbour)
+	}
+	return list
+}
+
+func (s *SimpleInMemoryStore) PutNodeNeighbours(neighbours NeighbourStruct) {
+	s.NeighbourInfos[neighbours.NodeId] = &neighbours
 }
 
 func (s *SimpleInMemoryStore) GetNodeinfo(nodeId string) (info NodeInfo, err error) {
@@ -75,23 +102,16 @@ func (s *SimpleInMemoryStore) GetNodeinfo(nodeId string) (info NodeInfo, err err
 	return
 }
 
-func (s *SimpleInMemoryStore) GetNodeinfos() []NodeInfo {
-	Nodeinfos := make([]NodeInfo, len(s.Nodeinfos))
-	counter := 0
-	for _, nodeinfo := range s.Nodeinfos {
-		Nodeinfos[counter] = nodeinfo
-		counter++
-	}
-	return Nodeinfos
+func (s *SimpleInMemoryStore) PutNodeInfo(nodeInfo NodeInfo) {
+	s.Nodeinfos[nodeInfo.NodeId] = nodeInfo
 }
 
-func (s *SimpleInMemoryStore) GetStatistics(nodeId string) (Statistics StatisticsStruct, err error) {
-	stats, exists := s.Statistics[nodeId]
-	Statistics = *stats
-	if !exists {
-		err = fmt.Errorf("NodeId %s has no Statistics", nodeId)
+func (s *SimpleInMemoryStore) GetNodeinfos() []NodeInfo {
+	list := make([]NodeInfo, 0, len(s.Nodeinfos))
+	for _, nodeinfo := range s.Nodeinfos {
+		list = append(list, nodeinfo)
 	}
-	return
+	return list
 }
 
 func (s *SimpleInMemoryStore) Routes() []httpserver.Route {
