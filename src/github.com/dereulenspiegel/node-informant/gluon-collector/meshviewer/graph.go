@@ -3,6 +3,7 @@ package meshviewer
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"net/http"
 
 	log "github.com/Sirupsen/logrus"
@@ -55,116 +56,114 @@ func FindInLinks(links []*GraphLink, sourceIndex, targetIndex int) (link *GraphL
 	return
 }
 
-func (g *GraphGenerator) GenerateGraphJson() GraphJson {
+func (g *GraphGenerator) buildNodeTableAndList() (map[string]*GraphNode, []*GraphNode) {
+	allNeighbours := g.Store.GetAllNeighbours()
+	nodeList := make([]*GraphNode, 0, len(allNeighbours))
+	for _, neighbourInfo := range allNeighbours {
+		for mac, _ := range neighbourInfo.Batadv {
+			node := &GraphNode{
+				Id:     mac,
+				NodeId: neighbourInfo.NodeId,
+			}
+			nodeList = append(nodeList, node)
+		}
+	}
+
 	nodeTable := make(map[string]*GraphNode)
+	for i, node := range nodeList {
+		node.tableId = i
+		nodeTable[node.Id] = node
+	}
+	return nodeTable, nodeList
+}
 
-	y := 0
-	allNeighbourInfos := g.Store.GetAllNeighbours()
-	for _, neighbourInfo := range allNeighbourInfos {
-		nodeId := neighbourInfo.NodeId
-		for ownMac, _ := range neighbourInfo.Batdv {
-			nodeTable[ownMac] = &GraphNode{
-				Id:     ownMac,
-				NodeId: nodeId,
-			}
-			y = y + 1
-		}
+func calculateTq(tqSource, tqTarget int) float64 {
+	return math.Min(float64(tqSource), float64(tqTarget))
+}
+
+func (g *GraphGenerator) buildLink(nodeTable map[string]*GraphNode, sourceMac, targetMac string, sourceLinkInfo data.BatmanLink) *GraphLink {
+	sourceNode, sourceExists := nodeTable[sourceMac]
+	targetNode, targetExists := nodeTable[targetMac]
+
+	if !sourceExists {
+		log.Warnf("Building link with nonexistant source node %s", sourceMac)
+		return nil
+	}
+	if !targetExists {
+		log.Warnf("Building link with nonexistant target node %s", targetMac)
+		return nil
+	}
+	link := &GraphLink{
+		Bidirect: false,
+		Source:   sourceNode.tableId,
+		Target:   targetNode.tableId,
+		Vpn:      false,
+		Tq:       0,
+	}
+	targetNeighbourInfo, err := g.Store.GetNodeNeighbours(targetNode.NodeId)
+	if err != nil {
+		log.Warnf("Can't find neighbourinfos for nodeId %s", targetNode.NodeId)
 	}
 
-	nodeList := make([]*GraphNode, 0, len(nodeTable))
-	i := 0
-	for _, item := range nodeTable {
-		item.tableId = i
-		nodeList = append(nodeList, item)
-		i = i + 1
-	}
-	allLinks := make([]*GraphLink, 0, len(allNeighbourInfos)*5)
-
-	for _, neighbours := range allNeighbourInfos {
-		for ownMac, neighbour := range neighbours.Batdv {
-			for peerMac, linkInfo := range neighbour.Neighbours {
-				source, sourceExists := nodeTable[ownMac]
-				target, targetExists := nodeTable[peerMac]
-				if !sourceExists {
-					log.WithFields(log.Fields{
-						"source-mac": ownMac,
-					}).Debug("Source mac not found when building graph link")
-					continue
-				}
-				if !targetExists {
-					log.WithFields(log.Fields{
-						"target-mac": peerMac,
-					}).Debug("Target mac not found when building graph link")
-					continue
-				}
-				/*if !sourceExists || !targetExists {
-					log.WithFields(log.Fields{
-						"source-mac": ownMac,
-						"target-mac": peerMac,
-					}).Debug("Tried to build link to unknown peer")
-					continue
-				}*/
-				link := &GraphLink{
-					Source: source.tableId,
-					Target: target.tableId,
-					Tq:     float64(linkInfo.Tq),
-				}
-				allLinks = append(allLinks, link)
-			}
-		}
-	}
-
-	bidirectionalLinks := make([]*GraphLink, 0, len(allNeighbourInfos)*5)
-	unidirectionalLinks := make([]*GraphLink, 0, len(allNeighbourInfos))
-	for _, link := range allLinks {
-		_, err := FindInLinks(allLinks, link.Target, link.Source)
-		if err != nil {
+	targetBatInfo, exists := targetNeighbourInfo.Batadv[targetMac]
+	if !exists {
+		log.Warnf("Can't find Batadv links for %s", targetMac)
+		link.Bidirect = false
+		link.Tq = float64(sourceLinkInfo.Tq)
+	} else {
+		targetLinkInfo, exists := targetBatInfo.Neighbours[sourceMac]
+		if !exists {
+			log.Warnf("Can't find linkinfo from %s to %s", targetMac, sourceMac)
 			link.Bidirect = false
-			unidirectionalLinks = append(unidirectionalLinks, link)
 		} else {
 			link.Bidirect = true
-			_, err := FindInLinks(allLinks, link.Source, link.Target)
-			if err != nil {
-				bidirectionalLinks = append(bidirectionalLinks, link)
+			// TODO How do we calculate a valid Tq value for meshviewer
+			link.Tq = calculateTq(sourceLinkInfo.Tq, targetLinkInfo.Tq)
+		}
+	}
+	return link
+}
+
+func (g *GraphGenerator) GenerateGraph() GraphJson {
+	nodeTable, nodeList := g.buildNodeTableAndList()
+
+	allNeighbours := g.Store.GetAllNeighbours()
+
+	bidirectionalLinks := make([]*GraphLink, 0, len(allNeighbours))
+	unidirectionalLinks := make([]*GraphLink, 0, len(allNeighbours))
+	for _, neighbourInfo := range allNeighbours {
+		for ownMac, batInfo := range neighbourInfo.Batadv {
+			for peerMac, linkInfo := range batInfo.Neighbours {
+				link := g.buildLink(nodeTable, ownMac, peerMac, linkInfo)
+				if link == nil {
+					log.Warnf("Couldn't form link between %s and %s", ownMac, peerMac)
+				} else if link.Bidirect {
+					bidirectionalLinks = append(bidirectionalLinks, link)
+				} else {
+					unidirectionalLinks = append(unidirectionalLinks, link)
+				}
 			}
 		}
 	}
 
-	allLinks = make([]*GraphLink, 0, len(bidirectionalLinks)+len(unidirectionalLinks))
+	allLinks := make([]*GraphLink, 0, len(unidirectionalLinks)+len(bidirectionalLinks))
 	allLinks = append(allLinks, bidirectionalLinks...)
 	allLinks = append(allLinks, unidirectionalLinks...)
-
-	for _, link := range allLinks {
-		if link == nil {
-			log.Warnf("Link is nil!")
-			continue
-		}
-		source := nodeList[link.Source]
-		target := nodeList[link.Target]
-		sourceGW := g.Store.IsGateway(source.Id)
-		targetGW := g.Store.IsGateway(target.Id)
-		if sourceGW || targetGW {
-			link.Vpn = true
-		}
-	}
-
 	batGraph := BatadvGraph{
 		Multigraph: false,
 		Directed:   false,
-		Links:      allLinks,
 		Nodes:      nodeList,
-		Graph:      make([]interface{}, 0, 1),
+		Links:      allLinks,
 	}
-
-	graphJson := GraphJson{
+	graph := GraphJson{
 		Batadv:  batGraph,
 		Version: 1,
 	}
-	return graphJson
+	return graph
 }
 
 func (g *GraphGenerator) UpdateGraphJson() {
-	graph := g.GenerateGraphJson()
+	graph := g.GenerateGraph()
 	jsonBytes, err := json.Marshal(graph)
 	if err != nil {
 		log.WithFields(log.Fields{

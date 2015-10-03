@@ -63,7 +63,7 @@ type WifiNeighbours struct {
 }
 
 type NeighbourStruct struct {
-	Batdv map[string]BatadvNeighbours `json:"batadv"`
+	Batadv map[string]BatadvNeighbours `json:"batadv"`
 	//WifiNeighbours map[string]WifiNeighbours   `json:"wifi"`
 	NodeId string `json:"node_id"`
 }
