@@ -1,14 +1,10 @@
 package data
 
 import (
-	"encoding/json"
 	"fmt"
-	"net/http"
 	"time"
 
 	conf "github.com/dereulenspiegel/node-informant/gluon-collector/config"
-	"github.com/dereulenspiegel/node-informant/gluon-collector/httpserver"
-	"github.com/gorilla/mux"
 	"github.com/muesli/cache2go"
 )
 
@@ -144,63 +140,4 @@ func (s *SimpleInMemoryStore) IsGateway(mac string) bool {
 
 func (s *SimpleInMemoryStore) RemoveGateway(mac string) {
 	delete(s.GatewayList, mac)
-}
-
-func (s *SimpleInMemoryStore) Routes() []httpserver.Route {
-	var memoryStoreRoutes = []httpserver.Route{
-		httpserver.Route{"NodeInfo", "GET", "/nodeinfos/{nodeid}", s.GetNodeInfoRest},
-		httpserver.Route{"Nodeinfos", "GET", "/nodeinfos", s.GetNodeinfosRest},
-		httpserver.Route{"NodeStatistics", "GET", "/Statistics/{nodeid}", s.GetNodeStatisticsRest},
-		httpserver.Route{"NodesNeighbours", "GET", "/neighbours/{nodeid}", s.GetNodeNeighboursRest},
-	}
-	return memoryStoreRoutes
-}
-
-func (s *SimpleInMemoryStore) GetNodeStatisticsRest(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	nodeid := vars["nodeid"]
-	stats, err := s.GetStatistics(nodeid)
-	if err == nil {
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(stats)
-	} else {
-		w.WriteHeader(http.StatusNotFound)
-		json.NewEncoder(w).Encode(err)
-	}
-}
-
-func (s *SimpleInMemoryStore) GetNodeNeighboursRest(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	nodeid := vars["nodeid"]
-	neighbours, err := s.GetNodeNeighbours(nodeid)
-	if err == nil {
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(neighbours)
-	} else {
-		w.WriteHeader(http.StatusNotFound)
-		json.NewEncoder(w).Encode(err)
-	}
-}
-
-func (s *SimpleInMemoryStore) GetNodeinfosRest(w http.ResponseWriter, r *http.Request) {
-	Nodeinfos := s.GetNodeInfos()
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(Nodeinfos)
-}
-
-func (s *SimpleInMemoryStore) GetNodeInfoRest(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	nodeid := vars["nodeid"]
-	nodeinfo, err := s.GetNodeInfo(nodeid)
-	if err == nil {
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(nodeinfo)
-	} else {
-		w.WriteHeader(http.StatusNotFound)
-		json.NewEncoder(w).Encode(err)
-	}
 }

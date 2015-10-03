@@ -12,6 +12,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 
 	"github.com/dereulenspiegel/node-informant/announced"
+	"github.com/dereulenspiegel/node-informant/gluon-collector/api"
 	conf "github.com/dereulenspiegel/node-informant/gluon-collector/config"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/httpserver"
@@ -132,8 +133,8 @@ func Assemble() ([]pipeline.Closeable, error) {
 	scheduler.NewJob(time.Minute*1, func() {
 		nodesGenerator.UpdateNodesJson()
 	}, false)
-
-	httpserver.StartHttpServerBlocking(graphGenerator, nodesGenerator)
+	httpApi := &api.HttpApi{Store: DataStore}
+	httpserver.StartHttpServerBlocking(httpApi, graphGenerator, nodesGenerator)
 	return closeables, nil
 }
 
