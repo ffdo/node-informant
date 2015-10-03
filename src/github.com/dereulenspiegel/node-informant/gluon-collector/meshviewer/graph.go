@@ -78,7 +78,8 @@ func (g *GraphGenerator) buildNodeTableAndList() (map[string]*GraphNode, []*Grap
 }
 
 func calculateTq(tqSource, tqTarget int) float64 {
-	return math.Min(float64(tqSource), float64(tqTarget))
+	min := math.Min(float64(tqSource), float64(tqTarget))
+	return (1.0 / (min / 255.0))
 }
 
 func (g *GraphGenerator) buildLink(nodeTable map[string]*GraphNode, sourceMac, targetMac string, sourceLinkInfo data.BatmanLink) *GraphLink {
@@ -98,7 +99,7 @@ func (g *GraphGenerator) buildLink(nodeTable map[string]*GraphNode, sourceMac, t
 		Source:   sourceNode.tableId,
 		Target:   targetNode.tableId,
 		Vpn:      false,
-		Tq:       0,
+		Tq:       float64(1.0 / (float64(sourceLinkInfo.Tq) / 255.0)),
 	}
 	targetNeighbourInfo, err := g.Store.GetNodeNeighbours(targetNode.NodeId)
 	if err != nil {
@@ -109,7 +110,6 @@ func (g *GraphGenerator) buildLink(nodeTable map[string]*GraphNode, sourceMac, t
 	if !exists {
 		log.Warnf("Can't find Batadv links for %s", targetMac)
 		link.Bidirect = false
-		link.Tq = float64(sourceLinkInfo.Tq)
 	} else {
 		targetLinkInfo, exists := targetBatInfo.Neighbours[sourceMac]
 		if !exists {
