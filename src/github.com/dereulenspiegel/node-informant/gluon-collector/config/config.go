@@ -12,6 +12,14 @@ var configFilePath = flag.String("config", "/etc/node-collector.yaml", "Config f
 
 var Global *config.Config
 
+func UInt(key string, def int) int {
+	if Global != nil {
+		return Global.UInt(key, def)
+	} else {
+		return def
+	}
+}
+
 func ParseConfig(path string) error {
 	var err error = nil
 	if strings.HasSuffix(path, "yaml") {

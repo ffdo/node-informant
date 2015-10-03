@@ -62,9 +62,9 @@ func (g *GraphGenerator) GenerateGraphJson() GraphJson {
 	allNeighbourInfos := g.Store.GetAllNeighbours()
 	for _, neighbourInfo := range allNeighbourInfos {
 		nodeId := neighbourInfo.NodeId
-		for mac, _ := range neighbourInfo.Batdv {
-			nodeTable[mac] = &GraphNode{
-				Id:     mac,
+		for ownMac, _ := range neighbourInfo.Batdv {
+			nodeTable[ownMac] = &GraphNode{
+				Id:     ownMac,
 				NodeId: nodeId,
 			}
 			y = y + 1
@@ -85,13 +85,25 @@ func (g *GraphGenerator) GenerateGraphJson() GraphJson {
 			for peerMac, linkInfo := range neighbour.Neighbours {
 				source, sourceExists := nodeTable[ownMac]
 				target, targetExists := nodeTable[peerMac]
-				if !sourceExists || !targetExists {
+				if !sourceExists {
+					log.WithFields(log.Fields{
+						"source-mac": ownMac,
+					}).Debug("Source mac not found when building graph link")
+					continue
+				}
+				if !targetExists {
+					log.WithFields(log.Fields{
+						"target-mac": peerMac,
+					}).Debug("Target mac not found when building graph link")
+					continue
+				}
+				/*if !sourceExists || !targetExists {
 					log.WithFields(log.Fields{
 						"source-mac": ownMac,
 						"target-mac": peerMac,
 					}).Debug("Tried to build link to unknown peer")
 					continue
-				}
+				}*/
 				link := &GraphLink{
 					Source: source.tableId,
 					Target: target.tableId,

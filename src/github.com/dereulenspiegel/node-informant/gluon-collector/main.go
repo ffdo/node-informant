@@ -103,19 +103,26 @@ func Assemble() ([]pipeline.Closeable, error) {
 	}
 	graphGenerator := &meshviewer.GraphGenerator{Store: DataStore}
 	nodesGenerator := &meshviewer.NodesJsonGenerator{Store: DataStore}
+	missingUpdate := &MissingUpdater{Store: DataStore, Requester: requester}
 
 	log.Printf("Setting up request timer")
 	nodeinfoInterval := conf.Global.UInt("announced.interval.nodeinfo", 1800)
 	statisticsInterval := conf.Global.UInt("announced.interval.statistics", 300)
 
 	scheduler.NewJob(time.Second*time.Duration(nodeinfoInterval), func() {
+		log.Debug("Querying Nodeinfos via Multicast")
 		requester.Query("GET nodeinfo")
 	}, true)
 	time.Sleep(time.Second * 10)
 	scheduler.NewJob(time.Second*time.Duration(statisticsInterval), func() {
+		log.Debug("Querying statistics via Multicast")
 		requester.Query("GET statistics")
-		time.Sleep(time.Second * 10)
+		time.Sleep(time.Second * 25)
+		log.Debug("Querying neighbours via Multicast")
 		requester.Query("GET neighbours")
+		time.Sleep(time.Second * 25)
+		missingUpdate.UpdateMissingNeighbours()
+		missingUpdate.UpdateMissingStatistics()
 	}, true)
 
 	scheduler.NewJob(time.Minute*1, func() {

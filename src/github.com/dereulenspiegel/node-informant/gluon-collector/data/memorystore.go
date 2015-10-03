@@ -4,27 +4,34 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
+	conf "github.com/dereulenspiegel/node-informant/gluon-collector/config"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/httpserver"
 	"github.com/gorilla/mux"
+	"github.com/muesli/cache2go"
 )
 
 type SimpleInMemoryStore struct {
-	Nodeinfos       map[string]NodeInfo
-	Statistics      map[string]*StatisticsStruct
+	Nodeinfos map[string]NodeInfo
+	//Statistics      map[string]*StatisticsStruct
+	statistics      *cache2go.CacheTable
 	StatusInfo      map[string]NodeStatusInfo
 	NodesJsonPath   string
 	CachedNodesJson string
 	GatewayList     map[string]bool
-	NeighbourInfos  map[string]*NeighbourStruct
+	neighbourCache  *cache2go.CacheTable
+	//NeighbourInfos  map[string]*NeighbourStruct
 }
 
 func NewSimpleInMemoryStore() *SimpleInMemoryStore {
 	return &SimpleInMemoryStore{
-		Nodeinfos:      make(map[string]NodeInfo),
-		Statistics:     make(map[string]*StatisticsStruct),
-		StatusInfo:     make(map[string]NodeStatusInfo),
-		NeighbourInfos: make(map[string]*NeighbourStruct),
+		Nodeinfos: make(map[string]NodeInfo),
+		//Statistics: make(map[string]*StatisticsStruct),
+		statistics: cache2go.Cache("statistics"),
+		StatusInfo: make(map[string]NodeStatusInfo),
+		//NeighbourInfos: make(map[string]*NeighbourStruct),
+		neighbourCache: cache2go.Cache("neighbours"),
 		GatewayList:    make(map[string]bool),
 	}
 }
@@ -51,47 +58,57 @@ func (s *SimpleInMemoryStore) PutNodeStatusInfo(nodeId string, info NodeStatusIn
 }
 
 func (s *SimpleInMemoryStore) GetStatistics(nodeId string) (Statistics StatisticsStruct, err error) {
-	stats, exists := s.Statistics[nodeId]
-	if !exists {
+	data, err := s.statistics.Value(nodeId)
+	if err != nil {
 		err = fmt.Errorf("NodeId %s has no Statistics", nodeId)
 		return
 	}
-	Statistics = *stats
+	Statistics = *data.Data().(*StatisticsStruct)
 	return
 }
 
 func (s *SimpleInMemoryStore) GetAllStatistics() []StatisticsStruct {
-	list := make([]StatisticsStruct, 0, len(s.Statistics))
-	for _, statistics := range s.Statistics {
-		list = append(list, *statistics)
-	}
+	list := make([]StatisticsStruct, 0, s.statistics.Count())
+	s.neighbourCache.Foreach(func(key interface{}, item *cache2go.CacheItem) {
+		list = append(list, *item.Data().(*StatisticsStruct))
+	})
 	return list
 }
 
 func (s *SimpleInMemoryStore) PutStatistics(statistics StatisticsStruct) {
-	s.Statistics[statistics.NodeId] = &statistics
+	s.statistics.Add(statistics.NodeId,
+		time.Second*time.Duration(conf.UInt("announced.interval.statistics", 300)*2),
+		&statistics)
+	//s.Statistics[statistics.NodeId] = &statistics
 }
 
 func (s *SimpleInMemoryStore) GetNodeNeighbours(nodeId string) (neighbours NeighbourStruct, err error) {
-	neighbourInfo, exists := s.NeighbourInfos[nodeId]
-	if !exists {
+	data, err := s.neighbourCache.Value(nodeId)
+	if err != nil {
 		err = fmt.Errorf("NodeId %s has no neighbour info", nodeId)
 		return
 	}
-	neighbours = *neighbourInfo
+	neighbours = *data.Data().(*NeighbourStruct)
 	return
 }
 
 func (s *SimpleInMemoryStore) GetAllNeighbours() []NeighbourStruct {
-	list := make([]NeighbourStruct, 0, len(s.NeighbourInfos))
-	for _, neighbour := range s.NeighbourInfos {
+	list := make([]NeighbourStruct, 0, s.neighbourCache.Count())
+	s.neighbourCache.Foreach(func(key interface{}, item *cache2go.CacheItem) {
+		list = append(list, *item.Data().(*NeighbourStruct))
+	})
+	return list
+	/*for _, neighbour := range s.NeighbourInfos {
 		list = append(list, *neighbour)
 	}
-	return list
+	return list*/
 }
 
 func (s *SimpleInMemoryStore) PutNodeNeighbours(neighbours NeighbourStruct) {
-	s.NeighbourInfos[neighbours.NodeId] = &neighbours
+	s.neighbourCache.Add(neighbours.NodeId,
+		time.Second*time.Duration(conf.UInt("announced.interval.statistics", 300)*2),
+		&neighbours)
+	//s.NeighbourInfos[neighbours.NodeId] = &neighbours
 }
 
 func (s *SimpleInMemoryStore) GetNodeInfo(nodeId string) (info NodeInfo, err error) {

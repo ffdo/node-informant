@@ -19,9 +19,14 @@ type PacketAnnouncedPacketReceiver interface {
 	Receive(rFunc func(Response))
 }
 
+type Query struct {
+	TargetAddr  *net.UDPAddr
+	QueryString string
+}
+
 type Requester struct {
 	unicastConn net.PacketConn
-	queryChan   chan string
+	queryChan   chan Query
 	ReceiveChan chan Response
 }
 
@@ -59,7 +64,7 @@ func NewRequester(ifaceName string, port int) (r *Requester, err error) {
 	if err != nil {
 		return
 	}
-	r.queryChan = make(chan string)
+	r.queryChan = make(chan Query)
 	r.ReceiveChan = make(chan Response, 100)
 	go r.writeLoop()
 	go r.readLoop()
@@ -67,9 +72,14 @@ func NewRequester(ifaceName string, port int) (r *Requester, err error) {
 }
 
 func (r *Requester) writeLoop() {
-	for queryString := range r.queryChan {
+	for query := range r.queryChan {
+		queryString := query.QueryString
+		targetAddr := query.TargetAddr
+		if targetAddr == nil {
+			targetAddr = announcedAddr
+		}
 		buf := []byte(queryString)
-		count, err := r.unicastConn.WriteTo(buf, announcedAddr)
+		count, err := r.unicastConn.WriteTo(buf, targetAddr)
 		if count < len(buf) {
 			log.Printf("Written less bytes (%d) than expected (%d)", count, len(buf))
 			log.WithFields(log.Fields{
@@ -118,8 +128,14 @@ func (r *Requester) Close() {
 	close(r.queryChan)
 }
 
+func (r *Requester) QueryUnicast(addr *net.UDPAddr, queryString string) {
+	query := Query{QueryString: queryString, TargetAddr: addr}
+	r.queryChan <- query
+}
+
 func (r *Requester) Query(queryString string) {
-	r.queryChan <- queryString
+	query := Query{QueryString: queryString}
+	r.queryChan <- query
 }
 
 func (r *Requester) Receive(rFunc func(Response)) {
