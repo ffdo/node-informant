@@ -124,6 +124,26 @@ func (g *GraphGenerator) buildLink(nodeTable map[string]*GraphNode, sourceMac, t
 	return link
 }
 
+func linkExists(links []*GraphLink, source, target int) bool {
+	for _, link := range links {
+		if link.Source == source && link.Target == target {
+			return true
+		}
+	}
+	return false
+}
+
+func removeDoublettes(links []*GraphLink) []*GraphLink {
+	cleanedLinks := make([]*GraphLink, 0, len(links))
+
+	for _, link := range links {
+		if !linkExists(cleanedLinks, link.Target, link.Source) {
+			cleanedLinks = append(cleanedLinks, link)
+		}
+	}
+	return cleanedLinks
+}
+
 func (g *GraphGenerator) GenerateGraph() GraphJson {
 	nodeTable, nodeList := g.buildNodeTableAndList()
 
@@ -153,7 +173,7 @@ func (g *GraphGenerator) GenerateGraph() GraphJson {
 		Multigraph: false,
 		Directed:   false,
 		Nodes:      nodeList,
-		Links:      allLinks,
+		Links:      removeDoublettes(allLinks),
 	}
 	graph := GraphJson{
 		Batadv:  batGraph,
