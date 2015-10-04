@@ -1,0 +1,12 @@
+[Unit]
+Description=Gluon Collector. Collects information about gluon nodes
+
+[Service]
+PIDFile=/tmp/gluon-collector.pid-3030
+User=root
+Group=root
+WorkingDirectory=/opt/gluon-collector
+ExecStart=/bin/bash -c '/opt/gluon-collector/gluon-collector-linux-amd64 -config /etc/gluon-collector.yaml'
+
+[Install]
+WantedBy=multi-user.target

@@ -20,6 +20,14 @@ func UInt(key string, def int) int {
 	}
 }
 
+func UString(key, def string) string {
+	if Global != nil {
+		return Global.UString(key, def)
+	} else {
+		return def
+	}
+}
+
 func ParseConfig(path string) error {
 	var err error = nil
 	if strings.HasSuffix(path, "yaml") {

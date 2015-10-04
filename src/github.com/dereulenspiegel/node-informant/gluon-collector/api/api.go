@@ -17,7 +17,7 @@ func (h *HttpApi) Routes() []httpserver.Route {
 	var apiRoutes = []httpserver.Route{
 		httpserver.Route{"NodeInfo", "GET", "/nodeinfos/{nodeid}", h.GetNodeInfoRest},
 		httpserver.Route{"Nodeinfos", "GET", "/nodeinfos", h.GetNodeinfosRest},
-		httpserver.Route{"NodeStatistics", "GET", "/Statistics/{nodeid}", h.GetNodeStatisticsRest},
+		httpserver.Route{"NodeStatistics", "GET", "/statistics/{nodeid}", h.GetNodeStatisticsRest},
 		httpserver.Route{"NodesNeighbours", "GET", "/neighbours/{nodeid}", h.GetNodeNeighboursRest},
 		httpserver.Route{"AllNeighbours", "GET", "/neighbours", h.GetAllNeighboursRest},
 	}
