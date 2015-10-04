@@ -11,7 +11,6 @@ import (
 	"github.com/dereulenspiegel/node-informant/gluon-collector/httpserver"
 )
 
-//const TimeFormat string = "2006-01-02T15:04:05"
 const TimeFormat string = time.RFC3339
 
 type NodeFlags struct {
@@ -129,13 +128,4 @@ func (n *NodesJsonGenerator) UpdateNodesJson() {
 		return
 	}
 	n.CachedNodesJson = string(data)
-	/*if n.Store.NodesJsonPath == "" {
-		return
-	}
-	err = ioutil.WriteFile(n.Store.NodesJsonPath, data, 0644)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"error": err,
-		}).Error("Error writing nodes.json")
-	}*/
 }

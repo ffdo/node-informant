@@ -85,7 +85,6 @@ func (n *NeighbourInfoCollector) Process(in chan data.ParsedResponse) chan data.
 	return out
 }
 
-//const TimeFormat string = "2006-01-02T15:04:05"
 const TimeFormat string = time.RFC3339
 
 type StatusInfoCollector struct {
