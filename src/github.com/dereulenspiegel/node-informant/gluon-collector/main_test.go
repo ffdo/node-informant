@@ -83,7 +83,7 @@ func (t *TestDataReceiver) Receive(rFunc func(announced.Response)) {
 }
 
 func TestCompletePipe(t *testing.T) {
-	log.SetLevel(log.WarnLevel)
+	log.SetLevel(log.ErrorLevel)
 	assert := assert.New(t)
 	//err := LoadTestData()
 	//assert.Nil(err)
