@@ -1,19 +1,19 @@
-package main
+package test
 
 import (
-	"testing"
-	"time"
+	"encoding/json"
+	"io/ioutil"
+	"net"
+	"os"
+	"strconv"
+	"strings"
 
 	log "github.com/Sirupsen/logrus"
 
 	"github.com/dereulenspiegel/node-informant/announced"
-	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
-	"github.com/dereulenspiegel/node-informant/gluon-collector/meshviewer"
-	"github.com/dereulenspiegel/node-informant/gluon-collector/test"
-	"github.com/stretchr/testify/assert"
 )
 
-/*var testData []announced.Response
+var TestData []announced.Response
 
 func stringToBytes(in string) []byte {
 	parts := strings.Split(in, " ")
@@ -67,50 +67,14 @@ func LoadTestData() error {
 		}
 		responses = append(responses, response)
 	}
-	testData = responses
-	log.Printf("Loaded %d packets", len(testData))
+	TestData = responses
+	log.Printf("Loaded %d packets", len(TestData))
 	return nil
-}*/
-
-type TestDataReceiver struct {
-	TestData []announced.Response
 }
 
-func (t *TestDataReceiver) Receive(rFunc func(announced.Response)) {
-	for _, data := range t.TestData {
-		rFunc(data)
+func init() {
+	err := LoadTestData()
+	if err != nil {
+		log.Fatalf("Can't load test data: %v", err)
 	}
-}
-
-func TestCompletePipe(t *testing.T) {
-	log.SetLevel(log.WarnLevel)
-	assert := assert.New(t)
-	//err := LoadTestData()
-	//assert.Nil(err)
-	testReceiver := &TestDataReceiver{TestData: test.TestData}
-	store := data.NewSimpleInMemoryStore()
-
-	i := 0
-	closeables, err := BuildPipelines(store, testReceiver, func(response data.ParsedResponse) {
-		i = i + 1
-	})
-	assert.Nil(err)
-
-	time.Sleep(time.Second * 2)
-
-	for _, closable := range closeables {
-		closable.Close()
-	}
-
-	assert.Equal(len(test.TestData), i)
-
-	graphGenerator := &meshviewer.GraphGenerator{Store: store}
-	nodesGenerator := &meshviewer.NodesJsonGenerator{Store: store}
-	graph := graphGenerator.GenerateGraph()
-	assert.NotNil(graph)
-	assert.Equal(232, len(graph.Batadv.Nodes))
-	assert.Equal(72, len(graph.Batadv.Links))
-
-	nodes := nodesGenerator.GetNodesJson()
-	assert.NotNil(nodes)
 }
