@@ -106,6 +106,7 @@ func (s *StatusInfoCollector) Process(in chan data.ParsedResponse) chan data.Par
 					Firstseen: time.Now().Format(TimeFormat),
 					Lastseen:  time.Now().Format(TimeFormat),
 					Gateway:   false,
+					NodeId:    nodeId,
 				}
 			}
 			s.Store.PutNodeStatusInfo(nodeId, statusInfo)

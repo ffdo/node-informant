@@ -7,6 +7,7 @@ type NodeStatusInfo struct {
 	Lastseen  string
 	Online    bool
 	Gateway   bool
+	NodeId    string
 }
 
 type Nodeinfostore interface {
