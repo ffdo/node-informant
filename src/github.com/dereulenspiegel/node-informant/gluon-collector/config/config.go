@@ -38,8 +38,7 @@ func ParseConfig(path string) error {
 	return err
 }
 
-func init() {
-	flag.Parse()
+func InitConfig() {
 	err := ParseConfig(*configFilePath)
 	if err != nil {
 		log.WithFields(log.Fields{

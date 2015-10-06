@@ -12,7 +12,10 @@ type FFMapBackendDataLoader struct {
 	NodesJsonPath string
 }
 
-func convertFromMeshviewerStatistics(nodeId string, in *StatisticsStruct) *data.StatisticsStruct {
+func convertFromMeshviewerStatistics(nodeId string, in *StatisticsStruct) data.StatisticsStruct {
+	if in == nil {
+		return data.StatisticsStruct{}
+	}
 	clients := data.ClientStatistics{
 		Wifi:  in.Clients,
 		Total: in.Clients,
@@ -21,14 +24,17 @@ func convertFromMeshviewerStatistics(nodeId string, in *StatisticsStruct) *data.
 		Total: 100,
 		Free:  uint64((float64(100) * in.MemoryUsage)),
 	}
-	return &data.StatisticsStruct{
+	statistics := data.StatisticsStruct{
 		NodeId:      nodeId,
-		Traffic:     *in.Traffic,
 		Clients:     clients,
 		LoadAverage: in.Loadavg,
 		RootFsUsage: in.RootfsUsage,
 		Memory:      memory,
 	}
+	if in.Traffic != nil {
+		statistics.Traffic = *in.Traffic
+	}
+	return statistics
 }
 
 func (l *FFMapBackendDataLoader) LoadNodesFromFile(path string) error {
@@ -53,7 +59,12 @@ func (l *FFMapBackendDataLoader) LoadNodesFromFile(path string) error {
 			Gateway:   nodeJsonInfo.Flags.Gateway,
 		}
 		l.Store.PutNodeInfo(nodeinfos)
-		l.Store.PutStatistics(*convertFromMeshviewerStatistics(nodeId, nodeStats))
+
+		if nodeStats != nil {
+			statistics := convertFromMeshviewerStatistics(nodeId, nodeStats)
+
+			l.Store.PutStatistics(statistics)
+		}
 		l.Store.PutNodeStatusInfo(nodeId, nodeStatus)
 	}
 	return nil

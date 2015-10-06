@@ -216,6 +216,7 @@ func ImportData() {
 func main() {
 	Closeables = make([]pipeline.Closeable, 0, 5)
 	flag.Parse()
+	conf.InitConfig()
 	if conf.Global == nil {
 		log.Fatal("Configuration couldn't be parsed")
 	}
