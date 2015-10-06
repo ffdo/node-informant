@@ -22,7 +22,7 @@ import (
 )
 
 var importPath = flag.String("import", "", "Import data from this path")
-var importType = flag.String("importType", "", "The data format to import from, i.e ffmap-backend")
+var importType = flag.String("importType", "ffmap-backend", "The data format to import from, i.e ffmap-backend")
 
 var DataStore data.Nodeinfostore
 var Closeables []pipeline.Closeable
@@ -175,6 +175,7 @@ func CreateDataStore() {
 				"storeType": dbType,
 			}).Fatal("Can't create bolt store")
 		} else {
+			Closeables = append(Closeables, boltStore)
 			DataStore = boltStore
 		}
 	default:
