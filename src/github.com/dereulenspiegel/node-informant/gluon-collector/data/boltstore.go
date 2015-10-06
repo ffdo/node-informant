@@ -13,22 +13,31 @@ type BoltStore struct {
 	bucket *bolt.Bucket
 }
 
+type JsonBool struct {
+	Value bool
+}
+
 const NodeinfoBucket string = "nodeinfos"
 const StatisticsBucket string = "statistics"
+const StatusInfoBucket string = "statusinfo"
+const NeighboursBucket string = "neighbours"
+const GatewayBucket string = "gateways"
+
+var AllBucketNames = []string{NodeinfoBucket, StatisticsBucket, StatusInfoBucket, NeighboursBucket}
 
 func NewBoltStore(path string) (*BoltStore, error) {
 	db, err := bolt.Open(path, 0600, nil)
 	if err != nil {
-		log.Errorf("Error opening db")
 		return nil, err
 	}
 	store := &BoltStore{db: db}
 	err = db.Update(func(tx *bolt.Tx) error {
-		b, err := tx.CreateBucket([]byte(BucketName))
-		if err != nil {
-			return err
+		for _, bucketName := range AllBucketNames {
+			_, err := tx.CreateBucketIfNotExists([]byte(bucketName))
+			if err != nil {
+				return err
+			}
 		}
-		store.bucket = b
 		return nil
 	})
 	if err != nil {
@@ -47,6 +56,7 @@ func (b *BoltStore) put(key, bucket string, data interface{}) {
 		err = b.db.Update(func(tx *bolt.Tx) error {
 			b := tx.Bucket([]byte(bucket))
 			err := b.Put([]byte(key), bytes)
+			return err
 		})
 	}
 	if err != nil {
@@ -75,6 +85,9 @@ func (b *BoltStore) get(key, bucket string, object interface{}) error {
 func (b *BoltStore) GetNodeInfo(nodeId string) (NodeInfo, error) {
 	info := &NodeInfo{}
 	err := b.get(nodeId, NodeinfoBucket, info)
+	if err != nil {
+		return NodeInfo{}, err
+	}
 	return *info, err
 }
 
@@ -108,15 +121,24 @@ func (b *BoltStore) GetNodeInfos() []NodeInfo {
 				"nodeid":     key,
 			}).Error("Error unmarshalling json data")
 		} else {
-			allNodeinfos = append(allNodeinfos, nodeinfo)
+			allNodeinfos = append(allNodeinfos, *nodeinfo)
 		}
 	})
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error":  err,
+			"bucket": NodeinfoBucket,
+		}).Error("Error iterating over all values")
+	}
 	return allNodeinfos
 }
 
 func (b *BoltStore) GetStatistics(nodeId string) (StatisticsStruct, error) {
 	statistics := &StatisticsStruct{}
 	err := b.get(nodeId, StatisticsBucket, statistics)
+	if err != nil {
+		return StatisticsStruct{}, err
+	}
 	return *statistics, err
 }
 
@@ -136,8 +158,112 @@ func (b *BoltStore) GetAllStatistics() []StatisticsStruct {
 				"nodeid":     key,
 			}).Error("Error unmarshalling json data")
 		} else {
-			allStatistics = append(allStatistics, statistics)
+			allStatistics = append(allStatistics, *statistics)
 		}
 	})
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error":  err,
+			"bucket": StatisticsBucket,
+		}).Error("Error iterating over all values")
+	}
 	return allStatistics
+}
+
+func (b *BoltStore) GetNodeStatusInfo(nodeId string) (NodeStatusInfo, error) {
+	info := &NodeStatusInfo{}
+	err := b.get(nodeId, StatusInfoBucket, info)
+	if err != nil {
+		return NodeStatusInfo{}, err
+	}
+	return *info, err
+}
+
+func (b *BoltStore) PutNodeStatusInfo(nodeId string, info NodeStatusInfo) {
+	b.put(nodeId, StatusInfoBucket, info)
+}
+
+func (b *BoltStore) GetNodeStatusInfos() []NodeStatusInfo {
+	allStatusInfos := make([]NodeStatusInfo, 0, 500)
+	err := b.allValues(StatusInfoBucket, func(key string, data []byte) {
+		status := &NodeStatusInfo{}
+		err := json.Unmarshal(data, status)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"error":      err,
+				"jsonString": string(data),
+				"nodeid":     key,
+			}).Error("Error unmarshalling json data")
+		} else {
+			allStatusInfos = append(allStatusInfos, *status)
+		}
+	})
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error":  err,
+			"bucket": StatusInfoBucket,
+		}).Error("Error iterating over all values")
+	}
+	return allStatusInfos
+}
+
+func (b *BoltStore) GetNodeNeighbours(nodeId string) (NeighbourStruct, error) {
+	neighbours := &NeighbourStruct{}
+	err := b.get(nodeId, NeighboursBucket, neighbours)
+	if err != nil {
+		return NeighbourStruct{}, nil
+	}
+	return *neighbours, err
+}
+
+func (b *BoltStore) PutNodeNeighbours(neighbours NeighbourStruct) {
+	b.put(neighbours.NodeId, NeighboursBucket, neighbours)
+}
+
+func (b *BoltStore) GetAllNeighbours() []NeighbourStruct {
+	allNeighbours := make([]NeighbourStruct, 0, 500)
+	err := b.allValues(NeighboursBucket, func(key string, data []byte) {
+		neighbours := &NeighbourStruct{}
+		err := json.Unmarshal(data, neighbours)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"error":      err,
+				"jsonString": string(data),
+				"nodeid":     key,
+			}).Error("Error unmarshalling json data")
+		} else {
+			allNeighbours = append(allNeighbours, *neighbours)
+		}
+	})
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error":  err,
+			"bucket": NeighboursBucket,
+		}).Error("Error iterating over all values")
+	}
+	return allNeighbours
+}
+
+func (b *BoltStore) PutGateway(mac string) {
+	b.put(mac, GatewayBucket, JsonBool{Value: true})
+}
+
+func (b *BoltStore) IsGateway(mac string) bool {
+	result := &JsonBool{}
+	err := b.get(mac, GatewayBucket, result)
+	return err != nil && result.Value
+}
+
+func (b *BoltStore) RemoveGateway(mac string) {
+	err := b.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(GatewayBucket))
+		err := b.Delete([]byte(mac))
+		return err
+	})
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error":       err,
+			"gateway-mac": mac,
+		}).Error("Error deleting gateway from bolt store")
+	}
 }

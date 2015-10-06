@@ -161,7 +161,25 @@ func ConfigureLogger() {
 }
 
 func CreateDataStore() {
-	DataStore = data.NewSimpleInMemoryStore()
+	dbType := conf.UString("store.type", "memory")
+	switch dbType {
+	case "memory":
+		DataStore = data.NewSimpleInMemoryStore()
+	case "bolt":
+		storagePath := conf.UString("store.path", "/opt/gluon-collector/collector.db")
+		boltStore, err := data.NewBoltStore(storagePath)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"error":     err,
+				"storePath": storagePath,
+				"storeType": dbType,
+			}).Fatal("Can't create bolt store")
+		} else {
+			DataStore = boltStore
+		}
+	default:
+		log.Fatalf("Unknown store type %s", dbType)
+	}
 }
 
 func Stop() {
