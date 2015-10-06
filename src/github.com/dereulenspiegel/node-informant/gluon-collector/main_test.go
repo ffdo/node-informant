@@ -67,4 +67,5 @@ func TestCompletePipeWithBoltStore(t *testing.T) {
 	assert.Nil(err)
 	assert.NotNil(store)
 	executeCompletePipe(t, store)
+	store.Close()
 }
