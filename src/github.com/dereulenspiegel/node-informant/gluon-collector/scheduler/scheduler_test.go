@@ -25,5 +25,5 @@ func TestJobScheduling(t *testing.T) {
 	time.Sleep(time.Second * 3)
 	job.Stop()
 	assert.True(executed, "The scheduler has NOT been executed")
-	assert.True(2 < executionCount, "The scheduler has only been executed twice or less time")
+	assert.True(2 <= executionCount, "The scheduler has only been executed twice or less time")
 }
