@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"testing"
 	"time"
 
@@ -13,65 +14,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-/*var testData []announced.Response
-
-func stringToBytes(in string) []byte {
-	parts := strings.Split(in, " ")
-	bytes := make([]byte, len(parts))
-	if len(parts) == 0 {
-		log.Fatalf("No bytes to decode")
-	}
-	for i, p := range parts {
-		if strings.TrimSpace(p) == "" {
-			continue
-		}
-		y, err := strconv.Atoi(p)
-		if err != nil {
-			log.Fatalf("Can't convert string %s to int", p)
-		}
-		bytes[i] = byte(y)
-	}
-	return bytes
-}
-
-func LoadTestData() error {
-	dataFile, err := os.Open("../../../../../testdata.raw")
-	if err != nil {
-		return err
-	}
-	dataBytes, err := ioutil.ReadAll(dataFile)
-	if err != nil {
-		return err
-	}
-	dataString := string(dataBytes)
-	serializedPacktes := strings.Split(dataString, "|")
-	responses := make([]announced.Response, 0, len(serializedPacktes))
-	for _, text := range serializedPacktes {
-		if strings.TrimSpace(text) == "" {
-			continue
-		}
-		printableResponse := &announced.PrintableResponse{}
-		err := json.Unmarshal([]byte(text), printableResponse)
-		if err != nil {
-			log.Printf("Error unmarshalling json %s: %v", text, err)
-			return err
-		}
-		addr := &net.UDPAddr{
-			IP:   net.ParseIP(printableResponse.Addr.IP),
-			Port: printableResponse.Addr.Port,
-			Zone: printableResponse.Addr.Zone,
-		}
-		response := announced.Response{
-			ClientAddr: addr,
-			Payload:    stringToBytes(printableResponse.Bytes),
-		}
-		responses = append(responses, response)
-	}
-	testData = responses
-	log.Printf("Loaded %d packets", len(testData))
-	return nil
-}*/
-
 type TestDataReceiver struct {
 	TestData []announced.Response
 }
@@ -82,13 +24,10 @@ func (t *TestDataReceiver) Receive(rFunc func(announced.Response)) {
 	}
 }
 
-func TestCompletePipe(t *testing.T) {
+func executeCompletePipe(t *testing.T, store data.Nodeinfostore) {
 	log.SetLevel(log.ErrorLevel)
 	assert := assert.New(t)
-	//err := LoadTestData()
-	//assert.Nil(err)
 	testReceiver := &TestDataReceiver{TestData: test.TestData}
-	store := data.NewSimpleInMemoryStore()
 
 	i := 0
 	closeables, err := BuildPipelines(store, testReceiver, func(response data.ParsedResponse) {
@@ -113,4 +52,19 @@ func TestCompletePipe(t *testing.T) {
 
 	nodes := nodesGenerator.GetNodesJson()
 	assert.NotNil(nodes)
+}
+
+func TestCompletePipe(t *testing.T) {
+	store := data.NewSimpleInMemoryStore()
+	executeCompletePipe(t, store)
+}
+
+func TestCompletePipeWithBoltStore(t *testing.T) {
+	assert := assert.New(t)
+	dbPath := "./bolt.db"
+	defer os.RemoveAll(dbPath)
+	store, err := data.NewBoltStore(dbPath)
+	assert.Nil(err)
+	assert.NotNil(store)
+	executeCompletePipe(t, store)
 }

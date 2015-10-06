@@ -23,7 +23,8 @@ const StatusInfoBucket string = "statusinfo"
 const NeighboursBucket string = "neighbours"
 const GatewayBucket string = "gateways"
 
-var AllBucketNames = []string{NodeinfoBucket, StatisticsBucket, StatusInfoBucket, NeighboursBucket}
+var AllBucketNames = []string{NodeinfoBucket, StatisticsBucket,
+	StatusInfoBucket, NeighboursBucket, GatewayBucket}
 
 func NewBoltStore(path string) (*BoltStore, error) {
 	db, err := bolt.Open(path, 0600, nil)
@@ -52,10 +53,13 @@ func (b *BoltStore) Close() {
 
 func (b *BoltStore) put(key, bucket string, data interface{}) {
 	bytes, err := json.Marshal(data)
-	if err == nil {
+	if err == nil && bytes != nil {
 		err = b.db.Update(func(tx *bolt.Tx) error {
 			b := tx.Bucket([]byte(bucket))
-			err := b.Put([]byte(key), bytes)
+			if b == nil {
+				return fmt.Errorf("Bucket %s was null", bucket)
+			}
+			err = b.Put([]byte(key), bytes)
 			return err
 		})
 	}
@@ -73,7 +77,7 @@ func (b *BoltStore) get(key, bucket string, object interface{}) error {
 	err := b.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(bucket))
 		v := b.Get([]byte(key))
-		if v != nil {
+		if v == nil {
 			return fmt.Errorf("Can't find object for key %s", key)
 		}
 		err := json.Unmarshal(v, object)
