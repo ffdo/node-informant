@@ -144,6 +144,22 @@ func removeDoublettes(links []*GraphLink) []*GraphLink {
 	return cleanedLinks
 }
 
+func isTunnelMac(info data.NodeInfo, mac string) bool {
+	for _, tunnelMac := range info.Network.Mesh.Bat0.Interfaces.Tunnel {
+		if tunnelMac == mac {
+			return true
+		}
+	}
+	return false
+}
+
+func (g *GraphGenerator) markVpn(sourceNodeId, targetNodeId, sourceMac, targetMac string) bool {
+	sourceInfos, _ := g.Store.GetNodeInfo(sourceNodeId)
+	targetInfos, _ := g.Store.GetNodeInfo(targetNodeId)
+
+	return isTunnelMac(sourceInfos, sourceMac) || isTunnelMac(targetInfos, targetMac)
+}
+
 func (g *GraphGenerator) GenerateGraph() GraphJson {
 	nodeTable, nodeList := g.buildNodeTableAndList()
 
@@ -157,7 +173,10 @@ func (g *GraphGenerator) GenerateGraph() GraphJson {
 				link := g.buildLink(nodeTable, ownMac, peerMac, linkInfo)
 				if link == nil {
 					log.Warnf("Couldn't form link between %s and %s", ownMac, peerMac)
-				} else if link.Bidirect {
+					continue
+				}
+				link.Vpn = g.markVpn(nodeTable[ownMac].NodeId, nodeTable[peerMac].NodeId, ownMac, peerMac)
+				if link.Bidirect {
 					bidirectionalLinks = append(bidirectionalLinks, link)
 				} else {
 					unidirectionalLinks = append(unidirectionalLinks, link)
