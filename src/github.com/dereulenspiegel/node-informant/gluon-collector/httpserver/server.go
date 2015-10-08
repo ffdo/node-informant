@@ -10,6 +10,9 @@ import (
 	conf "github.com/dereulenspiegel/node-informant/gluon-collector/config"
 )
 
+// StartHttpServerBlocking is a blocking method which takes an arbritrary number
+// of HttpServeables, adds all their routes the http mux and starts a server on
+// the configured port and address.
 func StartHttpServerBlocking(serveables ...HttpServeable) {
 	router := AssembleRouter(serveables...)
 	httpPort := conf.Global.UInt("http.port", 8080)
