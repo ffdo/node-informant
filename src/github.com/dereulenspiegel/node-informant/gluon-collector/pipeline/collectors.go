@@ -6,6 +6,8 @@ import (
 	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
 )
 
+// GatewayCollector inspects all received statistics and stores the mac addresses
+// of gateways to the data store.
 type GatewayCollector struct {
 	Store data.Nodeinfostore
 }
@@ -28,6 +30,8 @@ func (g *GatewayCollector) Process(in chan data.ParsedResponse) chan data.Parsed
 	return out
 }
 
+// NodeinfoCollector inspects all ParsedResponses containing general information
+// about a node and stores this to the data store.
 type NodeinfoCollector struct {
 	Store data.Nodeinfostore
 }
@@ -47,6 +51,8 @@ func (n *NodeinfoCollector) Process(in chan data.ParsedResponse) chan data.Parse
 	return out
 }
 
+// StatisticsCollector collects all ParsedResponses containing statistics information
+// and stores them in the data store.
 type StatisticsCollector struct {
 	Store data.Nodeinfostore
 }
@@ -66,6 +72,8 @@ func (s *StatisticsCollector) Process(in chan data.ParsedResponse) chan data.Par
 	return out
 }
 
+// NeighbourInfoCollector inspects all ParsedResponses containing information about
+// mesh neighbours and stores them to the data store.
 type NeighbourInfoCollector struct {
 	Store data.Nodeinfostore
 }
@@ -87,6 +95,11 @@ func (n *NeighbourInfoCollector) Process(in chan data.ParsedResponse) chan data.
 
 const TimeFormat string = time.RFC3339
 
+// StatusInfoCollector creates some meta data like Firstseen and Lastseen for every
+// node. Everytime we receive a packet from a node, we assume that is online and also
+// update the Lastseen value. If we have never seen a packet from this node before we
+// also set the Firstseen value.
+// TODO determine Gateway status.
 type StatusInfoCollector struct {
 	Store data.Nodeinfostore
 }

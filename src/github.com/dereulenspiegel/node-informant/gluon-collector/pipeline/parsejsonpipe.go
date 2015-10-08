@@ -8,6 +8,10 @@ import (
 	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
 )
 
+// JsonParsePipe is meant as the last stage of the ReceivePipeline. JsonParsePipe
+// expect the response to have string payload containing json encoded data. It is
+// possible that the ReceivePipeline needs to some processing (like deflating)to
+// ensure this. All unparseable packets are discarded and written to the error log.
 type JsonParsePipe struct {
 }
 

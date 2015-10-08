@@ -6,6 +6,9 @@ import (
 	"github.com/dereulenspiegel/node-informant/utils"
 )
 
+// DeflatePipe tries to decompress the payload of all received Responses with
+// deflate algorithm. All Responses which can't be deflated are discarded and
+// written to the error log.
 type DeflatePipe struct {
 }
 
