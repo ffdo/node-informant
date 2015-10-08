@@ -22,23 +22,38 @@ const MaxDataGramSize int = 8192
 
 var announcedAddr = &net.UDPAddr{IP: net.ParseIP(MultiCastGroup), Port: Port}
 
+// AnnouncedPacketReceiver abstracts the receiption of packets on the network side
+// away so we can mock this easily in tests.
 type AnnouncedPacketReceiver interface {
+	// Receive registers a callback method called every time packet is delivered
+	// Normally this method jusz enqueues the Repsonse in a channel for further processing.
 	Receive(rFunc func(Response))
 }
 
+// Query represents who and what to query. If TargetAddr is null the default
+// multicast address will be used to query all nodes in this multicast group.
 type Query struct {
 	TargetAddr  *net.UDPAddr
 	QueryString string
 }
 
+// Requester is responsible for sending out queries and receiving the responses.
+// The requester does not process the Responses in any way.
 type Requester struct {
 	unicastConn net.PacketConn
 	queryChan   chan Query
 	ReceiveChan chan Response
 }
 
+// getIPFromInterface tries to determine the link local IPv6 unicast address of
+// an interface named by the given string. Returns an error if the interface is
+// not found, or the interface has not a link local IPv6 unicast address (i.e.
+// because IPv6 is not configured for this interface).
 func getIPFromInterface(ifaceName string) (*net.IP, error) {
-	iface, _ := net.InterfaceByName(ifaceName)
+	iface, err := net.InterfaceByName(ifaceName)
+	if err != nil {
+		return nil, err
+	}
 
 	addresses, err := iface.Addrs()
 	if err != nil {
@@ -52,9 +67,11 @@ func getIPFromInterface(ifaceName string) (*net.IP, error) {
 			}
 		}
 	}
-	return nil, fmt.Errorf("No valid IPv6 address found on interface")
+	return nil, fmt.Errorf("No valid IPv6 address found on interface %s", ifaceName)
 }
 
+// NewRequester creates a new Requester using the interface named by interfaceName
+// and listening on the port specified for responses.
 func NewRequester(ifaceName string, port int) (r *Requester, err error) {
 	var lIP *net.IP = &net.IPv6zero
 	r = &Requester{}
@@ -78,6 +95,8 @@ func NewRequester(ifaceName string, port int) (r *Requester, err error) {
 	return
 }
 
+// writeLoop waits for Queries on a channel and writes the immediately to the
+// socket.
 func (r *Requester) writeLoop() {
 	for query := range r.queryChan {
 		queryString := query.QueryString
@@ -105,6 +124,7 @@ func (r *Requester) writeLoop() {
 	}
 }
 
+// readLoop reads UDP packets from the socket and puts these Respones on a channel
 func (r *Requester) readLoop() {
 	var socketIsOpen = true
 	var buf []byte = make([]byte, MaxDataGramSize)
@@ -129,22 +149,28 @@ func (r *Requester) readLoop() {
 	}
 }
 
+// Close closes the Requester instance and frees all allocated resources
 func (r *Requester) Close() {
 	r.unicastConn.Close()
 	close(r.ReceiveChan)
 	close(r.queryChan)
 }
 
+// QueryUnicast sends an UDP query to a host directly via unicast. The IPv6 address
+// and the port where announced listens on the remote node need to be known.
 func (r *Requester) QueryUnicast(addr *net.UDPAddr, queryString string) {
 	query := Query{QueryString: queryString, TargetAddr: addr}
 	r.queryChan <- query
 }
 
+// Query multicasts the specified query to the default announced multicast group
+// on the default port.
 func (r *Requester) Query(queryString string) {
 	query := Query{QueryString: queryString}
 	r.queryChan <- query
 }
 
+// Receive is an implementation of the AnnouncedPacketReceiver interface
 func (r *Requester) Receive(rFunc func(Response)) {
 	for response := range r.ReceiveChan {
 		rFunc(response)
