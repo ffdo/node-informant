@@ -55,7 +55,7 @@ func (l *LogPipe) Process(in chan announced.Response) chan announced.Response {
 	return out
 }
 
-func BuildPipelines(store data.Nodeinfostore, receiver announced.PacketAnnouncedPacketReceiver, pipeEnd func(response data.ParsedResponse)) ([]pipeline.Closeable, error) {
+func BuildPipelines(store data.Nodeinfostore, receiver announced.AnnouncedPacketReceiver, pipeEnd func(response data.ParsedResponse)) ([]pipeline.Closeable, error) {
 
 	closeables := make([]pipeline.Closeable, 0, 2)
 
