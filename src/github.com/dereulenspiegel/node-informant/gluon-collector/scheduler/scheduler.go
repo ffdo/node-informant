@@ -15,6 +15,9 @@ type ScheduledJob struct {
 // NewJob creates an new ScheduledJob which executes the given method in the
 // specified interval. The bool value fireNow determines if the method should
 // executed directly or after the specified duration has passed the first time.
+// Please note that the job is executed in a single go routine. This means that
+// it is possible for the job to block the loop longer than the interval, which
+// causes the method to executed irregularly.
 func NewJob(interval time.Duration, job func(), fireNow bool) *ScheduledJob {
 	if fireNow {
 		go job()
