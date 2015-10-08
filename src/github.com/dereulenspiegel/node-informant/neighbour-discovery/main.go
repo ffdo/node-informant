@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"log"
+	"net"
 	"runtime"
 	"time"
 
@@ -15,6 +16,7 @@ var queryString = flag.String("query", "", "Query string")
 var deflate = flag.Bool("deflate", false, "Is the received data compressed")
 var port = flag.Int("port", 12444, "Port to listen to responses on")
 var timeout = flag.Int("timeout", -1, "Timeout after i seconds")
+var targetAddress = flag.String("target", "", "Query a single device via unicast")
 
 var requester *announced.Requester
 
@@ -28,7 +30,15 @@ func UseAnnounced() {
 	if *queryString == "" {
 		log.Fatalf("No query string specified")
 	}
-	requester.Query(*queryString)
+	if *targetAddress != "" {
+		addr := &net.UDPAddr{
+			Port: 1001,
+			IP:   net.ParseIP(*targetAddress),
+		}
+		requester.QueryUnicast(addr, *queryString)
+	} else {
+		requester.Query(*queryString)
+	}
 	for response := range requester.ReceiveChan {
 		if *deflate {
 			decompressedData, err := utils.Deflate(response.Payload)
