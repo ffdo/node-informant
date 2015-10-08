@@ -26,7 +26,7 @@ type SystemStruct struct {
 type LocationStruct struct {
 	Longtitude float64 `json:"longitude"`
 	Latitude   float64 `json:"latitude"`
-	Altitude   float64 `json:"altitude"`
+	Altitude   float64 `json:"altitude,omitempty"`
 }
 
 type SoftwareStruct struct {
