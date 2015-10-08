@@ -8,6 +8,8 @@ import (
 	"github.com/muesli/cache2go"
 )
 
+// SimpleInMemoryStore is a simple implementation of Nodeinfostore using maps
+// caches to store data in ram. This data store is not persistent.
 type SimpleInMemoryStore struct {
 	Nodeinfos map[string]NodeInfo
 	//Statistics      map[string]*StatisticsStruct
@@ -20,6 +22,7 @@ type SimpleInMemoryStore struct {
 	//NeighbourInfos  map[string]*NeighbourStruct
 }
 
+// NewSimpleInMemoryStore creates a new SimpleInMemoryStore. Simple as that.
 func NewSimpleInMemoryStore() *SimpleInMemoryStore {
 	return &SimpleInMemoryStore{
 		Nodeinfos: make(map[string]NodeInfo),

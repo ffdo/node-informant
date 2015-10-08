@@ -8,6 +8,8 @@ import (
 	"github.com/boltdb/bolt"
 )
 
+// BoltStore implements the Nodeinfostore interface. BoltStore uses the embedded
+// bolt database to persist data to disc.
 type BoltStore struct {
 	db     *bolt.DB
 	bucket *bolt.Bucket
@@ -26,6 +28,9 @@ const GatewayBucket string = "gateways"
 var AllBucketNames = []string{NodeinfoBucket, StatisticsBucket,
 	StatusInfoBucket, NeighboursBucket, GatewayBucket}
 
+// NewBoltStore creates a new BoltStore where the database file is located at
+// the given path. If the file does not exist it will be created. If there is
+// already a bolt database at the given path this BoltStore will contain its data.
 func NewBoltStore(path string) (*BoltStore, error) {
 	db, err := bolt.Open(path, 0600, nil)
 	if err != nil {
@@ -47,6 +52,7 @@ func NewBoltStore(path string) (*BoltStore, error) {
 	return store, nil
 }
 
+// Close closes the underlying bolt database.
 func (b *BoltStore) Close() {
 	b.db.Close()
 }
