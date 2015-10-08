@@ -9,11 +9,18 @@ import (
 	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
 )
 
+// MissingUpdater has the simple jop if iterating through all available NodeInfos
+// and check whether we have statistics and neighbour infos for them. If they are
+// missing these nodes are queried by unicast on the link local und global unicast
+// IPv6 addresses for the missing information.
+// This makes more sense if data in the data store can expire (this is a TODO for
+// the BoltStore).
 type MissingUpdater struct {
 	Requester *announced.Requester
 	Store     data.Nodeinfostore
 }
 
+// Query for the missing mesh neighbour information.
 func (m *MissingUpdater) UpdateMissingNeighbours() {
 	log.Print("Updating missing neighbour infos")
 
@@ -34,6 +41,7 @@ func (m *MissingUpdater) UpdateMissingNeighbours() {
 	}
 }
 
+// Query for missing statistics.
 func (m *MissingUpdater) UpdateMissingStatistics() {
 	log.Print("Updating missing neighbour infos")
 
