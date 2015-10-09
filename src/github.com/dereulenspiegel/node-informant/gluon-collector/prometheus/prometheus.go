@@ -1,6 +1,7 @@
 package prometheus
 
 import (
+	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
 	stat "github.com/prometheus/client_golang/prometheus"
 )
 
@@ -43,4 +44,21 @@ func init() {
 	stat.MustRegister(TotalNodeTrafficTx)
 	stat.MustRegister(TotalNodeMgmtTrafficRx)
 	stat.MustRegister(TotalNodeMgmtTrafficTx)
+}
+
+func initTotalClientsGauge(store data.Nodeinfostore) {
+	TotalClientCounter.Set(0.0)
+	for _, status := range store.GetNodeStatusInfos() {
+		if status.Online {
+			stats, err := store.GetStatistics(status.NodeId)
+			if err != nil {
+				TotalClientCounter.Add(float64(stats.Clients.Total))
+			}
+		}
+	}
+}
+
+func ProcessStoredValues(store data.Nodeinfostore) {
+	TotalNodes.Set(float64(len(store.GetNodeStatusInfos())))
+	initTotalClientsGauge(store)
 }

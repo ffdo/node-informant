@@ -18,6 +18,7 @@ import (
 	"github.com/dereulenspiegel/node-informant/gluon-collector/httpserver"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/meshviewer"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/pipeline"
+	"github.com/dereulenspiegel/node-informant/gluon-collector/prometheus"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/scheduler"
 )
 
@@ -60,7 +61,8 @@ func BuildPipelines(store data.Nodeinfostore, receiver announced.AnnouncedPacket
 	closeables := make([]pipeline.Closeable, 0, 2)
 
 	receivePipeline := pipeline.NewReceivePipeline(&pipeline.JsonParsePipe{}, &pipeline.DeflatePipe{})
-	processPipe := pipeline.NewProcessPipeline(&pipeline.GatewayCollector{Store: store},
+	processPipe := pipeline.NewProcessPipeline(&prometheus.NodeCountPipe{Store: store},
+		&prometheus.ClientCountPipe{Store: store}, &pipeline.GatewayCollector{Store: store},
 		&pipeline.NodeinfoCollector{Store: store}, &pipeline.StatisticsCollector{Store: store},
 		&pipeline.NeighbourInfoCollector{Store: store}, &pipeline.StatusInfoCollector{Store: store})
 	closeables = append(closeables, receivePipeline, processPipe)
@@ -222,6 +224,7 @@ func main() {
 	}
 	ConfigureLogger()
 	CreateDataStore()
+	prometheus.ProcessStoredValues(DataStore)
 	if *importPath != "" {
 		ImportData()
 	}
