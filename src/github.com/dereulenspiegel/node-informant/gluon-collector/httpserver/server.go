@@ -6,6 +6,8 @@ import (
 
 	"github.com/rs/cors"
 
+	stat "github.com/prometheus/client_golang/prometheus"
+
 	log "github.com/Sirupsen/logrus"
 	conf "github.com/dereulenspiegel/node-informant/gluon-collector/config"
 )
@@ -20,5 +22,7 @@ func StartHttpServerBlocking(serveables ...HttpServeable) {
 	httpListenAddr := fmt.Sprintf("%s:%d", httpAddress, httpPort)
 	log.Printf("Trying to http listen on %s", httpListenAddr)
 	handler := cors.Default().Handler(router)
-	log.Fatal(http.ListenAndServe(httpListenAddr, handler))
+	http.Handle("/", handler)
+	http.Handle("/metrics", stat.Handler())
+	log.Fatal(http.ListenAndServe(httpListenAddr, nil))
 }
