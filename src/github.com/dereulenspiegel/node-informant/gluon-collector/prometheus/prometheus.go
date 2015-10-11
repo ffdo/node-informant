@@ -69,7 +69,22 @@ func initTotalClientsGauge(store data.Nodeinfostore) {
 	log.Debugf("Initialised prometheus with %d clients", totalClients)
 }
 
+func initTrafficCounter(store data.Nodeinfostore) {
+	TotalNodeTrafficRx.Set(0.0)
+	TotalNodeTrafficTx.Set(0.0)
+	TotalNodeMgmtTrafficRx.Set(0.0)
+	TotalNodeMgmtTrafficTx.Set(0.0)
+
+	for _, stats := range store.GetAllStatistics() {
+		TotalNodeTrafficRx.Add(float64(stats.Traffic.Rx.Bytes))
+		TotalNodeTrafficTx.Add(float64(stats.Traffic.Tx.Bytes))
+		TotalNodeMgmtTrafficRx.Add(float64(stats.Traffic.MgmtRx.Bytes))
+		TotalNodeMgmtTrafficTx.Add(float64(stats.Traffic.MgmtTx.Bytes))
+	}
+}
+
 func ProcessStoredValues(store data.Nodeinfostore) {
 	TotalNodes.Set(float64(len(store.GetNodeStatusInfos())))
 	initTotalClientsGauge(store)
+	initTrafficCounter(store)
 }

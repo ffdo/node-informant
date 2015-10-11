@@ -56,7 +56,7 @@ func convertToMeshviewerStatistics(in *data.StatisticsStruct) StatisticsStruct {
 		Loadavg:     in.LoadAverage,
 		MemoryUsage: (float64(in.Memory.Free) / float64(in.Memory.Total)),
 		RootfsUsage: in.RootFsUsage,
-		Traffic:     &in.Traffic,
+		Traffic:     in.Traffic,
 		Uptime:      in.Uptime,
 	}
 }

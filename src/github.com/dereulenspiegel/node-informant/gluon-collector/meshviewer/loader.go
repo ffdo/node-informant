@@ -32,7 +32,7 @@ func convertFromMeshviewerStatistics(nodeId string, in *StatisticsStruct) data.S
 		Memory:      memory,
 	}
 	if in.Traffic != nil {
-		statistics.Traffic = *in.Traffic
+		statistics.Traffic = in.Traffic
 	}
 	return statistics
 }

@@ -7,11 +7,11 @@ type TrafficObject struct {
 }
 
 type TrafficStruct struct {
-	Tx      TrafficObject `json:"tx"`
-	Rx      TrafficObject `json:"rx"`
-	Forward TrafficObject `json:"forward"`
-	MgmtTx  TrafficObject `json:"mgmt_tx"`
-	MgmtRx  TrafficObject `json:"mgmt_rx"`
+	Tx      *TrafficObject `json:"tx"`
+	Rx      *TrafficObject `json:"rx"`
+	Forward *TrafficObject `json:"forward"`
+	MgmtTx  *TrafficObject `json:"mgmt_tx"`
+	MgmtRx  *TrafficObject `json:"mgmt_rx"`
 }
 
 type ClientStatistics struct {
@@ -30,7 +30,7 @@ type StatisticsStruct struct {
 	NodeId      string           `json:"node_id"`
 	Clients     ClientStatistics `json:"clients"`
 	RootFsUsage float64          `json:"rootfs_usage"`
-	Traffic     TrafficStruct    `json:"traffic"`
+	Traffic     *TrafficStruct   `json:"traffic"`
 	Memory      MemoryStatistics `json:"memory"`
 	Uptime      float64          `json:"uptime"`
 	Idletime    float64          `json:"idletime"`
