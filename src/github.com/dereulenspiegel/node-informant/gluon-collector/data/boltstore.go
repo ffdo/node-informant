@@ -3,16 +3,20 @@ package data
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/boltdb/bolt"
+	conf "github.com/dereulenspiegel/node-informant/gluon-collector/config"
+	"github.com/dereulenspiegel/node-informant/gluon-collector/scheduler"
 )
 
 // BoltStore implements the Nodeinfostore interface. BoltStore uses the embedded
 // bolt database to persist data to disc.
 type BoltStore struct {
-	db     *bolt.DB
-	bucket *bolt.Bucket
+	db              *bolt.DB
+	bucket          *bolt.Bucket
+	onlineStatusJob *scheduler.ScheduledJob
 }
 
 type JsonBool struct {
@@ -49,12 +53,50 @@ func NewBoltStore(path string) (*BoltStore, error) {
 	if err != nil {
 		return nil, err
 	}
+	store.onlineStatusJob = scheduler.NewJob(time.Minute*1, store.calculateOnlineStatus, false)
 	return store, nil
 }
 
 // Close closes the underlying bolt database.
 func (b *BoltStore) Close() {
+	b.onlineStatusJob.Stop()
 	b.db.Close()
+}
+
+func (b *BoltStore) calculateOnlineStatus() {
+	now := time.Now()
+	updateInterval := conf.UInt("announced.interval.statistics", 300)
+	offlineInterval := updateInterval * 2
+	err := b.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(StatusInfoBucket))
+		c := b.Cursor()
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			status := NodeStatusInfo{}
+			err := json.Unmarshal(v, &status)
+			if err != nil {
+				log.WithFields(log.Fields{
+					"error":      err,
+					"nodeId":     k,
+					"jsonString": string(v),
+				}).Error("Can't unmarshall json from node status info")
+				continue
+			}
+			lastseen, _ := time.Parse(TimeFormat, status.Lastseen)
+			if (now.Unix() - lastseen.Unix()) > int64(offlineInterval) {
+				status.Online = false
+				data, err := json.Marshal(status)
+				if err != nil {
+					b.Put(k, data)
+				}
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+		}).Error("Error in database transaction while updating online status")
+	}
 }
 
 func (b *BoltStore) put(key, bucket string, data interface{}) {
