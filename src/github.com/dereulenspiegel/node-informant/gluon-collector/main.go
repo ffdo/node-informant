@@ -61,6 +61,7 @@ func getProcessPipes(store data.Nodeinfostore) []pipeline.ProcessPipe {
 
 	pipes = append(pipes, &prometheus.NodeCountPipe{Store: store})
 	pipes = append(pipes, &prometheus.ClientCountPipe{Store: store})
+	pipes = append(pipes, &prometheus.TrafficCountPipe{Store: store})
 	pipes = append(pipes, &pipeline.GatewayCollector{Store: store},
 		&pipeline.NodeinfoCollector{Store: store}, &pipeline.StatisticsCollector{Store: store},
 		&pipeline.NeighbourInfoCollector{Store: store}, &pipeline.StatusInfoCollector{Store: store})
