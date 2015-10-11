@@ -186,10 +186,16 @@ func (b *BoltStore) GetNodeStatusInfo(nodeId string) (NodeStatusInfo, error) {
 	if err != nil {
 		return NodeStatusInfo{}, err
 	}
+	if info.NodeId == "" {
+		info.NodeId = nodeId
+	}
 	return *info, err
 }
 
 func (b *BoltStore) PutNodeStatusInfo(nodeId string, info NodeStatusInfo) {
+	if info.NodeId == "" {
+		info.NodeId = nodeId
+	}
 	b.put(nodeId, StatusInfoBucket, info)
 }
 
@@ -205,6 +211,9 @@ func (b *BoltStore) GetNodeStatusInfos() []NodeStatusInfo {
 				"nodeid":     key,
 			}).Error("Error unmarshalling json data")
 		} else {
+			if status.NodeId == "" {
+				status.NodeId = key
+			}
 			allStatusInfos = append(allStatusInfos, *status)
 		}
 	})
