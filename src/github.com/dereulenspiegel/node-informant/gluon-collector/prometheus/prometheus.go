@@ -1,6 +1,7 @@
 package prometheus
 
 import (
+	log "github.com/Sirupsen/logrus"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
 	stat "github.com/prometheus/client_golang/prometheus"
 )
@@ -48,14 +49,24 @@ func init() {
 
 func initTotalClientsGauge(store data.Nodeinfostore) {
 	TotalClientCounter.Set(0.0)
-	for _, status := range store.GetNodeStatusInfos() {
+	var totalClients int = 0
+	for _, stats := range store.GetAllStatistics() {
+		status, err := store.GetNodeStatusInfo(stats.NodeId)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"error":  err,
+				"nodeId": stats.NodeId,
+			}).Warn("Didn't found node status in store")
+		}
 		if status.Online {
-			stats, err := store.GetStatistics(status.NodeId)
-			if err != nil {
-				TotalClientCounter.Add(float64(stats.Clients.Total))
-			}
+			totalClients = totalClients + stats.Clients.Total
+			log.Debugf("Adding %d clients", stats.Clients.Total)
+			TotalClientCounter.Add(float64(stats.Clients.Total))
+		} else {
+			log.Debugf("Node %s was offline", status.NodeId)
 		}
 	}
+	log.Debugf("Initialised prometheus with %d clients", totalClients)
 }
 
 func ProcessStoredValues(store data.Nodeinfostore) {

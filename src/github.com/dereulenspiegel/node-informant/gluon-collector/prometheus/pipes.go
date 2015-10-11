@@ -1,6 +1,9 @@
 package prometheus
 
-import "github.com/dereulenspiegel/node-informant/gluon-collector/data"
+import (
+	log "github.com/Sirupsen/logrus"
+	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
+)
 
 type NodeCountPipe struct {
 	Store data.Nodeinfostore
@@ -37,6 +40,7 @@ func (c *ClientCountPipe) Process(in chan data.ParsedResponse) chan data.ParsedR
 				} else {
 					addValue = float64(newStats.Clients.Total)
 				}
+				log.Debugf("Adding %f clients", addValue)
 				TotalClientCounter.Add(addValue)
 			}
 			out <- response

@@ -67,7 +67,6 @@ func (s *StatisticsCollector) Process(in chan data.ParsedResponse) chan data.Par
 			}
 			out <- response
 		}
-
 	}()
 	return out
 }

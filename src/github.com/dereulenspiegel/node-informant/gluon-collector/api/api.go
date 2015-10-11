@@ -20,8 +20,24 @@ func (h *HttpApi) Routes() []httpserver.Route {
 		httpserver.Route{"NodeStatistics", "GET", "/statistics/{nodeid}", h.GetNodeStatisticsRest},
 		httpserver.Route{"NodesNeighbours", "GET", "/neighbours/{nodeid}", h.GetNodeNeighboursRest},
 		httpserver.Route{"AllNeighbours", "GET", "/neighbours", h.GetAllNeighboursRest},
+		httpserver.Route{"AllStatistucs", "GET", "/statistics", h.GetAllStatistics},
+		httpserver.Route{"AllNodeStatus", "GET", "/nodestatus", h.GetAllNodeStatus},
 	}
 	return apiRoutes
+}
+
+func respondJson(w http.ResponseWriter, data interface{}) {
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(data)
+}
+
+func (h *HttpApi) GetAllNodeStatus(w http.ResponseWriter, r *http.Request) {
+	respondJson(w, h.Store.GetNodeStatusInfos())
+}
+
+func (h *HttpApi) GetAllStatistics(w http.ResponseWriter, r *http.Request) {
+	respondJson(w, h.Store.GetAllStatistics())
 }
 
 func (h *HttpApi) GetAllNeighboursRest(w http.ResponseWriter, r *http.Request) {

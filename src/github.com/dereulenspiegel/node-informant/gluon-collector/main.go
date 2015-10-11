@@ -56,15 +56,23 @@ func (l *LogPipe) Process(in chan announced.Response) chan announced.Response {
 	return out
 }
 
+func getProcessPipes(store data.Nodeinfostore) []pipeline.ProcessPipe {
+	pipes := make([]pipeline.ProcessPipe, 0, 10)
+
+	pipes = append(pipes, &prometheus.NodeCountPipe{Store: store})
+	pipes = append(pipes, &prometheus.ClientCountPipe{Store: store})
+	pipes = append(pipes, &pipeline.GatewayCollector{Store: store},
+		&pipeline.NodeinfoCollector{Store: store}, &pipeline.StatisticsCollector{Store: store},
+		&pipeline.NeighbourInfoCollector{Store: store}, &pipeline.StatusInfoCollector{Store: store})
+	return pipes
+}
+
 func BuildPipelines(store data.Nodeinfostore, receiver announced.AnnouncedPacketReceiver, pipeEnd func(response data.ParsedResponse)) ([]pipeline.Closeable, error) {
 
 	closeables := make([]pipeline.Closeable, 0, 2)
 
 	receivePipeline := pipeline.NewReceivePipeline(&pipeline.JsonParsePipe{}, &pipeline.DeflatePipe{})
-	processPipe := pipeline.NewProcessPipeline(&prometheus.NodeCountPipe{Store: store},
-		&prometheus.ClientCountPipe{Store: store}, &pipeline.GatewayCollector{Store: store},
-		&pipeline.NodeinfoCollector{Store: store}, &pipeline.StatisticsCollector{Store: store},
-		&pipeline.NeighbourInfoCollector{Store: store}, &pipeline.StatusInfoCollector{Store: store})
+	processPipe := pipeline.NewProcessPipeline(getProcessPipes(store)...)
 	closeables = append(closeables, receivePipeline, processPipe)
 	log.Printf("Adding process pipe end")
 	go func() {
