@@ -87,11 +87,11 @@ func (g *GraphGenerator) buildLink(nodeTable map[string]*GraphNode, sourceMac, t
 	targetNode, targetExists := nodeTable[targetMac]
 
 	if !sourceExists {
-		log.Warnf("Building link with nonexistant source node %s", sourceMac)
+		log.Debugf("Building link with nonexistant source node %s", sourceMac)
 		return nil
 	}
 	if !targetExists {
-		log.Warnf("Building link with nonexistant target node %s", targetMac)
+		log.Debugf("Building link with nonexistant target node %s", targetMac)
 		return nil
 	}
 	link := &GraphLink{
@@ -172,7 +172,7 @@ func (g *GraphGenerator) GenerateGraph() GraphJson {
 			for peerMac, linkInfo := range batInfo.Neighbours {
 				link := g.buildLink(nodeTable, ownMac, peerMac, linkInfo)
 				if link == nil {
-					log.Warnf("Couldn't form link between %s and %s", ownMac, peerMac)
+					log.Debugf("Couldn't form link between %s and %s", ownMac, peerMac)
 					continue
 				}
 				link.Vpn = g.markVpn(nodeTable[ownMac].NodeId, nodeTable[peerMac].NodeId, ownMac, peerMac)
@@ -207,7 +207,7 @@ func (g *GraphGenerator) UpdateGraphJson() {
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error": err,
-		}).Error("Failed to marshal graph.json")
+		}).Error("Failed to marshall graph.json")
 		return
 	}
 	g.cachedJsonString = string(jsonBytes)
