@@ -39,8 +39,6 @@ func executeCompletePipe(t *testing.T, store data.Nodeinfostore) {
 		time.Sleep(time.Millisecond * 1)
 	}
 
-	/*time.Sleep(time.Second * 3)*/
-
 	for _, closable := range closeables {
 		closable.Close()
 	}
