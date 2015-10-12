@@ -8,6 +8,10 @@ import (
 	stat "github.com/prometheus/client_golang/prometheus"
 )
 
+/*
+These are counters accumulated over all nodes. If possible these should be
+updated dynamically in ProcessPipes
+*/
 var (
 	TotalClientCounter = stat.NewGauge(stat.GaugeOpts{
 		Name: "total_clients",
@@ -47,6 +51,7 @@ var (
 	NodeMetricsMap = make(map[string]*NodeMetrics)
 )
 
+// This type holds the Metrics for a single node
 type NodeMetrics struct {
 	Clients stat.Gauge
 	Uptime  stat.Counter
@@ -54,6 +59,8 @@ type NodeMetrics struct {
 	NodeId  string
 }
 
+// GetNodeMetrics retrieves existing NodeMetrics struct from a central map
+// or creates a new struct and register all Metrics with prometheus.
 func GetNodeMetrics(nodeId string) *NodeMetrics {
 	if m, exists := NodeMetricsMap[nodeId]; exists {
 		return m
@@ -80,6 +87,7 @@ func GetNodeMetrics(nodeId string) *NodeMetrics {
 	return m
 }
 
+// Register all accumulated metrics
 func init() {
 	stat.MustRegister(TotalClientCounter)
 	stat.MustRegister(TotalNodes)
@@ -90,6 +98,8 @@ func init() {
 	stat.MustRegister(OnlineNodes)
 }
 
+// initTotalClientsGauge iterates over all statistics
+// and sums up the clients if all online nodes.
 func initTotalClientsGauge(store data.Nodeinfostore) {
 	TotalClientCounter.Set(0.0)
 	var totalClients int = 0
@@ -103,15 +113,15 @@ func initTotalClientsGauge(store data.Nodeinfostore) {
 		}
 		if status.Online {
 			totalClients = totalClients + stats.Clients.Total
-			log.Debugf("Adding %d clients", stats.Clients.Total)
 			TotalClientCounter.Add(float64(stats.Clients.Total))
 		} else {
 			log.Debugf("Node %s was offline", status.NodeId)
 		}
 	}
-	log.Debugf("Initialised prometheus with %d clients", totalClients)
 }
 
+// initTrafficCounter initialises the traffic counters with the accumulated traffic
+// in all node statistics stored in the database at startup
 func initTrafficCounter(store data.Nodeinfostore) {
 	TotalNodeTrafficRx.Set(0.0)
 	TotalNodeTrafficTx.Set(0.0)
@@ -126,10 +136,15 @@ func initTrafficCounter(store data.Nodeinfostore) {
 	}
 }
 
+// decrementOnlineNodes is a callback which can registered with a Nodeinfostore
+// to be notified if a node is marked as offline.
 func decrementOnlineNodes(nodeId string) {
 	OnlineNodes.Dec()
 }
 
+// initOnlineNodesGauge counts all nodes with status Online and initializes the
+// OnlineNode Gauge with it. It also register a callback with the database to be notified
+// of nodes going offline.
 func initOnlineNodesGauge(store data.Nodeinfostore) {
 	OnlineNodes.Set(0.0)
 	for _, status := range store.GetNodeStatusInfos() {
@@ -140,6 +155,9 @@ func initOnlineNodesGauge(store data.Nodeinfostore) {
 	store.NotifyNodeOffline(decrementOnlineNodes)
 }
 
+// ProcessStoredValues needs to be called at startup as soon as the data store is
+// ready. This methods takes care if initializing all Metrics with values based on
+// the last saved values.
 func ProcessStoredValues(store data.Nodeinfostore) {
 	TotalNodes.Set(float64(len(store.GetNodeStatusInfos())))
 	initTotalClientsGauge(store)

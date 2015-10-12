@@ -6,6 +6,11 @@ import (
 	stat "github.com/prometheus/client_golang/prometheus"
 )
 
+// NodeCountPipe simply increments the TotalNodes Gauge if we receive a response from
+// a node we don't habe a NodeStatusInfo object for. This indicates that we didn't had
+// contact with this node before and therefore it is new.
+// It also increments the OnlineNodes Gauge by one in case the stored NodeStatusInfo
+// indicates that this node wasn't online before.
 type NodeCountPipe struct {
 	Store data.Nodeinfostore
 }
@@ -29,6 +34,9 @@ func (n *NodeCountPipe) Process(in chan data.ParsedResponse) chan data.ParsedRes
 	return out
 }
 
+// ClientCountPipe tries to determine the difference in clients per node
+// between the currently received statistics and the received statistics and adds
+// the difference to the TotalClientsCounter Gauge.
 type ClientCountPipe struct {
 	Store data.Nodeinfostore
 }
@@ -54,6 +62,9 @@ func (c *ClientCountPipe) Process(in chan data.ParsedResponse) chan data.ParsedR
 	return out
 }
 
+// TrafficCountPipe determines the difference between previous node traffic and current
+// node traffic and increments the Total traffic counters by the difference.
+// TODO: Have look whether CounterVec is a better choice than 4 different counters.
 type TrafficCountPipe struct {
 	Store data.Nodeinfostore
 }
@@ -90,6 +101,7 @@ func (t *TrafficCountPipe) Process(in chan data.ParsedResponse) chan data.Parsed
 	return out
 }
 
+// NodeMetricCollector updates per node metrics based on received statistics responses.
 type NodeMetricCollector struct{}
 
 func (n *NodeMetricCollector) Process(in chan data.ParsedResponse) chan data.ParsedResponse {
@@ -114,6 +126,9 @@ func (n *NodeMetricCollector) Process(in chan data.ParsedResponse) chan data.Par
 	return out
 }
 
+// GetPrometheusProcessPipes returns all ProcessPipes necessary to keep Prometheus
+// metrics up to date. In most cases the Prometheus pipes need to be added before
+// all other pipes to the ProcessPipeline.
 func GetPrometheusProcessPipes(store data.Nodeinfostore) []pipeline.ProcessPipe {
 	out := make([]pipeline.ProcessPipe, 0, 10)
 	out = append(out, &NodeCountPipe{Store: store})
