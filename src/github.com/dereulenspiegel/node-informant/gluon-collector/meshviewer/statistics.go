@@ -37,6 +37,8 @@ import "github.com/dereulenspiegel/node-informant/gluon-collector/data"
     }
 */
 
+// Unfortunately the statistics structure expected by meshviewer looks slightly
+// different than the statistics structure returned from announced.
 type StatisticsStruct struct {
 	Clients     int                 `json:"clients"`
 	Gateway     string              `json:"gateway"`

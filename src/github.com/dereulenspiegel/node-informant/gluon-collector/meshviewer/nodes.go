@@ -6,7 +6,6 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	conf "github.com/dereulenspiegel/node-informant/gluon-collector/config"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/httpserver"
 )
@@ -17,6 +16,9 @@ type NodeFlags struct {
 	Gateway bool `json:"gateway"`
 	Online  bool `json:"online"`
 }
+
+// NodesJsonNode is the structure expected by mehsviewer to contain all information
+// about a node.
 type NodesJsonNode struct {
 	Nodeinfo   data.NodeInfo     `json:"nodeinfo"`
 	Statistics *StatisticsStruct `json:"statistics"`
@@ -25,6 +27,7 @@ type NodesJsonNode struct {
 	Firstseen  string            `json:"firstseen"`
 }
 
+// NodesJson is the top level structure for nodes.json
 type NodesJson struct {
 	Timestamp string                   `json:"timestamp"`
 	Version   int                      `json:"version"`
@@ -49,6 +52,8 @@ func (n *NodesJsonGenerator) GetNodesJsonRest(w http.ResponseWriter, r *http.Req
 	w.Write([]byte(n.CachedNodesJson))
 }
 
+// convertToMeshviewerStatistics takes care of converting statistics received by
+// announced to something meshviewer can digest.
 func convertToMeshviewerStatistics(in *data.StatisticsStruct) StatisticsStruct {
 	return StatisticsStruct{
 		Clients:     in.Clients.Total,
@@ -61,7 +66,7 @@ func convertToMeshviewerStatistics(in *data.StatisticsStruct) StatisticsStruct {
 	}
 }
 
-func isOnline(status *data.NodeStatusInfo) bool {
+/*func isOnline(status *data.NodeStatusInfo) bool {
 	now := time.Now()
 	lastseen, err := time.Parse(TimeFormat, status.Lastseen)
 	if err != nil {
@@ -80,8 +85,10 @@ func isOnline(status *data.NodeStatusInfo) bool {
 		status.Online = true
 	}
 	return status.Online
-}
+}*/
 
+// GetNodesJson fills a NodesJson struct with all information stored in the
+// Nodeinfostore
 func (n *NodesJsonGenerator) GetNodesJson() NodesJson {
 	timestamp := time.Now().Format(TimeFormat)
 	nodes := make(map[string]NodesJsonNode)
@@ -95,7 +102,7 @@ func (n *NodesJsonGenerator) GetNodesJson() NodesJson {
 		}
 		status, _ := n.Store.GetNodeStatusInfo(nodeId)
 		flags := NodeFlags{
-			Online:  isOnline(&status),
+			Online:  status.Online,
 			Gateway: status.Gateway,
 		}
 		node := NodesJsonNode{
@@ -115,6 +122,8 @@ func (n *NodesJsonGenerator) GetNodesJson() NodesJson {
 	return nodesJson
 }
 
+// UpdateNodesJson creates a new json string from a freshly generated NodesJson
+// and caches it so, that the REST handlers can simply send the cached string.
 func (n *NodesJsonGenerator) UpdateNodesJson() {
 	nodesJson := n.GetNodesJson()
 
