@@ -20,44 +20,44 @@ type MissingUpdater struct {
 	Store     data.Nodeinfostore
 }
 
+func (m *MissingUpdater) CheckNodeUnicast(nodeId string) {
+	nodeinfo, err := m.Store.GetNodeInfo(nodeId)
+	if err != nil {
+		// TODO log this, this shouldn't happen
+		return
+	}
+	m.UpdateMissingNeighbours(nodeinfo)
+	m.UpdateMissingStatistics(nodeinfo)
+}
+
 // Query for the missing mesh neighbour information.
-func (m *MissingUpdater) UpdateMissingNeighbours() {
+func (m *MissingUpdater) UpdateMissingNeighbours(nodeinfo data.NodeInfo) {
 	log.Print("Updating missing neighbour infos")
 
-	for _, nodeinfo := range m.Store.GetNodeInfos() {
-		_, err := m.Store.GetNodeNeighbours(nodeinfo.NodeId)
-		if err != nil {
-			log.Debugf("Updating missing neighbour information for Node %s", nodeinfo.NodeId)
-			for _, addressString := range nodeinfo.Network.Addresses {
-				ip := net.ParseIP(addressString)
-				addr := &net.UDPAddr{
-					IP:   ip,
-					Port: 1001,
-				}
-				log.Debugf("Querying IP %s for missing neighbours", addressString)
-				m.Requester.QueryUnicast(addr, "GET neighbours")
-			}
+	log.Debugf("Updating missing neighbour information for Node %s", nodeinfo.NodeId)
+	for _, addressString := range nodeinfo.Network.Addresses {
+		ip := net.ParseIP(addressString)
+		addr := &net.UDPAddr{
+			IP:   ip,
+			Port: 1001,
 		}
+		log.Debugf("Querying IP %s for missing neighbours", addressString)
+		m.Requester.QueryUnicast(addr, "GET neighbours")
 	}
 }
 
 // Query for missing statistics.
-func (m *MissingUpdater) UpdateMissingStatistics() {
+func (m *MissingUpdater) UpdateMissingStatistics(nodeinfo data.NodeInfo) {
 	log.Print("Updating missing neighbour infos")
 
-	for _, nodeinfo := range m.Store.GetNodeInfos() {
-		_, err := m.Store.GetStatistics(nodeinfo.NodeId)
-		if err != nil {
-			log.Debugf("Updating missing statistics information for Node %s", nodeinfo.NodeId)
-			for _, addressString := range nodeinfo.Network.Addresses {
-				ip := net.ParseIP(addressString)
-				addr := &net.UDPAddr{
-					IP:   ip,
-					Port: 1001,
-				}
-				log.Debugf("Querying IP %s for missing statistics", addressString)
-				m.Requester.QueryUnicast(addr, "GET statistics")
-			}
+	log.Debugf("Updating missing statistics information for Node %s", nodeinfo.NodeId)
+	for _, addressString := range nodeinfo.Network.Addresses {
+		ip := net.ParseIP(addressString)
+		addr := &net.UDPAddr{
+			IP:   ip,
+			Port: 1001,
 		}
+		log.Debugf("Querying IP %s for missing statistics", addressString)
+		m.Requester.QueryUnicast(addr, "GET statistics")
 	}
 }
