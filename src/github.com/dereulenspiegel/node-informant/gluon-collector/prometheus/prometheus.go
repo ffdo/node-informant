@@ -1,8 +1,6 @@
 package prometheus
 
 import (
-	"fmt"
-
 	log "github.com/Sirupsen/logrus"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
 	stat "github.com/prometheus/client_golang/prometheus"
@@ -19,7 +17,7 @@ var (
 	})
 
 	TotalNodes = stat.NewGauge(stat.GaugeOpts{
-		Name: "total_nodes",
+		Name: "meshnodes_total",
 		Help: "Total number of Nodes",
 	})
 
@@ -44,9 +42,24 @@ var (
 	})
 
 	OnlineNodes = stat.NewGauge(stat.GaugeOpts{
-		Name: "node_online",
+		Name: "meshnodes_online_total",
 		Help: "All online nodes",
 	})
+
+	NodesTraffic = stat.NewCounterVec(stat.CounterOpts{
+		Name: "meshnode_traffic",
+		Help: "Measured traffic in bytes on nodes",
+	}, []string{"nodeid", "type", "direction"})
+
+	NodesUptime = stat.NewCounterVec(stat.CounterOpts{
+		Name: "meshnode_uptime",
+		Help: "Uptime of meshnodes",
+	}, []string{"nodeid"})
+
+	NodesClients = stat.NewGaugeVec(stat.GaugeOpts{
+		Name: "meshnode_clients",
+		Help: "Clients on single meshnodes",
+	}, []string{"nodeid"})
 
 	NodeMetricsMap = make(map[string]*NodeMetrics)
 )
@@ -59,34 +72,6 @@ type NodeMetrics struct {
 	NodeId  string
 }
 
-// GetNodeMetrics retrieves existing NodeMetrics struct from a central map
-// or creates a new struct and register all Metrics with prometheus.
-func GetNodeMetrics(nodeId string) *NodeMetrics {
-	if m, exists := NodeMetricsMap[nodeId]; exists {
-		return m
-	}
-	m := &NodeMetrics{
-		NodeId: nodeId,
-	}
-	m.Uptime = stat.NewCounter(stat.CounterOpts{
-		Name: fmt.Sprintf("node_%s_uptime", nodeId),
-		Help: fmt.Sprintf("Uptime of node %s", nodeId),
-	})
-	m.Clients = stat.NewGauge(stat.GaugeOpts{
-		Name: fmt.Sprintf("node_%s_clients", nodeId),
-		Help: fmt.Sprintf("Clients connected to node %s", nodeId),
-	})
-	m.Traffic = stat.NewCounterVec(stat.CounterOpts{
-		Name: fmt.Sprintf("node_%s_traffic", nodeId),
-		Help: fmt.Sprintf("Measured traffic in bytes on %s", nodeId),
-	}, []string{"type", "direction"})
-	stat.Register(m.Uptime)
-	stat.Register(m.Clients)
-	stat.Register(m.Traffic)
-	NodeMetricsMap[nodeId] = m
-	return m
-}
-
 // Register all accumulated metrics
 func init() {
 	stat.MustRegister(TotalClientCounter)
@@ -96,6 +81,10 @@ func init() {
 	stat.MustRegister(TotalNodeMgmtTrafficRx)
 	stat.MustRegister(TotalNodeMgmtTrafficTx)
 	stat.MustRegister(OnlineNodes)
+
+	stat.MustRegister(NodesTraffic)
+	stat.MustRegister(NodesUptime)
+	stat.MustRegister(NodesClients)
 }
 
 // initTotalClientsGauge iterates over all statistics
