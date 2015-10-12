@@ -70,7 +70,7 @@ func GetNodeMetrics(nodeId string) *NodeMetrics {
 	}
 	m.Uptime = stat.NewCounter(stat.CounterOpts{
 		Name: fmt.Sprintf("node_%s_uptime", nodeId),
-		Help: fmt.Sprintf("Uptime of node %s"),
+		Help: fmt.Sprintf("Uptime of node %s", nodeId),
 	})
 	m.Clients = stat.NewGauge(stat.GaugeOpts{
 		Name: fmt.Sprintf("node_%s_clients", nodeId),

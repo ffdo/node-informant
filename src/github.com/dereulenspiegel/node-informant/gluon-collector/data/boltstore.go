@@ -68,7 +68,8 @@ func (b *BoltStore) Close() {
 func (bs *BoltStore) calculateOnlineStatus() {
 	now := time.Now()
 	updateInterval := conf.UInt("announced.interval.statistics", 300)
-	offlineInterval := updateInterval * 2
+	factor := conf.UInt("announced.interval.expire", 3)
+	offlineInterval := updateInterval * factor
 	err := bs.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(StatusInfoBucket))
 		c := b.Cursor()
@@ -83,15 +84,35 @@ func (bs *BoltStore) calculateOnlineStatus() {
 				}).Error("Can't unmarshall json from node status info")
 				continue
 			}
-			lastseen, _ := time.Parse(TimeFormat, status.Lastseen)
-			if (now.Unix() - lastseen.Unix()) > int64(offlineInterval) {
+			var lastseen time.Time
+			lastseen, err = time.Parse(TimeFormat, status.Lastseen)
+			if err != nil {
+				// In case we have imported data from ffmap-backend still in our database
+				lastseen, err = time.Parse(LegacyTimeFormat, status.Lastseen)
+				if err != nil {
+					log.WithFields(log.Fields{
+						"error":      err,
+						"timeString": status.Lastseen,
+						"nodeId":     status.NodeId,
+					}).Error("Can't parse lastseen time")
+				}
+			}
+			if (now.Unix()-lastseen.Unix()) > int64(offlineInterval) && status.Online {
 				status.Online = false
 				for _, handler := range bs.gwOfflineHandler {
 					go handler(string(k))
 				}
+				if status.NodeId == "" {
+					status.NodeId = string(k)
+				}
 				data, err := json.Marshal(status)
-				if err != nil {
+				if err == nil {
 					b.Put(k, data)
+				} else {
+					log.WithFields(log.Fields{
+						"error":      err,
+						"nodeStatus": status,
+					}).Error("Can't marshall node status info")
 				}
 			}
 		}
