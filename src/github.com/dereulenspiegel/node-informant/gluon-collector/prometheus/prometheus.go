@@ -36,6 +36,11 @@ var (
 		Name: "total_traffic_mgmt_tx",
 		Help: "Total accumulated transmitted management traffic as reported by Nodes",
 	})
+
+	OnlineNodes = stat.NewGauge(stat.GaugeOpts{
+		Name: "node_online",
+		Help: "All online nodes",
+	})
 )
 
 func init() {
@@ -45,6 +50,7 @@ func init() {
 	stat.MustRegister(TotalNodeTrafficTx)
 	stat.MustRegister(TotalNodeMgmtTrafficRx)
 	stat.MustRegister(TotalNodeMgmtTrafficTx)
+	stat.MustRegister(OnlineNodes)
 }
 
 func initTotalClientsGauge(store data.Nodeinfostore) {
@@ -83,8 +89,23 @@ func initTrafficCounter(store data.Nodeinfostore) {
 	}
 }
 
+func decrementOnlineNodes(nodeId string) {
+	OnlineNodes.Dec()
+}
+
+func initOnlineNodesGauge(store data.Nodeinfostore) {
+	OnlineNodes.Set(0.0)
+	for _, status := range store.GetNodeStatusInfos() {
+		if status.Online {
+			OnlineNodes.Inc()
+		}
+	}
+	store.NotifyNodeOffline(decrementOnlineNodes)
+}
+
 func ProcessStoredValues(store data.Nodeinfostore) {
 	TotalNodes.Set(float64(len(store.GetNodeStatusInfos())))
 	initTotalClientsGauge(store)
 	initTrafficCounter(store)
+	initOnlineNodesGauge(store)
 }

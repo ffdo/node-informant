@@ -144,3 +144,7 @@ func (s *SimpleInMemoryStore) IsGateway(mac string) bool {
 func (s *SimpleInMemoryStore) RemoveGateway(mac string) {
 	delete(s.GatewayList, mac)
 }
+
+func (s *SimpleInMemoryStore) NotifyNodeOffline(handler func(string)) {
+	// TODO not implemented yet.
+}

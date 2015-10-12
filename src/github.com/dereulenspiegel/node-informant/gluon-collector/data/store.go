@@ -80,6 +80,8 @@ type Nodeinfostore interface {
 	// RemoveGateway removes the given mac address as a gateway, indicating that the
 	// node with this mac address is not a gateway any more.
 	RemoveGateway(mac string)
+
+	NotifyNodeOffline(handler func(string))
 }
 
 // NodeFileImporter is a poor name for this. This interface can be implemented by

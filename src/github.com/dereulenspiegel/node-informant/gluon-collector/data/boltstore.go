@@ -14,9 +14,10 @@ import (
 // BoltStore implements the Nodeinfostore interface. BoltStore uses the embedded
 // bolt database to persist data to disc.
 type BoltStore struct {
-	db              *bolt.DB
-	bucket          *bolt.Bucket
-	onlineStatusJob *scheduler.ScheduledJob
+	db               *bolt.DB
+	bucket           *bolt.Bucket
+	onlineStatusJob  *scheduler.ScheduledJob
+	gwOfflineHandler []func(string)
 }
 
 type JsonBool struct {
@@ -53,6 +54,7 @@ func NewBoltStore(path string) (*BoltStore, error) {
 	if err != nil {
 		return nil, err
 	}
+	store.gwOfflineHandler = make([]func(string), 0, 10)
 	store.onlineStatusJob = scheduler.NewJob(time.Minute*1, store.calculateOnlineStatus, false)
 	return store, nil
 }
@@ -63,11 +65,11 @@ func (b *BoltStore) Close() {
 	b.db.Close()
 }
 
-func (b *BoltStore) calculateOnlineStatus() {
+func (bs *BoltStore) calculateOnlineStatus() {
 	now := time.Now()
 	updateInterval := conf.UInt("announced.interval.statistics", 300)
 	offlineInterval := updateInterval * 2
-	err := b.db.Update(func(tx *bolt.Tx) error {
+	err := bs.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(StatusInfoBucket))
 		c := b.Cursor()
 		for k, v := c.First(); k != nil; k, v = c.Next() {
@@ -84,6 +86,9 @@ func (b *BoltStore) calculateOnlineStatus() {
 			lastseen, _ := time.Parse(TimeFormat, status.Lastseen)
 			if (now.Unix() - lastseen.Unix()) > int64(offlineInterval) {
 				status.Online = false
+				for _, handler := range bs.gwOfflineHandler {
+					go handler(string(k))
+				}
 				data, err := json.Marshal(status)
 				if err != nil {
 					b.Put(k, data)
@@ -132,6 +137,10 @@ func (b *BoltStore) get(key, bucket string, object interface{}) error {
 		return err
 	})
 	return err
+}
+
+func (b *BoltStore) NotifyNodeOffline(handler func(string)) {
+	b.gwOfflineHandler = append(b.gwOfflineHandler, handler)
 }
 
 func (b *BoltStore) GetNodeInfo(nodeId string) (NodeInfo, error) {

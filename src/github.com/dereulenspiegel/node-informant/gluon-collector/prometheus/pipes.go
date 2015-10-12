@@ -14,9 +14,14 @@ func (n *NodeCountPipe) Process(in chan data.ParsedResponse) chan data.ParsedRes
 	out := make(chan data.ParsedResponse)
 	go func() {
 		for response := range in {
-			_, err := n.Store.GetNodeStatusInfo(response.NodeId())
+			status, err := n.Store.GetNodeStatusInfo(response.NodeId())
 			if err != nil {
 				TotalNodes.Inc()
+				// New node. Also increment online count
+				OnlineNodes.Inc()
+			} else if status.Online == false {
+				// Existing offline node came back online
+				OnlineNodes.Inc()
 			}
 			out <- response
 		}
