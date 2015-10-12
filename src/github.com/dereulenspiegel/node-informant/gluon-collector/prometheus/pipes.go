@@ -1,8 +1,8 @@
 package prometheus
 
 import (
-	log "github.com/Sirupsen/logrus"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
+	"github.com/dereulenspiegel/node-informant/gluon-collector/pipeline"
 	stat "github.com/prometheus/client_golang/prometheus"
 )
 
@@ -46,7 +46,6 @@ func (c *ClientCountPipe) Process(in chan data.ParsedResponse) chan data.ParsedR
 				} else {
 					addValue = float64(newStats.Clients.Total)
 				}
-				log.Debugf("Adding %f clients", addValue)
 				TotalClientCounter.Add(addValue)
 			}
 			out <- response
@@ -88,5 +87,38 @@ func (t *TrafficCountPipe) Process(in chan data.ParsedResponse) chan data.Parsed
 			out <- response
 		}
 	}()
+	return out
+}
+
+type NodeMetricCollector struct{}
+
+func (n *NodeMetricCollector) Process(in chan data.ParsedResponse) chan data.ParsedResponse {
+	out := make(chan data.ParsedResponse)
+	go func() {
+		for response := range in {
+			if response.Type() == "statistics" {
+				stats := response.ParsedData().(*data.StatisticsStruct)
+				metrics := GetNodeMetrics(response.NodeId())
+				metrics.Clients.Set(float64(stats.Clients.Total))
+				metrics.Uptime.Set(stats.Uptime)
+				if stats.Traffic != nil {
+					metrics.Traffic.WithLabelValues("traffic", "rx").Set(float64(stats.Traffic.Rx.Bytes))
+					metrics.Traffic.WithLabelValues("traffic", "tx").Set(float64(stats.Traffic.Tx.Bytes))
+					metrics.Traffic.WithLabelValues("mgmt_traffic", "rx").Set(float64(stats.Traffic.MgmtRx.Bytes))
+					metrics.Traffic.WithLabelValues("mgmt_traffic", "tx").Set(float64(stats.Traffic.MgmtTx.Bytes))
+				}
+			}
+			out <- response
+		}
+	}()
+	return out
+}
+
+func GetPrometheusProcessPipes(store data.Nodeinfostore) []pipeline.ProcessPipe {
+	out := make([]pipeline.ProcessPipe, 0, 10)
+	out = append(out, &NodeCountPipe{Store: store})
+	out = append(out, &ClientCountPipe{Store: store})
+	out = append(out, &TrafficCountPipe{Store: store})
+	out = append(out, &NodeMetricCollector{})
 	return out
 }

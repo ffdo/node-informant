@@ -1,6 +1,8 @@
 package prometheus
 
 import (
+	"fmt"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
 	stat "github.com/prometheus/client_golang/prometheus"
@@ -41,7 +43,42 @@ var (
 		Name: "node_online",
 		Help: "All online nodes",
 	})
+
+	NodeMetricsMap = make(map[string]*NodeMetrics)
 )
+
+type NodeMetrics struct {
+	Clients stat.Gauge
+	Uptime  stat.Counter
+	Traffic *stat.CounterVec
+	NodeId  string
+}
+
+func GetNodeMetrics(nodeId string) *NodeMetrics {
+	if m, exists := NodeMetricsMap[nodeId]; exists {
+		return m
+	}
+	m := &NodeMetrics{
+		NodeId: nodeId,
+	}
+	m.Uptime = stat.NewCounter(stat.CounterOpts{
+		Name: fmt.Sprintf("node_%s_uptime", nodeId),
+		Help: fmt.Sprintf("Uptime of node %s"),
+	})
+	m.Clients = stat.NewGauge(stat.GaugeOpts{
+		Name: fmt.Sprintf("node_%s_clients", nodeId),
+		Help: fmt.Sprintf("Clients connected to node %s", nodeId),
+	})
+	m.Traffic = stat.NewCounterVec(stat.CounterOpts{
+		Name: fmt.Sprintf("node_%s_traffic", nodeId),
+		Help: fmt.Sprintf("Measured traffic in bytes on %s", nodeId),
+	}, []string{"type", "direction"})
+	stat.Register(m.Uptime)
+	stat.Register(m.Clients)
+	stat.Register(m.Traffic)
+	NodeMetricsMap[nodeId] = m
+	return m
+}
 
 func init() {
 	stat.MustRegister(TotalClientCounter)
