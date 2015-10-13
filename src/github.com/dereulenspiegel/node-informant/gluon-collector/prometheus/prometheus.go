@@ -46,10 +46,15 @@ var (
 		Help: "All online nodes",
 	})
 
-	NodesTraffic = stat.NewCounterVec(stat.CounterOpts{
-		Name: "meshnode_traffic",
-		Help: "Measured traffic in bytes on nodes",
-	}, []string{"nodeid", "type", "direction"})
+	NodesTrafficRx = stat.NewCounterVec(stat.CounterOpts{
+		Name: "meshnode_traffic_rx",
+		Help: "Transmitted traffic from nodes",
+	}, []string{"nodeid", "type"})
+
+	NodesTrafficTx = stat.NewCounterVec(stat.CounterOpts{
+		Name: "meshnode_traffic_tx",
+		Help: "Received traffic on nodes",
+	}, []string{"nodeid", "type"})
 
 	NodesUptime = stat.NewCounterVec(stat.CounterOpts{
 		Name: "meshnode_uptime",
@@ -82,7 +87,8 @@ func init() {
 	stat.MustRegister(TotalNodeMgmtTrafficTx)
 	stat.MustRegister(OnlineNodes)
 
-	stat.MustRegister(NodesTraffic)
+	stat.MustRegister(NodesTrafficRx)
+	stat.MustRegister(NodesTrafficTx)
 	stat.MustRegister(NodesUptime)
 	stat.MustRegister(NodesClients)
 }

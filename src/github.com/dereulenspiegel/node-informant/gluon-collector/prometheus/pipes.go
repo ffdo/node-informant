@@ -113,10 +113,10 @@ func (n *NodeMetricCollector) Process(in chan data.ParsedResponse) chan data.Par
 				NodesClients.WithLabelValues(response.NodeId()).Set(float64(stats.Clients.Total))
 				NodesUptime.WithLabelValues(response.NodeId()).Set(stats.Uptime)
 				if stats.Traffic != nil {
-					NodesTraffic.WithLabelValues(response.NodeId(), "traffic", "rx").Set(float64(stats.Traffic.Rx.Bytes))
-					NodesTraffic.WithLabelValues(response.NodeId(), "traffic", "tx").Set(float64(stats.Traffic.Tx.Bytes))
-					NodesTraffic.WithLabelValues(response.NodeId(), "mgmt_traffic", "rx").Set(float64(stats.Traffic.MgmtRx.Bytes))
-					NodesTraffic.WithLabelValues(response.NodeId(), "mgmt_traffic", "tx").Set(float64(stats.Traffic.MgmtTx.Bytes))
+					NodesTrafficRx.WithLabelValues(response.NodeId(), "traffic").Set(float64(stats.Traffic.Rx.Bytes))
+					NodesTrafficTx.WithLabelValues(response.NodeId(), "traffic").Set(float64(stats.Traffic.Tx.Bytes))
+					NodesTrafficRx.WithLabelValues(response.NodeId(), "mgmt_traffic").Set(float64(stats.Traffic.MgmtRx.Bytes))
+					NodesTrafficTx.WithLabelValues(response.NodeId(), "mgmt_traffic").Set(float64(stats.Traffic.MgmtTx.Bytes))
 				}
 			}
 			out <- response
