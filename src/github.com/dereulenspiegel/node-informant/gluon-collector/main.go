@@ -156,11 +156,14 @@ func ConfigureLogger() {
 	filePath, err := conf.Global.String("logger.file")
 	if err == nil && filePath != "" {
 		file, err := os.Open(filePath)
+		if err != nil && os.IsNotExist(err) {
+			file, err = os.Create(filePath)
+		}
 		if err != nil {
 			log.WithFields(log.Fields{
 				"err":         err,
 				"logFilePath": filePath,
-			}).Fatal("Can't open logfile")
+			}).Fatal("Can't open/create logfile")
 		} else {
 			log.SetOutput(file)
 		}
