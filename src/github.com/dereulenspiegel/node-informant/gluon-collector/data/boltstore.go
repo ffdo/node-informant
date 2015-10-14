@@ -69,10 +69,19 @@ func (b *BoltStore) Close() {
 	b.db.Close()
 }
 
+func executeHandlersOnNodeIdList(nodeIds []string, handlers []func(string)) {
+	for _, nodeid := range nodeIds {
+		for _, handler := range handlers {
+			go handler(string(nodeid))
+		}
+	}
+}
+
 func (bs *BoltStore) expireUnreachableNodes() {
 	now := time.Now()
 	expireDuration := time.Duration(conf.UInt("store.expireNodesAfterDays", 365)*24) * time.Hour
 	expireSeconds := expireDuration.Seconds()
+	expiredNodeIds := make([]string, 0, 50)
 	err := bs.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(StatusInfoBucket))
 		nodeinfoBucket := tx.Bucket([]byte(NodeinfoBucket))
@@ -110,13 +119,12 @@ func (bs *BoltStore) expireUnreachableNodes() {
 				statsBucket.Delete(k)
 				neighbourBucket.Delete(k)
 				gatewayBucket.Delete(k)
-				for _, handler := range bs.expiredNodesHandler {
-					go handler(string(k))
-				}
+				expiredNodeIds = append(expiredNodeIds, string(k))
 			}
 		}
 		return nil
 	})
+	executeHandlersOnNodeIdList(expiredNodeIds, bs.expiredNodesHandler)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error": err,
@@ -129,6 +137,7 @@ func (bs *BoltStore) calculateOnlineStatus() {
 	updateInterval := conf.UInt("announced.interval.statistics", 300)
 	factor := conf.UInt("announced.interval.expire", 3)
 	offlineInterval := updateInterval * factor
+	offlineNodeIds := make([]string, 0, 50)
 	err := bs.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(StatusInfoBucket))
 		c := b.Cursor()
@@ -158,9 +167,7 @@ func (bs *BoltStore) calculateOnlineStatus() {
 			}
 			if (now.Unix()-lastseen.Unix()) > int64(offlineInterval) && status.Online {
 				status.Online = false
-				for _, handler := range bs.gwOfflineHandler {
-					go handler(string(k))
-				}
+				offlineNodeIds = append(offlineNodeIds, string(k))
 				if status.NodeId == "" {
 					status.NodeId = string(k)
 				}
@@ -177,6 +184,7 @@ func (bs *BoltStore) calculateOnlineStatus() {
 		}
 		return nil
 	})
+	executeHandlersOnNodeIdList(offlineNodeIds, bs.gwOfflineHandler)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error": err,
