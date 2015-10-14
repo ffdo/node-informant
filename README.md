@@ -70,3 +70,21 @@ http:
   port: 8079              # The port where the http server will listen on.
   address: "[::]"         # Optional listen address if you want the server to listen only on a specific interface
 ```
+
+## HTTP API
+
+The following rest endpoints are available. All endpoints return JSON (or JSON arrays)
+and CORS headers. The only valid method is GET.
+
+Endpoint | Description
+-------- | -----------
+/nodes.json | Generates a valid nodes.json for meshviewer
+/graph.json | Generates valid graph data for meshviewer
+/nodeinfos/{nodeid} | Retrieves general node information about the node with nodeid
+/nodeinfos | Retrieve all available general node information
+/statistics/{nodeid} | Retrieve statistics for node
+/statistics | Retrieve all available statistics
+/neighbours/{nodeid} | Retrieve mesh neighbour information about node
+/neighbours | Retrieve all available neighbour information
+/nodestatus/{nodeid} | Retrieve status information like Lastseen, Online status etc. for node
+/nodestatus | Retrieve all available status information
