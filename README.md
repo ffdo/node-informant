@@ -88,3 +88,22 @@ Endpoint | Description
 /neighbours | Retrieve all available neighbour information
 /nodestatus/{nodeid} | Retrieve status information like Lastseen, Online status etc. for node
 /nodestatus | Retrieve all available status information
+
+## Prometheus
+
+Under the /metrics endpoint prometheus metrics are exposed. Currently we expose the
+following metrics
+
+Metric | Description
+------ | -----------
+total_clients | Total count of clients connected to all nodes
+meshnodes_total | Count of all known mesh nodes online and offline
+total_traffic_rx | Accumulated on mesh nodes received traffic
+total_traffic_tx | Accumulated from mesh nodes transmitted traffic
+total_traffic_mgmt_rx | Accumulated on mesh nodes received management traffic
+total_traffic_mgmt_tx | Accumulated from mesh nodes transmitted management traffic
+meshnodes_online_total | Count of currently available mesh nodes
+meshnode_traffic_rx | Received traffic on every node labeled with the nodeid and traffic type
+meshnode_traffic_tx | Transmitted traffic from every mesh node labeled with the nodeid and traffic type
+meshnode_uptime | Uptime of single mesh nodes labeled with the nodeid
+meshnode_clients | Client count on mesh nodes labeled with the nodeid
