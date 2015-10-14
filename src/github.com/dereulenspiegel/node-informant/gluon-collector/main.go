@@ -235,5 +235,6 @@ func main() {
 	}
 	closeables, err := Assemble()
 	Closeables = append(Closeables, closeables...)
+	ListenToSig()
 	log.Errorf("Error assembling application: %v", err)
 }

@@ -22,6 +22,7 @@ func (h *HttpApi) Routes() []httpserver.Route {
 		httpserver.Route{"AllNeighbours", "GET", "/neighbours", h.GetAllNeighboursRest},
 		httpserver.Route{"AllStatistucs", "GET", "/statistics", h.GetAllStatistics},
 		httpserver.Route{"AllNodeStatus", "GET", "/nodestatus", h.GetAllNodeStatus},
+		httpserver.Route{"NodeStatus", "GET", "/nodestatus/{nodeid}", h.GetAllNodeStatus},
 	}
 	return apiRoutes
 }
@@ -32,8 +33,24 @@ func respondJson(w http.ResponseWriter, data interface{}) {
 	json.NewEncoder(w).Encode(data)
 }
 
+func respondMissing(w http.ResponseWriter, err error) {
+	w.WriteHeader(http.StatusNotFound)
+	json.NewEncoder(w).Encode(err)
+}
+
 func (h *HttpApi) GetAllNodeStatus(w http.ResponseWriter, r *http.Request) {
 	respondJson(w, h.Store.GetNodeStatusInfos())
+}
+
+func (h *HttpApi) GetNodeStatus(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	nodeid := vars["nodeid"]
+	status, err := h.Store.GetNodeStatusInfo(nodeid)
+	if err != nil {
+		respondJson(w, status)
+	} else {
+		respondMissing(w, err)
+	}
 }
 
 func (h *HttpApi) GetAllStatistics(w http.ResponseWriter, r *http.Request) {
