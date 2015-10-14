@@ -52,6 +52,8 @@ announced:                # Block describing the behavior of the annoucned reque
   interval:
     statistics: 300       # The interval in seconds to fetch fast changing data like statistics and neighbours
     nodeinfo: 1800        # The interval in seconds to request more static data and discover new nodes
+    expire: 3             # This is a multiplicator for the statistics interval. A node is considered offline if
+                          # statistics interval multiplied by expire seconds have passed since the last response
   interface: "bat0"       # The interface to use for announced
   port: 21444             # The port to use as a source port announced requests and to listen for responses on
 
@@ -62,6 +64,7 @@ logger:
 store:
   type: "bolt"            # The type of data store to use. Currently bolt (persistend) and memory (non persistend) are supported
   path: "/opt/gluon-collector/collector.db" # The path is only relevant for bolt store. Where to store the database?
+  expireNodesAfterDays: 365 # After this amount of days, a node is considered gone and is deleted from the database
 
 http:             
   port: 8079              # The port where the http server will listen on.
