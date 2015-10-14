@@ -14,10 +14,12 @@ import (
 // BoltStore implements the Nodeinfostore interface. BoltStore uses the embedded
 // bolt database to persist data to disc.
 type BoltStore struct {
-	db               *bolt.DB
-	bucket           *bolt.Bucket
-	onlineStatusJob  *scheduler.ScheduledJob
-	gwOfflineHandler []func(string)
+	db                  *bolt.DB
+	bucket              *bolt.Bucket
+	onlineStatusJob     *scheduler.ScheduledJob
+	expireNodesJob      *scheduler.ScheduledJob
+	gwOfflineHandler    []func(string)
+	expiredNodesHandler []func(string)
 }
 
 type JsonBool struct {
@@ -55,7 +57,9 @@ func NewBoltStore(path string) (*BoltStore, error) {
 		return nil, err
 	}
 	store.gwOfflineHandler = make([]func(string), 0, 10)
+	store.expiredNodesHandler = make([]func(string), 0, 10)
 	store.onlineStatusJob = scheduler.NewJob(time.Minute*1, store.calculateOnlineStatus, false)
+	store.expireNodesJob = scheduler.NewJob(time.Hour*24, store.expireUnreachableNodes, false)
 	return store, nil
 }
 
@@ -63,6 +67,61 @@ func NewBoltStore(path string) (*BoltStore, error) {
 func (b *BoltStore) Close() {
 	b.onlineStatusJob.Stop()
 	b.db.Close()
+}
+
+func (bs *BoltStore) expireUnreachableNodes() {
+	now := time.Now()
+	expireDuration := time.Duration(conf.UInt("store.expireNodesAfterDays", 365)*24) * time.Hour
+	expireSeconds := expireDuration.Seconds()
+	err := bs.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(StatusInfoBucket))
+		nodeinfoBucket := tx.Bucket([]byte(NodeinfoBucket))
+		statsBucket := tx.Bucket([]byte(StatisticsBucket))
+		neighbourBucket := tx.Bucket([]byte(NeighboursBucket))
+		gatewayBucket := tx.Bucket([]byte(GatewayBucket))
+		c := b.Cursor()
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			status := NodeStatusInfo{}
+			err := json.Unmarshal(v, &status)
+			if err != nil {
+				log.WithFields(log.Fields{
+					"error":      err,
+					"nodeId":     k,
+					"jsonString": string(v),
+				}).Error("Can't unmarshall json from node status info")
+				continue
+			}
+			var lastseen time.Time
+			lastseen, err = time.Parse(TimeFormat, status.Lastseen)
+			if err != nil {
+				// In case we have imported data from ffmap-backend still in our database
+				lastseen, err = time.Parse(LegacyTimeFormat, status.Lastseen)
+				if err != nil {
+					log.WithFields(log.Fields{
+						"error":      err,
+						"timeString": status.Lastseen,
+						"nodeId":     status.NodeId,
+					}).Error("Can't parse lastseen time")
+				}
+			}
+			if (now.Unix() - lastseen.Unix()) > int64(expireSeconds) {
+				b.Delete(k)
+				nodeinfoBucket.Delete(k)
+				statsBucket.Delete(k)
+				neighbourBucket.Delete(k)
+				gatewayBucket.Delete(k)
+				for _, handler := range bs.expiredNodesHandler {
+					go handler(string(k))
+				}
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+		}).Error("Error in database transaction while updating online status")
+	}
 }
 
 func (bs *BoltStore) calculateOnlineStatus() {
@@ -162,6 +221,10 @@ func (b *BoltStore) get(key, bucket string, object interface{}) error {
 
 func (b *BoltStore) NotifyNodeOffline(handler func(string)) {
 	b.gwOfflineHandler = append(b.gwOfflineHandler, handler)
+}
+
+func (b *BoltStore) NotifyNodeExpired(handler func(string)) {
+	b.expiredNodesHandler = append(b.expiredNodesHandler, handler)
 }
 
 func (b *BoltStore) GetNodeInfo(nodeId string) (NodeInfo, error) {
