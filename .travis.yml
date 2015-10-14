@@ -12,7 +12,7 @@ deploy:
   api_key:
     secure: EtC2N5fqMuAvvTSP9JSiKeIhQmqSrx1eOpDh4Ifw3VV6dqs0gYtrvMLreqoRUguGFd1hcNLXq49xKAIzfzuWdw+xH4yy3edw8Vwha3UPmTQ5rxUBABkx2U6ouFzRXnL93SW8zqqjO5R4oCvqKs5/mGhDCt10FNBZe6kmzkN1Et2KTHi/dewC6DGqlj2oieFJ+OKtrrOxv7OXoIX+U5CgBDxR1uZ86A1Vrm0d1/n43FhmBEJo88BVAggR0ZXtwDyJTJYPEaNLqEBt2ZzDI7SfVDZPYOy0U2ErfQW2GC1gbof8ZB+imVoCzKq3iHiGSZIHrqTKTNEHBSNjb4esD0quI2PWW1FdQygM/7NFOFWZ33RW1Hp9sHvbNOcmN/9jYG3XE6aFH1dwL9WmESj/wD1CMPWozV8Q4s8uRUjINVnbnBMdnkXMp17AFUHvQjaoRXr/CijEEFYOLpeczBOC0WMM7Pg0szecmG/Yc33zfBne6SQSDQWsslNdu67fOdJJRZTW+OCcipIMnFVv2OYkbbj7DsYJaEAxfjL0Qmvoz8mlth2sQlHv41J4Gle0TW3eii7pt6QbyLLBsScWiibyGBZL+Ua53SEXKGPyrs5dhpq1uDwJDfzoTZPfljX/F+evnZVPC9YQ9Y2ma2jXVsJZ9YzOcpo9AS0EKSjW5gdJHyc+CrI=
   file:
-  - bin/gluon-collector-linux-amd64
+  - bin/gluon-collector
   - bin/gluon-collector-linux-386
   on:
     repo: dereulenspiegel/node-collector
