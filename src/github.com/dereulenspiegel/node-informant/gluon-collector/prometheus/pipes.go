@@ -19,12 +19,28 @@ func (n *NodeCountPipe) Process(in chan data.ParsedResponse) chan data.ParsedRes
 	out := make(chan data.ParsedResponse)
 	go func() {
 		for response := range in {
-			status, err := n.Store.GetNodeStatusInfo(response.NodeId())
+			_, err := n.Store.GetNodeStatusInfo(response.NodeId())
 			if err != nil {
 				TotalNodes.Inc()
 				// New node. Also increment online count
 				OnlineNodes.Inc()
-			} else if status.Online == false {
+			}
+			out <- response
+		}
+	}()
+	return out
+}
+
+type ReturnedNodeDetector struct {
+	Store data.Nodeinfostore
+}
+
+func (r *ReturnedNodeDetector) Process(in chan data.ParsedResponse) chan data.ParsedResponse {
+	out := make(chan data.ParsedResponse)
+	go func() {
+		for response := range in {
+			status, err := r.Store.GetNodeStatusInfo(response.NodeId())
+			if err == nil && !status.Online {
 				// Existing offline node came back online
 				OnlineNodes.Inc()
 			}
@@ -134,5 +150,6 @@ func GetPrometheusProcessPipes(store data.Nodeinfostore) []pipeline.ProcessPipe 
 	out = append(out, &ClientCountPipe{Store: store})
 	out = append(out, &TrafficCountPipe{Store: store})
 	out = append(out, &NodeMetricCollector{})
+	out = append(out, &ReturnedNodeDetector{Store: store})
 	return out
 }
