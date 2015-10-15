@@ -31,6 +31,8 @@ func (n *NodeCountPipe) Process(in chan data.ParsedResponse) chan data.ParsedRes
 	return out
 }
 
+// ReturnedNodeDetector handles incrementing the online node metric for returning
+// nodes.
 type ReturnedNodeDetector struct {
 	Store data.Nodeinfostore
 }

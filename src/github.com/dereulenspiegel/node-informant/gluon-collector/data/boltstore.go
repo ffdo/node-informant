@@ -69,6 +69,8 @@ func (b *BoltStore) Close() {
 	b.db.Close()
 }
 
+// executeHandlersOnNodeIdList is a helper method to simply invoke a list of handler
+// methods on a list if node ids.
 func executeHandlersOnNodeIdList(nodeIds []string, handlers []func(string)) {
 	for _, nodeid := range nodeIds {
 		for _, handler := range handlers {
@@ -77,6 +79,9 @@ func executeHandlersOnNodeIdList(nodeIds []string, handlers []func(string)) {
 	}
 }
 
+// expireUnreachableNodes is invoked once per day to finally delete nodes which
+// have been offline for too long. The default interval is one year.
+// All information in all buckets regarding the expired nodes is removed.
 func (bs *BoltStore) expireUnreachableNodes() {
 	now := time.Now()
 	expireDuration := time.Duration(conf.UInt("store.expireNodesAfterDays", 365)*24) * time.Hour
@@ -132,6 +137,10 @@ func (bs *BoltStore) expireUnreachableNodes() {
 	}
 }
 
+// calculateOnlineStatus is invoked once a minute to calculate the current
+// online status of a node. A node is considered to be offline if it has missed
+// to report data back on multiple requests. Eventually the node is tried via
+// unicast, which could bring her back.
 func (bs *BoltStore) calculateOnlineStatus() {
 	now := time.Now()
 	updateInterval := conf.UInt("announced.interval.statistics", 300)
@@ -192,6 +201,8 @@ func (bs *BoltStore) calculateOnlineStatus() {
 	}
 }
 
+// put is a helper method to arbritrary data as marshalled as a json String
+// in the specified bucket.
 func (b *BoltStore) put(key, bucket string, data interface{}) {
 	bytes, err := json.Marshal(data)
 	if err == nil && bytes != nil {
@@ -214,6 +225,8 @@ func (b *BoltStore) put(key, bucket string, data interface{}) {
 	}
 }
 
+// get is a helper method to retrieve arbritrary data which has been marshalled
+// as a json string from the specified bucket
 func (b *BoltStore) get(key, bucket string, object interface{}) error {
 	err := b.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(bucket))
@@ -227,10 +240,15 @@ func (b *BoltStore) get(key, bucket string, object interface{}) error {
 	return err
 }
 
+// NotifyNodeOffline registers a handler which will be called as soon as a node
+// is considered offline by this data store
 func (b *BoltStore) NotifyNodeOffline(handler func(string)) {
 	b.gwOfflineHandler = append(b.gwOfflineHandler, handler)
 }
 
+// NotifyNodeExpired registers a handler which is called as soon as node is
+// removed from this data store. If these handlers are called no node data is
+// available any more.
 func (b *BoltStore) NotifyNodeExpired(handler func(string)) {
 	b.expiredNodesHandler = append(b.expiredNodesHandler, handler)
 }
