@@ -32,9 +32,10 @@ func (m *MissingUpdater) CheckNodeUnicast(nodeId string) {
 
 // Query for the missing mesh neighbour information.
 func (m *MissingUpdater) UpdateMissingNeighbours(nodeinfo data.NodeInfo) {
-	log.Print("Updating missing neighbour infos")
+	log.WithFields(log.Fields{
+		"nodeid": nodeinfo.NodeId,
+	}).Info("Updating missing neighbour infos")
 
-	log.Debugf("Updating missing neighbour information for Node %s", nodeinfo.NodeId)
 	for _, addressString := range nodeinfo.Network.Addresses {
 		ip := net.ParseIP(addressString)
 		addr := &net.UDPAddr{
@@ -48,9 +49,10 @@ func (m *MissingUpdater) UpdateMissingNeighbours(nodeinfo data.NodeInfo) {
 
 // Query for missing statistics.
 func (m *MissingUpdater) UpdateMissingStatistics(nodeinfo data.NodeInfo) {
-	log.Print("Updating missing neighbour infos")
+	log.WithFields(log.Fields{
+		"nodeid": nodeinfo.NodeId,
+	}).Info("Updating missing statistics")
 
-	log.Debugf("Updating missing statistics information for Node %s", nodeinfo.NodeId)
 	for _, addressString := range nodeinfo.Network.Addresses {
 		ip := net.ParseIP(addressString)
 		addr := &net.UDPAddr{

@@ -1,9 +1,12 @@
-package pipeline
+package collectors
 
 import (
 	"time"
 
+	log "github.com/Sirupsen/logrus"
+
 	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
+	"github.com/dereulenspiegel/node-informant/gluon-collector/prometheus"
 )
 
 // GatewayCollector inspects all received statistics and stores the mac addresses
@@ -110,6 +113,12 @@ func (s *StatusInfoCollector) Process(in chan data.ParsedResponse) chan data.Par
 			nodeId := response.NodeId()
 			statusInfo, err := s.Store.GetNodeStatusInfo(nodeId)
 			if err == nil {
+				if !statusInfo.Online {
+					prometheus.OnlineNodes.Inc()
+					log.WithFields(log.Fields{
+						"nodeid": nodeId,
+					}).Info("Node is considered online again, after receiving any packet at all")
+				}
 				statusInfo.Online = true
 				statusInfo.Lastseen = time.Now().Format(TimeFormat)
 			} else {

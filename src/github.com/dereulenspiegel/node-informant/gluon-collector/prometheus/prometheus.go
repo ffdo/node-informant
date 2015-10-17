@@ -134,7 +134,11 @@ func initTrafficCounter(store data.Nodeinfostore) {
 // decrementOnlineNodes is a callback which can registered with a Nodeinfostore
 // to be notified if a node is marked as offline.
 func decrementOnlineNodes(nodeId string) {
-	OnlineNodes.Dec()
+	if nodeId != "" {
+		OnlineNodes.Dec()
+	} else {
+		log.Warn("decrementOnlineNodes callback called with empty nodeId")
+	}
 }
 
 // initOnlineNodesGauge counts all nodes with status Online and initializes the

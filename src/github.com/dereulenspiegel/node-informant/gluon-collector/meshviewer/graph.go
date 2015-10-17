@@ -113,7 +113,7 @@ func (g *GraphGenerator) buildLink(nodeTable map[string]*GraphNode, sourceMac, t
 	} else {
 		targetLinkInfo, exists := targetBatInfo.Neighbours[sourceMac]
 		if !exists {
-			log.Warnf("Can't find linkinfo from %s to %s", targetMac, sourceMac)
+			log.Debugf("Can't find linkinfo from %s to %s", targetMac, sourceMac)
 			link.Bidirect = false
 		} else {
 			link.Bidirect = true

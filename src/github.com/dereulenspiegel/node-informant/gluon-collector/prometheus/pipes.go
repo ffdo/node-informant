@@ -1,6 +1,7 @@
 package prometheus
 
 import (
+	log "github.com/Sirupsen/logrus"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/pipeline"
 	stat "github.com/prometheus/client_golang/prometheus"
@@ -19,11 +20,15 @@ func (n *NodeCountPipe) Process(in chan data.ParsedResponse) chan data.ParsedRes
 	out := make(chan data.ParsedResponse)
 	go func() {
 		for response := range in {
-			_, err := n.Store.GetNodeStatusInfo(response.NodeId())
-			if err != nil {
-				TotalNodes.Inc()
-				// New node. Also increment online count
-				OnlineNodes.Inc()
+			if response.Type() == "nodeinfo" {
+				_, err := n.Store.GetNodeStatusInfo(response.NodeId())
+				if err != nil {
+					log.WithFields(log.Fields{
+						"nodeid": response.NodeId(),
+					}).Info("Discovered new node")
+					OnlineNodes.Inc()
+					TotalNodes.Inc()
+				}
 			}
 			out <- response
 		}
@@ -41,10 +46,13 @@ func (r *ReturnedNodeDetector) Process(in chan data.ParsedResponse) chan data.Pa
 	out := make(chan data.ParsedResponse)
 	go func() {
 		for response := range in {
-			status, err := r.Store.GetNodeStatusInfo(response.NodeId())
-			if err == nil && !status.Online {
-				// Existing offline node came back online
-				OnlineNodes.Inc()
+			if response.Type() == "nodeinfo" {
+				status, err := r.Store.GetNodeStatusInfo(response.NodeId())
+				if err == nil && !status.Online {
+					// Existing offline node came back online
+					log.Debugf("Node %s came back online", response.NodeId())
+					OnlineNodes.Inc()
+				}
 			}
 			out <- response
 		}
@@ -149,9 +157,9 @@ func (n *NodeMetricCollector) Process(in chan data.ParsedResponse) chan data.Par
 func GetPrometheusProcessPipes(store data.Nodeinfostore) []pipeline.ProcessPipe {
 	out := make([]pipeline.ProcessPipe, 0, 10)
 	out = append(out, &NodeCountPipe{Store: store})
+	//out = append(out, &ReturnedNodeDetector{Store: store})
 	out = append(out, &ClientCountPipe{Store: store})
 	out = append(out, &TrafficCountPipe{Store: store})
 	out = append(out, &NodeMetricCollector{})
-	out = append(out, &ReturnedNodeDetector{Store: store})
 	return out
 }

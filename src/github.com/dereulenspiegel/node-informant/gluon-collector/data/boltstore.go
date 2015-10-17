@@ -74,7 +74,7 @@ func (b *BoltStore) Close() {
 func executeHandlersOnNodeIdList(nodeIds []string, handlers []func(string)) {
 	for _, nodeid := range nodeIds {
 		for _, handler := range handlers {
-			go handler(string(nodeid))
+			handler(string(nodeid))
 		}
 	}
 }
@@ -119,6 +119,10 @@ func (bs *BoltStore) expireUnreachableNodes() {
 				}
 			}
 			if (now.Unix() - lastseen.Unix()) > int64(expireSeconds) {
+				log.WithFields(log.Fields{
+					"nodeid":   string(k),
+					"lastseen": status.Lastseen,
+				}).Info("Deleting node as it is considered gone forever after")
 				b.Delete(k)
 				nodeinfoBucket.Delete(k)
 				statsBucket.Delete(k)
@@ -175,6 +179,10 @@ func (bs *BoltStore) calculateOnlineStatus() {
 				}
 			}
 			if (now.Unix()-lastseen.Unix()) > int64(offlineInterval) && status.Online {
+				log.WithFields(log.Fields{
+					"nodeid":   string(k),
+					"lastseen": status.Lastseen,
+				}).Info("Node is considered offline after being unreachable for too long")
 				status.Online = false
 				offlineNodeIds = append(offlineNodeIds, string(k))
 				if status.NodeId == "" {
@@ -187,6 +195,7 @@ func (bs *BoltStore) calculateOnlineStatus() {
 					log.WithFields(log.Fields{
 						"error":      err,
 						"nodeStatus": status,
+						"nodeid":     string(k),
 					}).Error("Can't marshall node status info")
 				}
 			}

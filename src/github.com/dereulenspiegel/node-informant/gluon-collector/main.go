@@ -13,6 +13,7 @@ import (
 
 	"github.com/dereulenspiegel/node-informant/announced"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/api"
+	"github.com/dereulenspiegel/node-informant/gluon-collector/collectors"
 	conf "github.com/dereulenspiegel/node-informant/gluon-collector/config"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/httpserver"
@@ -60,9 +61,9 @@ func getProcessPipes(store data.Nodeinfostore) []pipeline.ProcessPipe {
 	pipes := make([]pipeline.ProcessPipe, 0, 10)
 
 	pipes = append(pipes, prometheus.GetPrometheusProcessPipes(store)...)
-	pipes = append(pipes, &pipeline.GatewayCollector{Store: store},
-		&pipeline.NodeinfoCollector{Store: store}, &pipeline.StatisticsCollector{Store: store},
-		&pipeline.NeighbourInfoCollector{Store: store}, &pipeline.StatusInfoCollector{Store: store})
+	pipes = append(pipes, &collectors.GatewayCollector{Store: store},
+		&collectors.NodeinfoCollector{Store: store}, &collectors.StatisticsCollector{Store: store},
+		&collectors.NeighbourInfoCollector{Store: store}, &collectors.StatusInfoCollector{Store: store})
 	return pipes
 }
 
