@@ -1,11 +1,18 @@
-package prometheus
+package main
 
 import (
+	"testing"
+	"time"
+
+	"github.com/dereulenspiegel/node-informant/gluon-collector/collectors"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/pipeline"
+	"github.com/dereulenspiegel/node-informant/gluon-collector/prometheus"
 	stat "github.com/prometheus/client_golang/prometheus"
 
 	dto "github.com/prometheus/client_model/go"
+
+	"github.com/stretchr/testify/assert"
 )
 
 var testNodeId string = "e8de27252554"
@@ -41,7 +48,7 @@ func feedClientsStat(processPipeline *pipeline.ProcessPipeline, clientCount int)
 	processPipeline.Enqueue(packet1)
 }
 
-/*func TestPrometheusClientCounter(t *testing.T) {
+func TestPrometheusClientCounter(t *testing.T) {
 	assert := assert.New(t)
 	assert.True(true)
 
@@ -49,14 +56,14 @@ func feedClientsStat(processPipeline *pipeline.ProcessPipeline, clientCount int)
 	finishChan := make(chan bool)
 
 	store := data.NewSimpleInMemoryStore()
-	processPipeline := pipeline.NewProcessPipeline(&ClientCountPipe{Store: store},
+	processPipeline := pipeline.NewProcessPipeline(&prometheus.ClientCountPipe{Store: store},
 		&collectors.StatisticsCollector{Store: store})
 
-	TotalClientCounter.Set(10.0)
+	prometheus.TotalClientCounter.Set(10.0)
 
 	var packetCount int = 0
 	go processPipeline.Dequeue(func(response data.ParsedResponse) {
-		value := collectGaugeValue(TotalClientCounter)
+		value := collectGaugeValue(prometheus.TotalClientCounter)
 		assert.Equal(expectedClientCounts[packetCount], value)
 		packetCount = packetCount + 1
 		if packetCount == len(expectedClientCounts) {
@@ -77,4 +84,4 @@ func feedClientsStat(processPipeline *pipeline.ProcessPipeline, clientCount int)
 	for range finishChan {
 		processPipeline.Close()
 	}
-}*/
+}
