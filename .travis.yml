@@ -14,6 +14,8 @@ deploy:
   file:
   - bin/gluon-collector
   - bin/gluon-collector-linux-386
+  - bin/neighbour-discovery
+  - bin/neighbour-discovery-linux-386
   on:
     repo: dereulenspiegel/node-collector
     tags: true
