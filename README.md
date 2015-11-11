@@ -1,4 +1,4 @@
-# Node informant [![Build Status](https://travis-ci.org/dereulenspiegel/node-collector.svg?branch=master)](https://travis-ci.org/dereulenspiegel/node-collector)
+# Node informant [![Build Status](https://travis-ci.org/ffdo/node-informant.svg?branch=master)](https://travis-ci.org/ffdo/node-informant)
 
 Node informant actually consists of two tools. neighbour-discovery and gluon-collector.
 
