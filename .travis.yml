@@ -17,5 +17,5 @@ deploy:
   - bin/neighbour-discovery
   - bin/neighbour-discovery-linux-386
   on:
-    repo: dereulenspiegel/node-collector
+    repo: ffdo/node-collector
     tags: true
