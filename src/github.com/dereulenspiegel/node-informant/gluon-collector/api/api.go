@@ -20,7 +20,7 @@ func (h *HttpApi) Routes() []httpserver.Route {
 		httpserver.Route{"NodeStatistics", "GET", "/statistics/{nodeid}", h.GetNodeStatisticsRest},
 		httpserver.Route{"NodesNeighbours", "GET", "/neighbours/{nodeid}", h.GetNodeNeighboursRest},
 		httpserver.Route{"AllNeighbours", "GET", "/neighbours", h.GetAllNeighboursRest},
-		httpserver.Route{"AllStatistucs", "GET", "/statistics", h.GetAllStatistics},
+		httpserver.Route{"AllStatistics", "GET", "/statistics", h.GetAllStatistics},
 		httpserver.Route{"AllNodeStatus", "GET", "/nodestatus", h.GetAllNodeStatus},
 		httpserver.Route{"NodeStatus", "GET", "/nodestatus/{nodeid}", h.GetNodeStatus},
 	}
