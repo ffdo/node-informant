@@ -1,9 +1,11 @@
-announced:
-  interval:
-    statistics: 300
-    nodeinfo: 1800
+receiver:
+- type:  announced
   interface: "bat0"
   port: 21444
+
+interval:
+  statistics: 300
+  nodeinfo: 1800
 
 logger:
   level: "debug"
