@@ -57,6 +57,31 @@ func (l *LogPipe) Process(in chan announced.Response) chan announced.Response {
 	return out
 }
 
+type MultiReceiver struct {
+	packetChan chan announced.Response
+}
+
+func NewMultiReceiver(receivers ...announced.AnnouncedPacketReceiver) *MultiReceiver {
+	mr := &MultiReceiver{make(chan announced.Response, 100)}
+
+	for _, receiver := range receivers {
+		go mr.singleReceive(receiver)
+	}
+	return mr
+}
+
+func (m *MultiReceiver) singleReceive(receiver announced.AnnouncedPacketReceiver) {
+	receiver.Receive(func(response announced.Response) {
+		m.packetChan <- response
+	})
+}
+
+func (m *MultiReceiver) Receive(rFunc func(announced.Response)) {
+	for packet := range m.packetChan {
+		rFunc(packet)
+	}
+}
+
 func getProcessPipes(store data.Nodeinfostore) []pipeline.ProcessPipe {
 	pipes := make([]pipeline.ProcessPipe, 0, 10)
 
