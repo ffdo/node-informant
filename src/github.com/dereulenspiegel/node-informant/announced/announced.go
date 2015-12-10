@@ -5,6 +5,8 @@ import (
 	"net"
 	"runtime"
 
+	"io"
+
 	log "github.com/Sirupsen/logrus"
 )
 
@@ -25,6 +27,7 @@ var announcedAddr = &net.UDPAddr{IP: net.ParseIP(MultiCastGroup), Port: Port}
 // AnnouncedPacketReceiver abstracts the receiption of packets on the network side
 // away so we can mock this easily in tests.
 type AnnouncedPacketReceiver interface {
+	io.Closer
 	// Receive registers a callback method called every time packet is delivered
 	// Normally this method jusz enqueues the Repsonse in a channel for further processing.
 	Receive(rFunc func(Response))
@@ -150,10 +153,11 @@ func (r *Requester) readLoop() {
 }
 
 // Close closes the Requester instance and frees all allocated resources
-func (r *Requester) Close() {
+func (r *Requester) Close() error {
 	r.unicastConn.Close()
 	close(r.ReceiveChan)
 	close(r.queryChan)
+	return nil
 }
 
 // QueryUnicast sends an UDP query to a host directly via unicast. The IPv6 address

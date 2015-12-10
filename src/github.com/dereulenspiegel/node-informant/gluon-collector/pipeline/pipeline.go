@@ -5,12 +5,6 @@ import (
 	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
 )
 
-// Closeable should be implemented by all types which need to free resources
-// on shutdown.
-type Closeable interface {
-	Close()
-}
-
 // ReceivePipe needs to implemented by all types which want to participate in the
 // process of receiving a response from announced and transforming it into something
 // usable. This can be deflating and parsing the date for example.
@@ -62,9 +56,10 @@ type ParsePipe interface {
 	Process(in chan announced.Response) chan data.ParsedResponse
 }
 
-func (pipeline *ReceivePipeline) Close() {
+func (pipeline *ReceivePipeline) Close() error {
 	close(pipeline.head)
 	close(pipeline.tail)
+	return nil
 }
 
 // ProcessPipe needs to be implemented by all types which want to participate in
@@ -79,9 +74,10 @@ type ProcessPipeline struct {
 	tail chan data.ParsedResponse
 }
 
-func (pipeline *ProcessPipeline) Close() {
+func (pipeline *ProcessPipeline) Close() error {
 	close(pipeline.head)
 	close(pipeline.tail)
+	return nil
 }
 
 // Enqueue gives a common interface to push ParsedResponses into the ProcessPipeline
