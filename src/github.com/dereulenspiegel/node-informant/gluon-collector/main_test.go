@@ -24,6 +24,11 @@ func (t *TestDataReceiver) Receive(rFunc func(announced.Response)) {
 	}
 }
 
+func (t *TestDataReceiver) Close() error {
+	// Only here to satisfy the announced.AnnouncedPacketReceiver interface
+	return nil
+}
+
 func executeCompletePipe(t *testing.T, store data.Nodeinfostore) {
 	log.SetLevel(log.ErrorLevel)
 	assert := assert.New(t)
