@@ -133,7 +133,7 @@ func (n *NodesJsonGenerator) UpdateNodesJson() {
 			"error":  err,
 			"value":  err.(*json.UnsupportedValueError).Value,
 			"string": err.(*json.UnsupportedValueError).Str,
-		}).Errorf("Error encoding nodes.json")
+		}).Errorf("Error marshalling nodes.json")
 		return
 	}
 	n.CachedNodesJson = string(data)

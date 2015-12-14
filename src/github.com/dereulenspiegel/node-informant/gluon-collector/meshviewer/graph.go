@@ -103,12 +103,12 @@ func (g *GraphGenerator) buildLink(nodeTable map[string]*GraphNode, sourceMac, t
 	}
 	targetNeighbourInfo, err := g.Store.GetNodeNeighbours(targetNode.NodeId)
 	if err != nil {
-		log.Warnf("Can't find neighbourinfos for nodeId %s", targetNode.NodeId)
+		log.Debugf("Can't find neighbourinfos for nodeId %s", targetNode.NodeId)
 	}
 
 	targetBatInfo, exists := targetNeighbourInfo.Batadv[targetMac]
 	if !exists {
-		log.Warnf("Can't find Batadv links for %s", targetMac)
+		log.Debugf("Can't find Batadv links for %s", targetMac)
 		link.Bidirect = false
 	} else {
 		targetLinkInfo, exists := targetBatInfo.Neighbours[sourceMac]
