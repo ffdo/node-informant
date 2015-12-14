@@ -124,10 +124,20 @@ func initTrafficCounter(store data.Nodeinfostore) {
 	TotalNodeMgmtTrafficTx.Set(0.0)
 
 	for _, stats := range store.GetAllStatistics() {
-		TotalNodeTrafficRx.Add(float64(stats.Traffic.Rx.Bytes))
-		TotalNodeTrafficTx.Add(float64(stats.Traffic.Tx.Bytes))
-		TotalNodeMgmtTrafficRx.Add(float64(stats.Traffic.MgmtRx.Bytes))
-		TotalNodeMgmtTrafficTx.Add(float64(stats.Traffic.MgmtTx.Bytes))
+		if stats.Traffic != nil {
+			if stats.Traffic.Rx != nil {
+				TotalNodeTrafficRx.Add(float64(stats.Traffic.Rx.Bytes))
+			}
+			if stats.Traffic.Tx != nil {
+				TotalNodeTrafficTx.Add(float64(stats.Traffic.Tx.Bytes))
+			}
+			if stats.Traffic.MgmtRx != nil {
+				TotalNodeMgmtTrafficRx.Add(float64(stats.Traffic.MgmtRx.Bytes))
+			}
+			if stats.Traffic.MgmtTx != nil {
+				TotalNodeMgmtTrafficTx.Add(float64(stats.Traffic.MgmtTx.Bytes))
+			}
+		}
 	}
 }
 
