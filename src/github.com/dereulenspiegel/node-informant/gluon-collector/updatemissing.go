@@ -16,7 +16,7 @@ import (
 // This makes more sense if data in the data store can expire (this is a TODO for
 // the BoltStore).
 type MissingUpdater struct {
-	Requester *announced.Requester
+	Requester announced.AnnouncedPacketReceiver
 	Store     data.Nodeinfostore
 }
 

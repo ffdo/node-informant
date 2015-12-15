@@ -1,6 +1,7 @@
 package main
 
 import (
+	"net"
 	"os"
 	"testing"
 	"time"
@@ -16,6 +17,14 @@ import (
 
 type TestDataReceiver struct {
 	TestData []announced.Response
+}
+
+func (t *TestDataReceiver) Query(queryString string) {
+	//Nothing just here for interface compatibility
+}
+
+func (t *TestDataReceiver) QueryUnicast(addr *net.UDPAddr, queryString string) {
+	//Nothing just here for interface compatibility
 }
 
 func (t *TestDataReceiver) Receive(rFunc func(announced.Response)) {

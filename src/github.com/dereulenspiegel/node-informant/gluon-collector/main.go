@@ -96,15 +96,7 @@ func BuildPipelines(store data.Nodeinfostore, receiver announced.AnnouncedPacket
 }
 
 func Assemble() ([]io.Closer, error) {
-	iface, err := conf.Global.String("announced.interface")
-	if err != nil {
-		return nil, err
-	}
-	requester, err := announced.NewRequester(iface, conf.Global.UInt("announced.port", 12444))
-	if err != nil {
-		log.Fatalf("Can't create requester: %v", err)
-		return nil, err
-	}
+	requester := buildReceiver()
 	closeables, err := BuildPipelines(DataStore, requester, func(response data.ParsedResponse) {
 		//Do nothing. This is the last step and we do not need to do anything here,
 		// just pull the chan clean

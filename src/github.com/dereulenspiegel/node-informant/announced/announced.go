@@ -31,6 +31,8 @@ type AnnouncedPacketReceiver interface {
 	// Receive registers a callback method called every time packet is delivered
 	// Normally this method jusz enqueues the Repsonse in a channel for further processing.
 	Receive(rFunc func(Response))
+	Query(queryString string)
+	QueryUnicast(addr *net.UDPAddr, queryString string)
 }
 
 // Query represents who and what to query. If TargetAddr is null the default

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"net"
 
 	log "github.com/Sirupsen/logrus"
 	conf "github.com/dereulenspiegel/node-informant/gluon-collector/config"
@@ -22,6 +23,18 @@ func NewMultiReceiver(receivers ...announced.AnnouncedPacketReceiver) *MultiRece
 		go mr.singleReceive(receiver)
 	}
 	return mr
+}
+
+func (m *MultiReceiver) Query(queryString string) {
+	for _, receiver := range m.childReceiver {
+		receiver.Query(queryString)
+	}
+}
+
+func (m *MultiReceiver) QueryUnicast(addr *net.UDPAddr, queryString string) {
+	for _, receiver := range m.childReceiver {
+		receiver.QueryUnicast(addr, queryString)
+	}
 }
 
 func (m *MultiReceiver) singleReceive(receiver announced.AnnouncedPacketReceiver) {
