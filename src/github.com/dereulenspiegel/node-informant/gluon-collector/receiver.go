@@ -76,7 +76,7 @@ func buildReceiver() announced.AnnouncedPacketReceiver {
 }
 
 func receiverFactory(receiverConfig *cfg.Config) announced.AnnouncedPacketReceiver {
-	receiverType, err := receiverConfig.String("Type")
+	receiverType, err := receiverConfig.String("type")
 	if err != nil {
 		log.Fatalf("Can't retrieve type of receiver: %v", err)
 	}
