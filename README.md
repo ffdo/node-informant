@@ -8,10 +8,10 @@ vendor feature is not experimental any more (or at least a used default) this
 project will move to the default go tools most probably.
 
 ## How to build
-Simply check out the project and install `gb`. Then simply execute `gb build`
-and executables are build. gluon-collector is a daemon for continuous data
-collection,neighbour-discovery is replacement for gluon-neighbour-discovery and
-executes single queries.
+Simply check out the project and install [gb](http://getgb.io/). Then simply
+execute `gb build` and executables are build. gluon-collector is a daemon for
+continuous data collection,neighbour-discovery is replacement for
+gluon-neighbour-discovery and executes single queries.
 
 # neighbour-discovery
 
