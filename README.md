@@ -31,7 +31,7 @@ Switch | Description | Default | Mandatory
 
 gluon-collector should run in the background. It queries in regular intervals all nodes
 listening on the default announced multicast group and stores the received information.
-The received information is the available via a REST API or data prepared for meshviewer.
+The received information is available via a REST API or data prepared for meshviewer.
 
 ## Command line switches
 
@@ -48,14 +48,16 @@ collected data.
 ## Example config
 
 ```yaml
-announced:                # Block describing the behavior of the annoucned requester
-  interval:
-    statistics: 300       # The interval in seconds to fetch fast changing data like statistics and neighbours
-    nodeinfo: 1800        # The interval in seconds to request more static data and discover new nodes
-    expire: 3             # This is a multiplicator for the statistics interval. A node is considered offline if
-                          # statistics interval multiplied by expire seconds have passed since the last response
+receiver:                 # List of receiver receiving informantion from nodes.     
+- type: announced         # Type of the receiver. Currently only announced is supported
   interface: "bat0"       # The interface to use for announced
   port: 21444             # The port to use as a source port announced requests and to listen for responses on
+
+interval:
+  statistics: 300         # The interval in seconds to fetch fast changing data like statistics and neighbours
+  nodeinfo: 1800          # The interval in seconds to request more static data and discover new nodes
+  expire: 3               # This is a multiplicator for the statistics interval. A node is considered offline if
+                          # statistics interval multiplied by expire seconds have passed since the last response
 
 logger:     
   level: "warn"           # The log level, see logrus for valid values

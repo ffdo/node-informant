@@ -1,6 +1,7 @@
 package main
 
 import (
+	"net"
 	"os"
 	"testing"
 	"time"
@@ -18,10 +19,23 @@ type TestDataReceiver struct {
 	TestData []announced.Response
 }
 
+func (t *TestDataReceiver) Query(queryString string) {
+	//Nothing just here for interface compatibility
+}
+
+func (t *TestDataReceiver) QueryUnicast(addr *net.UDPAddr, queryString string) {
+	//Nothing just here for interface compatibility
+}
+
 func (t *TestDataReceiver) Receive(rFunc func(announced.Response)) {
 	for _, data := range t.TestData {
 		rFunc(data)
 	}
+}
+
+func (t *TestDataReceiver) Close() error {
+	// Only here to satisfy the announced.AnnouncedPacketReceiver interface
+	return nil
 }
 
 func executeCompletePipe(t *testing.T, store data.Nodeinfostore) {

@@ -64,9 +64,10 @@ func NewBoltStore(path string) (*BoltStore, error) {
 }
 
 // Close closes the underlying bolt database.
-func (b *BoltStore) Close() {
+func (b *BoltStore) Close() error {
 	b.onlineStatusJob.Stop()
 	b.db.Close()
+	return nil
 }
 
 // executeHandlersOnNodeIdList is a helper method to simply invoke a list of handler

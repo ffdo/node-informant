@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"os/signal"
 	"syscall"
@@ -27,7 +28,7 @@ var importPath = flag.String("import", "", "Import data from this path")
 var importType = flag.String("importType", "ffmap-backend", "The data format to import from, i.e ffmap-backend")
 
 var DataStore data.Nodeinfostore
-var Closeables []pipeline.Closeable
+var Closeables []io.Closer
 
 type LogPipe struct {
 	logFile *bufio.Writer
@@ -67,9 +68,9 @@ func getProcessPipes(store data.Nodeinfostore) []pipeline.ProcessPipe {
 	return pipes
 }
 
-func BuildPipelines(store data.Nodeinfostore, receiver announced.AnnouncedPacketReceiver, pipeEnd func(response data.ParsedResponse)) ([]pipeline.Closeable, error) {
+func BuildPipelines(store data.Nodeinfostore, receiver announced.AnnouncedPacketReceiver, pipeEnd func(response data.ParsedResponse)) ([]io.Closer, error) {
 
-	closeables := make([]pipeline.Closeable, 0, 2)
+	closeables := make([]io.Closer, 0, 2)
 
 	receivePipeline := pipeline.NewReceivePipeline(&pipeline.JsonParsePipe{}, &pipeline.DeflatePipe{})
 	processPipe := pipeline.NewProcessPipeline(getProcessPipes(store)...)
@@ -94,16 +95,8 @@ func BuildPipelines(store data.Nodeinfostore, receiver announced.AnnouncedPacket
 	return closeables, nil
 }
 
-func Assemble() ([]pipeline.Closeable, error) {
-	iface, err := conf.Global.String("announced.interface")
-	if err != nil {
-		return nil, err
-	}
-	requester, err := announced.NewRequester(iface, conf.Global.UInt("announced.port", 12444))
-	if err != nil {
-		log.Fatalf("Can't create requester: %v", err)
-		return nil, err
-	}
+func Assemble() ([]io.Closer, error) {
+	requester := buildReceiver()
 	closeables, err := BuildPipelines(DataStore, requester, func(response data.ParsedResponse) {
 		//Do nothing. This is the last step and we do not need to do anything here,
 		// just pull the chan clean
@@ -225,7 +218,7 @@ func ImportData() {
 }
 
 func main() {
-	Closeables = make([]pipeline.Closeable, 0, 5)
+	Closeables = make([]io.Closer, 0, 5)
 	flag.Parse()
 	conf.InitConfig()
 	if conf.Global == nil {
