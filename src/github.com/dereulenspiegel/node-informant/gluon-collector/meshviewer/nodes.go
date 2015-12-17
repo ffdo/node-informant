@@ -59,33 +59,12 @@ func convertToMeshviewerStatistics(in *data.StatisticsStruct) StatisticsStruct {
 		Clients:     in.Clients.Total,
 		Gateway:     in.Gateway,
 		Loadavg:     in.LoadAverage,
-		MemoryUsage: ((float64(in.Memory.Total)-float64(in.Memory.Free)-float64(in.Memory.Buffers)-float64(in.Memory.Cached)) / float64(in.Memory.Total)),
+		MemoryUsage: ((float64(in.Memory.Total) - float64(in.Memory.Free) - float64(in.Memory.Buffers) - float64(in.Memory.Cached)) / float64(in.Memory.Total)),
 		RootfsUsage: in.RootFsUsage,
 		Traffic:     in.Traffic,
 		Uptime:      in.Uptime,
 	}
 }
-
-/*func isOnline(status *data.NodeStatusInfo) bool {
-	now := time.Now()
-	lastseen, err := time.Parse(TimeFormat, status.Lastseen)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"err":        err,
-			"timeString": status.Lastseen,
-		}).Error("Error while parsing lastseen time to determine online status")
-	}
-	var updateInterval int = 300
-	if conf.Global != nil {
-		updateInterval = conf.Global.UInt("announced.interval.statistics", 300)
-	}
-	if (now.Unix() - lastseen.Unix()) > int64((updateInterval * 3)) {
-		status.Online = false
-	} else {
-		status.Online = true
-	}
-	return status.Online
-}*/
 
 // GetNodesJson fills a NodesJson struct with all information stored in the
 // Nodeinfostore
@@ -94,12 +73,12 @@ func (n *NodesJsonGenerator) GetNodesJson() NodesJson {
 	nodes := make(map[string]NodesJsonNode)
 	for _, nodeInfo := range n.Store.GetNodeInfos() {
 		nodeId := nodeInfo.NodeId
-                status, _ := n.Store.GetNodeStatusInfo(nodeId)
+		status, _ := n.Store.GetNodeStatusInfo(nodeId)
 		var stats StatisticsStruct
 		if storedStats, err := n.Store.GetStatistics(nodeId); err == nil {
 			if !status.Online {
-			storedStats.Clients.Wifi = 0
-			storedStats.Clients.Total = 0
+				storedStats.Clients.Wifi = 0
+				storedStats.Clients.Total = 0
 			}
 			stats = convertToMeshviewerStatistics(&storedStats)
 		} else {
