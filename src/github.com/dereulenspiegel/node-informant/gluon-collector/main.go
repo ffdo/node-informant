@@ -109,6 +109,8 @@ func Assemble() ([]io.Closer, error) {
 	nodesGenerator := &meshviewer.NodesJsonGenerator{Store: DataStore}
 	missingUpdate := &MissingUpdater{Store: DataStore, Requester: requester}
 	DataStore.NotifyNodeOffline(missingUpdate.CheckNodeUnicast)
+	nodesGenerator.UpdateNodesJson()
+	graphGenerator.UpdateGraphJson()
 
 	log.Printf("Setting up request timer")
 	nodeinfoInterval := conf.Global.UInt("announced.interval.nodeinfo", 1800)
