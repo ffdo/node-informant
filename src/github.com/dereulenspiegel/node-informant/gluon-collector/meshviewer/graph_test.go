@@ -14,7 +14,8 @@ func testForDoublettes(assert *assert.Assertions, nodes []*GraphNode) {
 	for i, node := range nodes {
 		for y, node2 := range nodes {
 			if i != y {
-				assert.NotEqual(node.NodeId, node2.NodeId, "Doublette node found at positions %d and %d", i, y)
+				assert.False(node.NodeId == node2.NodeId && node.Id == node2.Id,
+					"Doublette node found at positions %d and %d with ids %s and %s", i, y, node.Id, node2.Id)
 			}
 		}
 	}
