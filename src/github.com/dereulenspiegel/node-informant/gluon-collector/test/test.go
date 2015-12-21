@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net"
 	"os"
+	"path"
 	"strconv"
 	"strings"
 	"testing"
@@ -16,7 +17,7 @@ import (
 	"github.com/dereulenspiegel/node-informant/announced"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/assemble"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
-	"github.com/dereulenspiegel/node-informant/gluon-collector/meshviewer"
+	"github.com/dereulenspiegel/node-informant/utils"
 )
 
 var TestData []announced.Response
@@ -64,16 +65,6 @@ func ExecuteCompletePipe(t *testing.T, store data.Nodeinfostore) {
 	}
 
 	assert.Equal(len(TestData), i)
-
-	graphGenerator := &meshviewer.GraphGenerator{Store: store}
-	nodesGenerator := &meshviewer.NodesJsonGenerator{Store: store}
-	graph := graphGenerator.GenerateGraph()
-	assert.NotNil(graph)
-	assert.Equal(232, len(graph.Batadv.Nodes))
-	assert.Equal(72, len(graph.Batadv.Links))
-
-	nodes := nodesGenerator.GetNodesJson()
-	assert.NotNil(nodes)
 }
 
 func stringToBytes(in string) []byte {
@@ -95,8 +86,29 @@ func stringToBytes(in string) []byte {
 	return bytes
 }
 
+func findTestData() string {
+	dataFound := false
+	currentPath, err := os.Getwd()
+	if err != nil {
+		log.Fatalf("Error can't determine current work directory: %v", err)
+	}
+	currentPath = path.Join(currentPath, "..")
+	currentPath = path.Clean(currentPath)
+	for !dataFound && currentPath != "/" {
+		dataPath := path.Join(currentPath, "testdata.raw")
+		if utils.FileExists(dataPath) {
+			return dataPath
+		}
+		currentPath = path.Join(currentPath, "..")
+		currentPath = path.Clean(currentPath)
+	}
+	return ""
+}
+
 func LoadTestData() error {
-	dataFile, err := os.Open("../../../../../testdata.raw")
+	dataPath := findTestData()
+	//dataFile, err := os.Open("../../../../../../testdata.raw")
+	dataFile, err := os.Open(dataPath)
 	if err != nil {
 		return err
 	}
