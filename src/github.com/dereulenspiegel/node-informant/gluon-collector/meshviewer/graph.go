@@ -60,9 +60,9 @@ func (g *GraphGenerator) buildNodeTableAndList() (map[string]*GraphNode, []*Grap
 	allNeighbours := g.Store.GetAllNeighbours()
 	nodeList := make([]*GraphNode, 0, len(allNeighbours))
 	for _, neighbourInfo := range allNeighbours {
-		for mac, _ := range neighbourInfo.Batadv {
-			status,_ := g.Store.GetNodeStatusInfo(neighbourInfo.NodeId)
-			if status.Online {
+		status, _ := g.Store.GetNodeStatusInfo(neighbourInfo.NodeId)
+		if status.Online {
+			for mac, _ := range neighbourInfo.Batadv {
 				node := &GraphNode{
 					Id:     mac,
 					NodeId: neighbourInfo.NodeId,
