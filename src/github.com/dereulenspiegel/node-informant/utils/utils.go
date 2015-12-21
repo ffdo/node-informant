@@ -5,6 +5,7 @@ import (
 	"compress/flate"
 	"compress/gzip"
 	"io/ioutil"
+	"os"
 )
 
 func DecompressGZip(in []byte) (data []byte, err error) {
@@ -27,4 +28,11 @@ func Deflate(in []byte) (data []byte, err error) {
 	defer r.Close()
 	data, err = ioutil.ReadAll(r)
 	return
+}
+
+func FileExists(path string) bool {
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return false
+	}
+	return true
 }
