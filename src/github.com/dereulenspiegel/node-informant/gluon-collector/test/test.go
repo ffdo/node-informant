@@ -7,13 +7,74 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"testing"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/dereulenspiegel/node-informant/announced"
+	"github.com/dereulenspiegel/node-informant/gluon-collector/assemble"
+	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
+	"github.com/dereulenspiegel/node-informant/gluon-collector/meshviewer"
 )
 
 var TestData []announced.Response
+
+type TestDataReceiver struct {
+	TestData []announced.Response
+}
+
+func (t *TestDataReceiver) Query(queryString string) {
+	//Nothing just here for interface compatibility
+}
+
+func (t *TestDataReceiver) QueryUnicast(addr *net.UDPAddr, queryString string) {
+	//Nothing just here for interface compatibility
+}
+
+func (t *TestDataReceiver) Receive(rFunc func(announced.Response)) {
+	for _, data := range t.TestData {
+		rFunc(data)
+	}
+}
+
+func (t *TestDataReceiver) Close() error {
+	// Only here to satisfy the announced.AnnouncedPacketReceiver interface
+	return nil
+}
+
+func ExecuteCompletePipe(t *testing.T, store data.Nodeinfostore) {
+	log.SetLevel(log.ErrorLevel)
+	assert := assert.New(t)
+	testReceiver := &TestDataReceiver{TestData: TestData}
+
+	i := 0
+	closeables, err := assemble.BuildPipelines(store, testReceiver, func(response data.ParsedResponse) {
+		i = i + 1
+	})
+	assert.Nil(err)
+
+	for i < len(TestData) {
+		time.Sleep(time.Millisecond * 1)
+	}
+
+	for _, closable := range closeables {
+		closable.Close()
+	}
+
+	assert.Equal(len(TestData), i)
+
+	graphGenerator := &meshviewer.GraphGenerator{Store: store}
+	nodesGenerator := &meshviewer.NodesJsonGenerator{Store: store}
+	graph := graphGenerator.GenerateGraph()
+	assert.NotNil(graph)
+	assert.Equal(232, len(graph.Batadv.Nodes))
+	assert.Equal(72, len(graph.Batadv.Links))
+
+	nodes := nodesGenerator.GetNodesJson()
+	assert.NotNil(nodes)
+}
 
 func stringToBytes(in string) []byte {
 	parts := strings.Split(in, " ")

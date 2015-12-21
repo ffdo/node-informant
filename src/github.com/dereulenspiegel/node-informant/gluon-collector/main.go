@@ -14,12 +14,11 @@ import (
 
 	"github.com/dereulenspiegel/node-informant/announced"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/api"
-	"github.com/dereulenspiegel/node-informant/gluon-collector/collectors"
+	"github.com/dereulenspiegel/node-informant/gluon-collector/assemble"
 	conf "github.com/dereulenspiegel/node-informant/gluon-collector/config"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/httpserver"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/meshviewer"
-	"github.com/dereulenspiegel/node-informant/gluon-collector/pipeline"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/prometheus"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/scheduler"
 )
@@ -58,7 +57,7 @@ func (l *LogPipe) Process(in chan announced.Response) chan announced.Response {
 	return out
 }
 
-func getProcessPipes(store data.Nodeinfostore) []pipeline.ProcessPipe {
+/* func getProcessPipes(store data.Nodeinfostore) []pipeline.ProcessPipe {
 	pipes := make([]pipeline.ProcessPipe, 0, 10)
 
 	pipes = append(pipes, prometheus.GetPrometheusProcessPipes(store)...)
@@ -93,11 +92,11 @@ func BuildPipelines(store data.Nodeinfostore, receiver announced.AnnouncedPacket
 		})
 	}()
 	return closeables, nil
-}
+}*/
 
 func Assemble() ([]io.Closer, error) {
 	requester := buildReceiver()
-	closeables, err := BuildPipelines(DataStore, requester, func(response data.ParsedResponse) {
+	closeables, err := assemble.BuildPipelines(DataStore, requester, func(response data.ParsedResponse) {
 		//Do nothing. This is the last step and we do not need to do anything here,
 		// just pull the chan clean
 	})

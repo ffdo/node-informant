@@ -25,8 +25,8 @@ var (
 func TestMultiReceiver(t *testing.T) {
 	assert := assert.New(t)
 
-	testReceiver1 := &TestDataReceiver{test.TestData}
-	testReceiver2 := &TestDataReceiver{additionalData}
+	testReceiver1 := &test.TestDataReceiver{test.TestData}
+	testReceiver2 := &test.TestDataReceiver{additionalData}
 
 	multiReceiver := NewMultiReceiver(testReceiver1, testReceiver2)
 
