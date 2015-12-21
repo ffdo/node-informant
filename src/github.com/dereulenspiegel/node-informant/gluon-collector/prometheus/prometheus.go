@@ -49,22 +49,22 @@ var (
 	NodesTrafficRx = stat.NewCounterVec(stat.CounterOpts{
 		Name: "meshnode_traffic_rx",
 		Help: "Transmitted traffic from nodes",
-	}, []string{"nodeid", "type"})
+	}, []string{"nodeid", "name", "type"})
 
 	NodesTrafficTx = stat.NewCounterVec(stat.CounterOpts{
 		Name: "meshnode_traffic_tx",
 		Help: "Received traffic on nodes",
-	}, []string{"nodeid", "type"})
+	}, []string{"nodeid", "name", "type"})
 
 	NodesUptime = stat.NewCounterVec(stat.CounterOpts{
 		Name: "meshnode_uptime",
 		Help: "Uptime of meshnodes",
-	}, []string{"nodeid"})
+	}, []string{"nodeid", "name"})
 
 	NodesClients = stat.NewGaugeVec(stat.GaugeOpts{
 		Name: "meshnode_clients",
 		Help: "Clients on single meshnodes",
-	}, []string{"nodeid"})
+	}, []string{"nodeid", "name"})
 
 	NodeMetricsMap = make(map[string]*NodeMetrics)
 )
