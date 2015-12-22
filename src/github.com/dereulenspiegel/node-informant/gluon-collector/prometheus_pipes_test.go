@@ -5,9 +5,11 @@ import (
 	"time"
 
 	"github.com/dereulenspiegel/node-informant/gluon-collector/collectors"
+	"github.com/dereulenspiegel/node-informant/gluon-collector/config"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/pipeline"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/prometheus"
+	"github.com/dereulenspiegel/node-informant/gluon-collector/test"
 	stat "github.com/prometheus/client_golang/prometheus"
 
 	dto "github.com/prometheus/client_model/go"
@@ -84,4 +86,15 @@ func TestPrometheusClientCounter(t *testing.T) {
 	for range finishChan {
 		processPipeline.Close()
 	}
+}
+
+func TestPrometheusClientCounterWithFullLabels(t *testing.T) {
+	config.Global.Set("prometheus.namelabel", true)
+	config.Global.Set("prometheus.sitecodelabel", true)
+	store := data.NewSimpleInMemoryStore()
+	test.ExecuteCompletePipe(t, store)
+
+	// It is kinda complicated to collect values from CounterVecs,
+	// so for now this test simply makes sure that the application doesn't
+	// crash if extended node labels are activated.
 }
