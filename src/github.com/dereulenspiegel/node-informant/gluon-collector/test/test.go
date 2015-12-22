@@ -12,10 +12,12 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	cfg "github.com/olebedev/config"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/dereulenspiegel/node-informant/announced"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/assemble"
+	"github.com/dereulenspiegel/node-informant/gluon-collector/config"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
 	"github.com/dereulenspiegel/node-informant/utils"
 )
@@ -145,7 +147,12 @@ func LoadTestData() error {
 	return nil
 }
 
+func initDefaultConfig() {
+	config.Global = &cfg.Config{}
+}
+
 func init() {
+	initDefaultConfig()
 	err := LoadTestData()
 	if err != nil {
 		log.Fatalf("Can't load test data: %v", err)
