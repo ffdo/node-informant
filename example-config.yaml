@@ -13,3 +13,7 @@ logger:
 http:
   port: 8080
   #address: "[::]"
+
+prometheus:
+  namelabel: true
+  sitecodelabel: true
