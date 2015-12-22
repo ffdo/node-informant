@@ -34,14 +34,22 @@ type NodesJson struct {
 	Nodes     map[string]NodesJsonNode `json:"nodes"`
 }
 
+type NodesJsonV2 struct {
+	Timestamp string          `json:"timestamp"`
+	Version   int             `json:"version"`
+	Nodes     []NodesJsonNode `json:"nodes"`
+}
+
 type NodesJsonGenerator struct {
-	Store           data.Nodeinfostore
-	CachedNodesJson string
+	Store             data.Nodeinfostore
+	CachedNodesJson   string
+	CachedNodesJsonV2 string
 }
 
 func (n *NodesJsonGenerator) Routes() []httpserver.Route {
 	var nodesRoutes = []httpserver.Route{
 		httpserver.Route{"NodesJson", "GET", "/nodes.json", n.GetNodesJsonRest},
+		httpserver.Route{"NodesJson", "GET", "/v2/nodes.json", n.GetNodesJsonRest},
 	}
 	return nodesRoutes
 }
@@ -105,6 +113,46 @@ func (n *NodesJsonGenerator) GetNodesJson() NodesJson {
 	return nodesJson
 }
 
+// GetNodesJson fills a NodesJsonV2 struct with all information stored in the
+// Nodeinfostore
+func (n *NodesJsonGenerator) GetNodesJsonV2() NodesJsonV2 {
+	timestamp := time.Now().Format(TimeFormat)
+	nodeInfos := n.Store.GetNodeInfos()
+	nodes := make([]NodesJsonNode, 0, len(nodeInfos))
+	for _, nodeInfo := range nodeInfos {
+		nodeId := nodeInfo.NodeId
+		status, _ := n.Store.GetNodeStatusInfo(nodeId)
+		var stats StatisticsStruct
+		if storedStats, err := n.Store.GetStatistics(nodeId); err == nil {
+			if !status.Online {
+				storedStats.Clients.Wifi = 0
+				storedStats.Clients.Total = 0
+			}
+			stats = convertToMeshviewerStatistics(&storedStats)
+		} else {
+			stats = StatisticsStruct{}
+		}
+		flags := NodeFlags{
+			Online:  status.Online,
+			Gateway: status.Gateway,
+		}
+		node := NodesJsonNode{
+			Nodeinfo:   nodeInfo,
+			Statistics: &stats,
+			Lastseen:   status.Lastseen,
+			Firstseen:  status.Firstseen,
+			Flags:      flags,
+		}
+		nodes = append(nodes, node)
+	}
+	nodesJson := NodesJsonV2{
+		Timestamp: timestamp,
+		Version:   2,
+		Nodes:     nodes,
+	}
+	return nodesJson
+}
+
 // UpdateNodesJson creates a new json string from a freshly generated NodesJson
 // and caches it so, that the REST handlers can simply send the cached string.
 func (n *NodesJsonGenerator) UpdateNodesJson() {
@@ -117,7 +165,20 @@ func (n *NodesJsonGenerator) UpdateNodesJson() {
 			"value":  err.(*json.UnsupportedValueError).Value,
 			"string": err.(*json.UnsupportedValueError).Str,
 		}).Errorf("Error marshalling nodes.json")
-		return
+	} else {
+		n.CachedNodesJson = string(data)
 	}
-	n.CachedNodesJson = string(data)
+
+	nodesJsonV2 := n.GetNodesJsonV2()
+
+	data, err = json.Marshal(&nodesJsonV2)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error":  err,
+			"value":  err.(*json.UnsupportedValueError).Value,
+			"string": err.(*json.UnsupportedValueError).Str,
+		}).Errorf("Error marshalling nodes.json version 2")
+	} else {
+		n.CachedNodesJsonV2 = string(data)
+	}
 }
