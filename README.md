@@ -71,6 +71,10 @@ store:
 http:             
   port: 8079              # The port where the http server will listen on.
   address: "[::]"         # Optional listen address if you want the server to listen only on a specific interface
+
+prometheus:
+  namelabel: true         # Label prometheus node statistics with the host name
+  sitecodelabel: true     # Label prometheus node statistics with the received site code
 ```
 
 ## HTTP API
