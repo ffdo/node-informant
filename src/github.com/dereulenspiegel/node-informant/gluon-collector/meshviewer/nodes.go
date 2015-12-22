@@ -49,9 +49,15 @@ type NodesJsonGenerator struct {
 func (n *NodesJsonGenerator) Routes() []httpserver.Route {
 	var nodesRoutes = []httpserver.Route{
 		httpserver.Route{"NodesJson", "GET", "/nodes.json", n.GetNodesJsonRest},
-		httpserver.Route{"NodesJson", "GET", "/v2/nodes.json", n.GetNodesJsonRest},
+		httpserver.Route{"NodesJson", "GET", "/v2/nodes.json", n.GetNodesJsonV2Rest},
 	}
 	return nodesRoutes
+}
+
+func (n *NodesJsonGenerator) GetNodesJsonV2Rest(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(n.CachedNodesJsonV2))
 }
 
 func (n *NodesJsonGenerator) GetNodesJsonRest(w http.ResponseWriter, r *http.Request) {
