@@ -14,7 +14,7 @@ import (
 
 type GraphNode struct {
 	Id      string `json:"id"`
-	NodeId  string `json:"node_id"`
+	NodeId  string `json:"node_id,omitempty"`
 	tableId int
 }
 
@@ -62,12 +62,21 @@ func (g *GraphGenerator) buildNodeTableAndList() (map[string]*GraphNode, []*Grap
 	for _, neighbourInfo := range allNeighbours {
 		status, _ := g.Store.GetNodeStatusInfo(neighbourInfo.NodeId)
 		if status.Online {
+			i := 0
 			for mac, _ := range neighbourInfo.Batadv {
-				node := &GraphNode{
-					Id:     mac,
-					NodeId: neighbourInfo.NodeId,
+				var node *GraphNode
+				if i == 0 {
+					node = &GraphNode{
+						Id:     mac,
+						NodeId: neighbourInfo.NodeId,
+					}
+				} else {
+					node = &GraphNode{
+						Id: mac,
+					}
 				}
 				nodeList = append(nodeList, node)
+				i++
 			}
 		}
 	}
