@@ -16,6 +16,30 @@ These are counters accumulated over all nodes. If possible these should be
 updated dynamically in ProcessPipes
 */
 var (
+	TotalClientCounter stat.Gauge
+
+	TotalNodes stat.Gauge
+
+	TotalNodeTrafficRx stat.Counter
+
+	TotalNodeTrafficTx stat.Counter
+
+	TotalNodeMgmtTrafficRx stat.Counter
+
+	TotalNodeMgmtTrafficTx stat.Counter
+
+	OnlineNodes stat.Gauge
+
+	NodesTrafficRx *stat.CounterVec
+
+	NodesTrafficTx *stat.CounterVec
+
+	NodesUptime *stat.CounterVec
+
+	NodesClients *stat.GaugeVec
+)
+
+func initPrometheusMetrics() {
 	TotalClientCounter = stat.NewGauge(stat.GaugeOpts{
 		Name: "total_clients",
 		Help: "Total number of connected clients",
@@ -70,16 +94,6 @@ var (
 		Name: "meshnode_clients",
 		Help: "Clients on single meshnodes",
 	}, nodeLabels)
-
-	NodeMetricsMap = make(map[string]*NodeMetrics)
-)
-
-// This type holds the Metrics for a single node
-type NodeMetrics struct {
-	Clients stat.Gauge
-	Uptime  stat.Counter
-	Traffic *stat.CounterVec
-	NodeId  string
 }
 
 func initNodeLabels() {
@@ -97,7 +111,11 @@ func initNodeLabels() {
 
 // Register all accumulated metrics
 func Init() {
+	if NodesTrafficRx != nil {
+		return
+	}
 	initNodeLabels()
+	initPrometheusMetrics()
 	stat.MustRegister(TotalClientCounter)
 	stat.MustRegister(TotalNodes)
 	stat.MustRegister(TotalNodeTrafficRx)

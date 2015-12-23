@@ -19,6 +19,7 @@ import (
 	"github.com/dereulenspiegel/node-informant/gluon-collector/assemble"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/config"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
+	"github.com/dereulenspiegel/node-informant/gluon-collector/prometheus"
 	"github.com/dereulenspiegel/node-informant/utils"
 )
 
@@ -49,6 +50,7 @@ func (t *TestDataReceiver) Close() error {
 
 func ExecuteCompletePipe(t *testing.T, store data.Nodeinfostore) {
 	log.SetLevel(log.ErrorLevel)
+	prometheus.Init()
 	assert := assert.New(t)
 	testReceiver := &TestDataReceiver{TestData: TestData}
 
