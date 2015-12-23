@@ -6,6 +6,7 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/dereulenspiegel/node-informant/gluon-collector/config"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/httpserver"
 )
@@ -43,21 +44,23 @@ type NodesJsonV2 struct {
 type NodesJsonGenerator struct {
 	Store             data.Nodeinfostore
 	CachedNodesJson   string
-	CachedNodesJsonV2 string
+	meshviewerVersion int
+}
+
+func NewNodesJsonGenerator(store data.Nodeinfostore) *NodesJsonGenerator {
+	meshviewerVersion := config.Global.UInt("meshviewer_version", 1)
+
+	if meshviewerVersion < 1 && meshviewerVersion > 2 {
+		log.Fatalf("Invalid meshviewer version %d", meshviewerVersion)
+	}
+	return &NodesJsonGenerator{meshviewerVersion: meshviewerVersion, Store: store}
 }
 
 func (n *NodesJsonGenerator) Routes() []httpserver.Route {
 	var nodesRoutes = []httpserver.Route{
 		httpserver.Route{"NodesJson", "GET", "/nodes.json", n.GetNodesJsonRest},
-		httpserver.Route{"NodesJson", "GET", "/v2/nodes.json", n.GetNodesJsonV2Rest},
 	}
 	return nodesRoutes
-}
-
-func (n *NodesJsonGenerator) GetNodesJsonV2Rest(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(n.CachedNodesJsonV2))
 }
 
 func (n *NodesJsonGenerator) GetNodesJsonRest(w http.ResponseWriter, r *http.Request) {
@@ -162,9 +165,16 @@ func (n *NodesJsonGenerator) GetNodesJsonV2() NodesJsonV2 {
 // UpdateNodesJson creates a new json string from a freshly generated NodesJson
 // and caches it so, that the REST handlers can simply send the cached string.
 func (n *NodesJsonGenerator) UpdateNodesJson() {
-	nodesJson := n.GetNodesJson()
 
-	data, err := json.Marshal(&nodesJson)
+	var nodeData interface{}
+	switch n.meshviewerVersion {
+	case 1:
+		nodeData = n.GetNodesJson()
+	case 2:
+		nodeData = n.GetNodesJsonV2()
+	}
+
+	data, err := json.Marshal(&nodeData)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error":  err,
@@ -173,18 +183,5 @@ func (n *NodesJsonGenerator) UpdateNodesJson() {
 		}).Errorf("Error marshalling nodes.json")
 	} else {
 		n.CachedNodesJson = string(data)
-	}
-
-	nodesJsonV2 := n.GetNodesJsonV2()
-
-	data, err = json.Marshal(&nodesJsonV2)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"error":  err,
-			"value":  err.(*json.UnsupportedValueError).Value,
-			"string": err.(*json.UnsupportedValueError).Str,
-		}).Errorf("Error marshalling nodes.json version 2")
-	} else {
-		n.CachedNodesJsonV2 = string(data)
 	}
 }
