@@ -13,3 +13,5 @@ logger:
 http:
   port: 8080
   #address: "[::]"
+
+meshviewer_version: 1

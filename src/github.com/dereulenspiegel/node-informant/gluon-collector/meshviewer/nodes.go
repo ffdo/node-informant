@@ -6,6 +6,7 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/dereulenspiegel/node-informant/gluon-collector/config"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/httpserver"
 )
@@ -34,9 +35,25 @@ type NodesJson struct {
 	Nodes     map[string]NodesJsonNode `json:"nodes"`
 }
 
+type NodesJsonV2 struct {
+	Timestamp string          `json:"timestamp"`
+	Version   int             `json:"version"`
+	Nodes     []NodesJsonNode `json:"nodes"`
+}
+
 type NodesJsonGenerator struct {
-	Store           data.Nodeinfostore
-	CachedNodesJson string
+	Store             data.Nodeinfostore
+	CachedNodesJson   string
+	meshviewerVersion int
+}
+
+func NewNodesJsonGenerator(store data.Nodeinfostore) *NodesJsonGenerator {
+	meshviewerVersion := config.Global.UInt("meshviewer_version", 1)
+
+	if meshviewerVersion < 1 && meshviewerVersion > 2 {
+		log.Fatalf("Invalid meshviewer version %d", meshviewerVersion)
+	}
+	return &NodesJsonGenerator{meshviewerVersion: meshviewerVersion, Store: store}
 }
 
 func (n *NodesJsonGenerator) Routes() []httpserver.Route {
@@ -105,19 +122,66 @@ func (n *NodesJsonGenerator) GetNodesJson() NodesJson {
 	return nodesJson
 }
 
+// GetNodesJson fills a NodesJsonV2 struct with all information stored in the
+// Nodeinfostore
+func (n *NodesJsonGenerator) GetNodesJsonV2() NodesJsonV2 {
+	timestamp := time.Now().Format(TimeFormat)
+	nodeInfos := n.Store.GetNodeInfos()
+	nodes := make([]NodesJsonNode, 0, len(nodeInfos))
+	for _, nodeInfo := range nodeInfos {
+		nodeId := nodeInfo.NodeId
+		status, _ := n.Store.GetNodeStatusInfo(nodeId)
+		var stats StatisticsStruct
+		if storedStats, err := n.Store.GetStatistics(nodeId); err == nil {
+			if !status.Online {
+				storedStats.Clients.Wifi = 0
+				storedStats.Clients.Total = 0
+			}
+			stats = convertToMeshviewerStatistics(&storedStats)
+		} else {
+			stats = StatisticsStruct{}
+		}
+		flags := NodeFlags{
+			Online:  status.Online,
+			Gateway: status.Gateway,
+		}
+		node := NodesJsonNode{
+			Nodeinfo:   nodeInfo,
+			Statistics: &stats,
+			Lastseen:   status.Lastseen,
+			Firstseen:  status.Firstseen,
+			Flags:      flags,
+		}
+		nodes = append(nodes, node)
+	}
+	nodesJson := NodesJsonV2{
+		Timestamp: timestamp,
+		Version:   2,
+		Nodes:     nodes,
+	}
+	return nodesJson
+}
+
 // UpdateNodesJson creates a new json string from a freshly generated NodesJson
 // and caches it so, that the REST handlers can simply send the cached string.
 func (n *NodesJsonGenerator) UpdateNodesJson() {
-	nodesJson := n.GetNodesJson()
 
-	data, err := json.Marshal(&nodesJson)
+	var nodeData interface{}
+	switch n.meshviewerVersion {
+	case 1:
+		nodeData = n.GetNodesJson()
+	case 2:
+		nodeData = n.GetNodesJsonV2()
+	}
+
+	data, err := json.Marshal(&nodeData)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error":  err,
 			"value":  err.(*json.UnsupportedValueError).Value,
 			"string": err.(*json.UnsupportedValueError).Str,
 		}).Errorf("Error marshalling nodes.json")
-		return
+	} else {
+		n.CachedNodesJson = string(data)
 	}
-	n.CachedNodesJson = string(data)
 }
