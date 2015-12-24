@@ -5,7 +5,6 @@ import (
 	"net"
 
 	"github.com/dereulenspiegel/node-informant/gluon-emitter/data"
-	"github.com/dereulenspiegel/node-informant/utils"
 
 	log "github.com/Sirupsen/logrus"
 
@@ -13,9 +12,10 @@ import (
 )
 
 var (
-	interfaceFlag = flag.String("interface", "", "Specify the interface to listen on")
-	portFlag      = flag.Int("port", 1101, "Specify the port to listen on")
-	aliasFilePath = flag.String("alias", "", "Alias file to load")
+	interfaceFlag   = flag.String("interface", "", "Specify the interface to listen on")
+	portFlag        = flag.Int("port", 1101, "Specify the port to listen on")
+	aliasFilePath   = flag.String("alias", "", "Alias file to load")
+	goupAddressFlag = flag.String("group", "ff02:0:0:0:0:0:2:1001", "Address of multicast group to join")
 
 	requestRegexp = regexp.MustCompile(`^GET\s([\w]+)$`)
 )
@@ -29,26 +29,27 @@ func main() {
 			"error": err,
 		}).Fatal("Can't load alias file")
 	}
-	localIp, err := utils.GetIPFromInterface(*interfaceFlag)
+
+	iface, err := net.InterfaceByName(*interfaceFlag)
 	if err != nil {
 		log.WithFields(log.Fields{
-			"interface": *interfaceFlag,
-			"error":     err,
-		}).Fatal("Can't determine IP address for interface")
+			"interfaceName": *interfaceFlag,
+			"error":         err,
+		}).Fatal("Can't find interface to listen on")
 	}
+	multicastGroupIp := net.ParseIP(*goupAddressFlag)
 
-	localAddr := &net.UDPAddr{
-		IP:   *localIp,
+	groupAddr := &net.UDPAddr{
+		IP:   multicastGroupIp,
 		Port: *portFlag,
 	}
 
-	conn, err := net.ListenUDP("udp6", localAddr)
+	conn, err := net.ListenMulticastUDP("udp6", iface, groupAddr)
 	if err != nil {
 		log.WithFields(log.Fields{
-			"interface":    *interfaceFlag,
-			"port":         *portFlag,
-			"localAddress": *localAddr,
-			"error":        err,
+			"interface": *interfaceFlag,
+			"port":      *portFlag,
+			"error":     err,
 		}).Fatal("Can't open server socket")
 	}
 
