@@ -54,12 +54,9 @@ func TestCorrectGraphFormat(t *testing.T) {
 	graphGenerator := &GraphGenerator{Store: store}
 	_, nodeList := graphGenerator.buildNodeTableAndList()
 	assert.NotNil(nodeList)
-	assert.Equal(2, len(nodeList))
-
+	assert.Equal(1, len(nodeList))
 	assert.Equal("001122334455", nodeList[0].NodeId)
-	assert.Equal("", nodeList[1].NodeId)
-	assert.Equal("001122aa44cc", nodeList[0].Id)
-	assert.Equal("001122aa44aa", nodeList[1].Id)
+	assert.Equal("001122aa44aa", nodeList[0].Id)
 }
 
 func testForDoublettes(assert *assert.Assertions, nodes []*GraphNode) {
