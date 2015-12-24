@@ -7,6 +7,8 @@ import (
 
 	"io"
 
+	"github.com/dereulenspiegel/node-informant/utils"
+
 	log "github.com/Sirupsen/logrus"
 )
 
@@ -50,38 +52,13 @@ type Requester struct {
 	ReceiveChan chan Response
 }
 
-// getIPFromInterface tries to determine the link local IPv6 unicast address of
-// an interface named by the given string. Returns an error if the interface is
-// not found, or the interface has not a link local IPv6 unicast address (i.e.
-// because IPv6 is not configured for this interface).
-func getIPFromInterface(ifaceName string) (*net.IP, error) {
-	iface, err := net.InterfaceByName(ifaceName)
-	if err != nil {
-		return nil, err
-	}
-
-	addresses, err := iface.Addrs()
-	if err != nil {
-		return nil, err
-	}
-	for _, addr := range addresses {
-		ip, ok := addr.(*net.IPNet)
-		if ok {
-			if ip.IP.To4() == nil && ip.IP.IsLinkLocalUnicast() {
-				return &ip.IP, nil
-			}
-		}
-	}
-	return nil, fmt.Errorf("No valid IPv6 address found on interface %s", ifaceName)
-}
-
 // NewRequester creates a new Requester using the interface named by interfaceName
 // and listening on the port specified for responses.
 func NewRequester(ifaceName string, port int) (r *Requester, err error) {
 	var lIP *net.IP = &net.IPv6zero
 	r = &Requester{}
 	if ifaceName != "" {
-		lIP, err = getIPFromInterface(ifaceName)
+		lIP, err = utils.GetIPFromInterface(ifaceName)
 		if err != nil {
 			return
 		}

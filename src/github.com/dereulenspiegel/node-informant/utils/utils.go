@@ -6,8 +6,34 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"os"
 )
+
+// getIPFromInterface tries to determine the link local IPv6 unicast address of
+// an interface named by the given string. Returns an error if the interface is
+// not found, or the interface has not a link local IPv6 unicast address (i.e.
+// because IPv6 is not configured for this interface).
+func GetIPFromInterface(ifaceName string) (*net.IP, error) {
+	iface, err := net.InterfaceByName(ifaceName)
+	if err != nil {
+		return nil, err
+	}
+
+	addresses, err := iface.Addrs()
+	if err != nil {
+		return nil, err
+	}
+	for _, addr := range addresses {
+		ip, ok := addr.(*net.IPNet)
+		if ok {
+			if ip.IP.To4() == nil && ip.IP.IsLinkLocalUnicast() {
+				return &ip.IP, nil
+			}
+		}
+	}
+	return nil, fmt.Errorf("No valid IPv6 address found on interface %s", ifaceName)
+}
 
 func DecompressGZip(in []byte) (data []byte, err error) {
 	ir := bytes.NewReader(in)
