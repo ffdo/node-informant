@@ -146,7 +146,7 @@ func getLabels(nodeinfo data.NodeInfo, defaultLabels ...string) []string {
 	if prometheusCfg.UBool("sitecodelabel", false) {
 		labels = append(labels, nodeinfo.System.SiteCode)
 	}
-	return labels
+	return append(labels, defaultLabels...)
 }
 
 func (n *NodeMetricCollector) Process(in chan data.ParsedResponse) chan data.ParsedResponse {
