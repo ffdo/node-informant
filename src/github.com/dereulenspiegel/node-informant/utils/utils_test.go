@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var gzippedData = []byte{93, 82, 91, 142, 131, 48, 12, 188, 75, 190, 17, 114,
+var flatedData = []byte{93, 82, 91, 142, 131, 48, 12, 188, 75, 190, 17, 114,
 	156, 23, 225, 50, 85, 10, 9, 27, 45, 37, 40, 132, 237, 174, 170, 222, 125, 29,
 	218, 125, 126, 128, 98, 103, 60, 99, 143, 115, 99, 91, 113, 37, 110, 37, 14,
 	27, 235, 111, 108, 73, 163, 63, 197, 145, 245, 76, 75, 173, 207, 98, 244, 65,
@@ -33,10 +33,22 @@ var gzippedData = []byte{93, 82, 91, 142, 131, 48, 12, 188, 75, 190, 17, 114,
 	145, 141, 159}
 
 func TestDecompressFlate(t *testing.T) {
-	t.Skip("Currently no realistic test data")
+	//t.Skip("Currently no realistic test data")
 	assert := assert.New(t)
-	out, err := Deflate(gzippedData)
+	out, err := Deflate(flatedData)
 	assert.Nil(err)
 	assert.NotNil(out)
 	assert.True(len(out) > 1)
+}
+
+func TestCompressFlate(t *testing.T) {
+	assert := assert.New(t)
+	out, err := DeflateCompress([]byte("Test string"))
+	assert.Nil(err)
+	assert.NotNil(out)
+	assert.True(len(out) > 0)
+
+	decompressedBytes, err := Deflate(out)
+	assert.Nil(err)
+	assert.Equal("Test string", string(decompressedBytes))
 }
