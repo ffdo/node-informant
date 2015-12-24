@@ -22,7 +22,7 @@ var (
 
 func main() {
 	flag.Parse()
-	err := data.LoadYamlFile(*aliasFilePath)
+	err := data.LoadAliases(*aliasFilePath)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"path":  *aliasFilePath,

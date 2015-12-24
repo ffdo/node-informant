@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 	"text/template"
 
@@ -38,6 +39,44 @@ func buildConfigVars() configVars {
 		}
 	}
 	return vars
+}
+
+func LoadAliases(filePath string) error {
+	ext := filepath.Ext(filePath)
+	switch ext {
+	case ".yml":
+		return LoadYamlFile(filePath)
+	case ".json":
+		return LoadJsonFile(filePath)
+	default:
+		return fmt.Errorf("Unknown file format %s", ext)
+	}
+}
+
+func LoadJsonFile(path string) error {
+	aliasTemplate := template.New("alias")
+
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	aliasTemplate, err = aliasTemplate.Parse(string(data))
+	if err != nil {
+		return err
+	}
+	buffer := bytes.NewBuffer(make([]byte, 0, 4096))
+	err = aliasTemplate.Execute(buffer, buildConfigVars())
+	if err != nil {
+		return err
+	}
+
+	alias := make(map[string]interface{})
+	err = json.Unmarshal(buffer.Bytes(), &alias)
+	if err != nil {
+		return err
+	}
+	collectedData = alias
+	return nil
 }
 
 func LoadYamlFile(path string) error {
