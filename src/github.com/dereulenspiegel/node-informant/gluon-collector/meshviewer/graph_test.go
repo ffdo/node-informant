@@ -56,7 +56,9 @@ func TestCorrectGraphFormat(t *testing.T) {
 	assert.NotNil(nodeList)
 	assert.Equal(1, len(nodeList))
 	assert.Equal("001122334455", nodeList[0].NodeId)
-	assert.Equal("001122aa44aa", nodeList[0].Id)
+	// Access to the map after unmarshalling has no stable order, so both bat macs
+	// could be in the id field, but either way should be fine
+	assert.True(nodeList[0].Id == "001122aa44aa" || nodeList[0].Id == "001122aa44cc")
 }
 
 func testForDoublettes(assert *assert.Assertions, nodes []*GraphNode) {

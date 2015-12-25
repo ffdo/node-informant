@@ -19,7 +19,7 @@ func TestCompletePipe(t *testing.T) {
 	nodesGenerator := &meshviewer.NodesJsonGenerator{Store: store}
 	graph := graphGenerator.GenerateGraph()
 	assert.NotNil(graph)
-	assert.Equal(232, len(graph.Batadv.Nodes))
+	assert.Equal(169, len(graph.Batadv.Nodes))
 	assert.Equal(72, len(graph.Batadv.Links))
 
 	nodes := nodesGenerator.GetNodesJson()
