@@ -53,25 +53,32 @@ func LoadAliases(filePath string) error {
 	}
 }
 
-func LoadJsonFile(path string) error {
+func templateAliasesFile(filePath string) ([]byte, error) {
 	aliasTemplate := template.New("alias")
 
-	data, err := ioutil.ReadFile(path)
+	data, err := ioutil.ReadFile(filePath)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	aliasTemplate, err = aliasTemplate.Parse(string(data))
 	if err != nil {
-		return err
+		return nil, err
 	}
 	buffer := bytes.NewBuffer(make([]byte, 0, 4096))
 	err = aliasTemplate.Execute(buffer, buildConfigVars())
 	if err != nil {
+		return nil, err
+	}
+	return buffer.Bytes(), nil
+}
+
+func LoadJsonFile(path string) error {
+	data, err := templateAliasesFile(path)
+	if err != nil {
 		return err
 	}
-
 	alias := make(map[string]interface{})
-	err = json.Unmarshal(buffer.Bytes(), &alias)
+	err = json.Unmarshal(data, &alias)
 	if err != nil {
 		return err
 	}
@@ -80,29 +87,51 @@ func LoadJsonFile(path string) error {
 }
 
 func LoadYamlFile(path string) error {
-	aliasTemplate := template.New("alias")
-
-	data, err := ioutil.ReadFile(path)
-	if err != nil {
-		return err
-	}
-	aliasTemplate, err = aliasTemplate.Parse(string(data))
-	if err != nil {
-		return err
-	}
-	buffer := bytes.NewBuffer(make([]byte, 0, 4096))
-	err = aliasTemplate.Execute(buffer, buildConfigVars())
+	data, err := templateAliasesFile(path)
 	if err != nil {
 		return err
 	}
 
 	alias := make(map[string]interface{})
-	err = yaml.Unmarshal(buffer.Bytes(), &alias)
+	err = yaml.Unmarshal(data, &alias)
 	if err != nil {
 		return err
 	}
-	collectedData = alias
-	return nil
+	normalizedData, err := normalize(alias)
+	collectedData = normalizedData.(map[string]interface{})
+	return err
+}
+
+func normalize(in interface{}) (interface{}, error) {
+	switch in.(type) {
+	case map[string]interface{}:
+		inMap := in.(map[string]interface{})
+		for key, value := range inMap {
+			var err error
+			inMap[key], err = normalize(value)
+			if err != nil {
+				return nil, err
+			}
+		}
+		return inMap, nil
+
+	case map[interface{}]interface{}:
+		stringMap := make(map[string]interface{})
+		for key, value := range in.(map[interface{}]interface{}) {
+			if stringKey, ok := key.(string); ok {
+				var err error
+				stringMap[stringKey], err = normalize(value)
+				if err != nil {
+					return nil, err
+				}
+			} else {
+				return nil, fmt.Errorf("Can't convert %v to string", key)
+			}
+		}
+		return stringMap, nil
+	default:
+		return in, nil
+	}
 }
 
 func MergeCollectedData(path string, metrics map[string]interface{}) {
@@ -120,13 +149,16 @@ func GetMarshalledAndCompressedSection(section string) ([]byte, error) {
 	if !exists {
 		return nil, fmt.Errorf("Section %s does not exist", section)
 	}
-	jsonData, err := json.Marshal(dataSection)
+	log.Debugf("Found data for section %s: %v", section, dataSection)
+	jsonData, err := json.Marshal(&dataSection)
 	if err != nil {
 		return nil, err
 	}
+	log.Debugf("Marshalled data into json: %s", string(jsonData))
 	compressedData, err := utils.DeflateCompress(jsonData)
 	if err != nil {
 		return nil, err
 	}
+	log.Debugf("Compressed data to %d bytes", len(compressedData))
 	return compressedData, nil
 }

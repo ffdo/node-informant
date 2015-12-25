@@ -2,7 +2,10 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"net"
+
+	"golang.org/x/net/ipv6"
 
 	"github.com/dereulenspiegel/node-informant/gluon-emitter/data"
 
@@ -12,18 +15,52 @@ import (
 )
 
 var (
-	interfaceFlag   = flag.String("interface", "", "Specify the interface to listen on")
-	portFlag        = flag.Int("port", 1101, "Specify the port to listen on")
-	aliasFilePath   = flag.String("alias", "", "Alias file to load")
-	goupAddressFlag = flag.String("group", "ff02:0:0:0:0:0:2:1001", "Address of multicast group to join")
+	interfaceFlag    = flag.String("interface", "", "Specify the interface to listen on")
+	portFlag         = flag.Int("port", 1101, "Specify the port to listen on")
+	aliasFilePath    = flag.String("alias", "", "Alias file to load")
+	groupAddressFlag = flag.String("group", "ff02:0:0:0:0:0:2:1001", "Address of multicast group to join")
+	logLevelFlag     = flag.String("loglevel", "info", "Set the log level")
 
 	requestRegexp = regexp.MustCompile(`^GET\s([\w]+)$`)
 )
 
+func joinMulticastGroup(interfaceName, groupAddr string, port int) (*ipv6.PacketConn, error) {
+	log.WithFields(log.Fields{
+		"interface": interfaceName,
+		"group":     groupAddr,
+		"port":      port,
+	}).Info("Joining multicast group")
+	iface, err := net.InterfaceByName(interfaceName)
+	if err != nil {
+		return nil, err
+	}
+
+	group := net.ParseIP(groupAddr)
+	c, err := net.ListenPacket("udp6", fmt.Sprintf("[::]:%d", port))
+	if err != nil {
+		return nil, err
+	}
+	p := ipv6.NewPacketConn(c)
+
+	if err := p.JoinGroup(iface, &net.UDPAddr{IP: group}); err != nil {
+		return nil, err
+	}
+	if err := p.SetControlMessage(ipv6.FlagDst, true); err != nil {
+		return nil, err
+	}
+	return p, nil
+}
+
 func main() {
 	flag.Parse()
+	logLevel, err := log.ParseLevel(*logLevelFlag)
+	if err != nil {
+		logLevel = log.InfoLevel
+	}
+	log.SetLevel(logLevel)
+
 	log.Info("Loading alias file")
-	err := data.LoadAliases(*aliasFilePath)
+	err = data.LoadAliases(*aliasFilePath)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"path":  *aliasFilePath,
@@ -31,47 +68,33 @@ func main() {
 		}).Fatal("Can't load alias file")
 	}
 
-	iface, err := net.InterfaceByName(*interfaceFlag)
+	conn, err := joinMulticastGroup(*interfaceFlag, *groupAddressFlag, *portFlag)
 	if err != nil {
 		log.WithFields(log.Fields{
-			"interfaceName": *interfaceFlag,
-			"error":         err,
-		}).Fatal("Can't find interface to listen on")
-	}
-
-	multicastGroupIp := net.ParseIP(*goupAddressFlag)
-	groupAddr := &net.UDPAddr{
-		IP:   multicastGroupIp,
-		Port: *portFlag,
-	}
-
-	log.WithFields(log.Fields{
-		"multicastAddress": *goupAddressFlag,
-		"port":             *portFlag,
-	}).Info("Joining multicast group")
-	conn, err := net.ListenMulticastUDP("udp6", iface, groupAddr)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"interface": *interfaceFlag,
-			"port":      *portFlag,
-			"error":     err,
+			"interface":    *interfaceFlag,
+			"port":         *portFlag,
+			"groupAddress": *groupAddressFlag,
+			"error":        err,
 		}).Fatal("Can't open server socket")
 	}
+	log.Info("Joined multicast group.")
 
-	buf := make([]byte, 0, 1024)
-	for true {
-		n, addr, err := conn.ReadFromUDP(buf)
+	buf := make([]byte, 1500)
+	for {
+		log.Debug("Waiting for packets...")
+		n, _, src, err := conn.ReadFrom(buf)
 		if err != nil {
 			log.WithFields(log.Fields{
 				"receivedByteCount": n,
 				"error":             err,
-				"remoteAddress":     *addr,
+				"remoteAddress":     src,
 			}).Error("Error reading from UDP connection")
 			return
 		} else {
 			log.WithFields(log.Fields{
 				"data":          buf[:n],
-				"remoteAddress": *addr,
+				"byteCount":     n,
+				"remoteAddress": src,
 			}).Debug("Received data on multicast group")
 
 			if requestRegexp.Match(buf[0:n]) {
@@ -80,22 +103,23 @@ func main() {
 				log.WithFields(log.Fields{
 					"section": section,
 				}).Debug("Received valid request for section")
-				out, err := data.GetMarshalledAndCompressedSection(section)
-				if err != nil {
-					n, err := conn.WriteToUDP(out, addr)
+				response, err := data.GetMarshalledAndCompressedSection(section)
+				if err == nil {
+					log.Debugf("Found data to respond, responding %d bytes", len(response))
+					n, err := conn.WriteTo(response, nil, src)
 					if err != nil {
 						log.WithFields(log.Fields{
-							"remoteAddress": *addr,
+							"remoteAddress": src,
 							"error":         err,
 						}).Error("Can't write requested data to remote")
 						return
 					}
 
-					if n != len(out) {
+					if n != len(response) {
 						log.WithFields(log.Fields{
-							"dataLength":    len(out),
+							"dataLength":    len(response),
 							"bytesWritten":  n,
-							"remoteAddress": *addr,
+							"remoteAddress": src,
 						}).Error("Written less bytes than expected to remote")
 					}
 				} else {
@@ -107,4 +131,5 @@ func main() {
 			}
 		}
 	}
+	log.Info("gluon-emitter is exiting")
 }
