@@ -113,3 +113,56 @@ meshnode_traffic_rx | Received traffic on every node labeled with the nodeid and
 meshnode_traffic_tx | Transmitted traffic from every mesh node labeled with the nodeid and traffic type
 meshnode_uptime | Uptime of single mesh nodes labeled with the nodeid
 meshnode_clients | Client count on mesh nodes labeled with the nodeid
+
+# gluon-emitter
+
+gluon-emitter is a simple tool to respond to announced requests. It is primarily
+designed to run on non-embedded hosts like supernodes. Currently it can parse
+a json or yaml file containing static information and respond with these information.
+
+## Command line options
+
+Option | Default | Description | Required
+-------|---------|-------------|----------
+interface | none | Which interface is used to listen for packets | yes
+port | 1101 | Port to listen on | no
+alias | none | Path to a file containing static information about this node | yes
+group | ff02:0:0:0:0:0:2:1001 | Multicast group to join | no
+loglevel | info | Log level as defined by logrus to use | no
+
+## Alias file
+
+The alias file can be a json or yaml file containing the information with which to
+respond. The top level keys are the possible queries to answer to. Under each top
+level must follow the data structure expected by announced for this query
+
+### Example alias yaml file
+
+```yaml
+nodeinfo:
+  node_id: 04ceefcafe2a
+  network:
+    mac: "00:50:56:03:57:2b"
+    addresses:
+    - "2a03:2260:50:5::8"
+    - "fe80::6ce:efff:feca:fe2a"
+    mesh:
+      bat0:
+        interfaces:
+          tunnel:
+          - "04:ce:ef:ca:fe:2a"
+    mesh_interfaces:
+    - "04:ce:ef:ca:fe:2a"
+statistics:
+  node_id: 04ceefcafe2a
+  uptime: 12345
+  gateway: "04:ce:ef:ca:fe:2a"
+  clients:
+    wifi: 0
+    total: 0
+```
+
+### TODO
+
+* Collect statistics dynamically
+* Discover as much static information as possible automatically
