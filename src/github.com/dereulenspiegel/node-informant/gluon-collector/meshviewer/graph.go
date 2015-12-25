@@ -59,32 +59,22 @@ func FindInLinks(links []*GraphLink, sourceIndex, targetIndex int) (link *GraphL
 func (g *GraphGenerator) buildNodeTableAndList() (map[string]*GraphNode, []*GraphNode) {
 	allNeighbours := g.Store.GetAllNeighbours()
 	nodeList := make([]*GraphNode, 0, len(allNeighbours))
+	nodeTable := make(map[string]*GraphNode)
+	counter := 0
 	for _, neighbourInfo := range allNeighbours {
 		status, _ := g.Store.GetNodeStatusInfo(neighbourInfo.NodeId)
 		if status.Online {
-			i := 0
-			for mac, _ := range neighbourInfo.Batadv {
-				var node *GraphNode
-				if i == 0 {
-					node = &GraphNode{
-						Id:     mac,
-						NodeId: neighbourInfo.NodeId,
-					}
-				} else {
-					node = &GraphNode{
-						Id: mac,
-					}
-				}
-				nodeList = append(nodeList, node)
-				i++
+			node := &GraphNode{
+				NodeId: neighbourInfo.NodeId,
 			}
+			for mac, _ := range neighbourInfo.Batadv {
+				node.Id = mac
+				nodeTable[mac] = node
+			}
+			node.tableId = counter
+			nodeList = append(nodeList, node)
+			counter++
 		}
-	}
-
-	nodeTable := make(map[string]*GraphNode)
-	for i, node := range nodeList {
-		node.tableId = i
-		nodeTable[node.Id] = node
 	}
 	return nodeTable, nodeList
 }
