@@ -22,6 +22,7 @@ var (
 
 func main() {
 	flag.Parse()
+	log.Info("Loading alias file")
 	err := data.LoadAliases(*aliasFilePath)
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -37,13 +38,17 @@ func main() {
 			"error":         err,
 		}).Fatal("Can't find interface to listen on")
 	}
-	multicastGroupIp := net.ParseIP(*goupAddressFlag)
 
+	multicastGroupIp := net.ParseIP(*goupAddressFlag)
 	groupAddr := &net.UDPAddr{
 		IP:   multicastGroupIp,
 		Port: *portFlag,
 	}
 
+	log.WithFields(log.Fields{
+		"multicastAddress": *goupAddressFlag,
+		"port":             *portFlag,
+	}).Info("Joining multicast group")
 	conn, err := net.ListenMulticastUDP("udp6", iface, groupAddr)
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -62,10 +67,19 @@ func main() {
 				"error":             err,
 				"remoteAddress":     *addr,
 			}).Error("Error reading from UDP connection")
+			return
 		} else {
+			log.WithFields(log.Fields{
+				"data":          buf[:n],
+				"remoteAddress": *addr,
+			}).Debug("Received data on multicast group")
+
 			if requestRegexp.Match(buf[0:n]) {
 				finds := requestRegexp.FindAllSubmatch(buf[:n], -1)
 				section := string(finds[0][1])
+				log.WithFields(log.Fields{
+					"section": section,
+				}).Debug("Received valid request for section")
 				out, err := data.GetMarshalledAndCompressedSection(section)
 				if err != nil {
 					n, err := conn.WriteToUDP(out, addr)
@@ -74,6 +88,7 @@ func main() {
 							"remoteAddress": *addr,
 							"error":         err,
 						}).Error("Can't write requested data to remote")
+						return
 					}
 
 					if n != len(out) {
