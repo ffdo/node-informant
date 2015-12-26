@@ -12,6 +12,7 @@ import (
 
 func TestCompletePipe(t *testing.T) {
 	assert := assert.New(t)
+	log.SetLevel(log.DebugLevel)
 	store := data.NewSimpleInMemoryStore()
 	test.ExecuteCompletePipe(t, store)
 
@@ -28,6 +29,7 @@ func TestCompletePipe(t *testing.T) {
 
 func TestCompletePipeWithBoltStore(t *testing.T) {
 	assert := assert.New(t)
+	log.SetLevel(log.DebugLevel)
 	dbPath := "./bolt.db"
 	defer os.RemoveAll(dbPath)
 	store, err := data.NewBoltStore(dbPath)

@@ -49,7 +49,6 @@ func (t *TestDataReceiver) Close() error {
 }
 
 func ExecuteCompletePipe(t *testing.T, store data.Nodeinfostore) {
-	log.SetLevel(log.ErrorLevel)
 	prometheus.Init()
 	assert := assert.New(t)
 	testReceiver := &TestDataReceiver{TestData: TestData}
