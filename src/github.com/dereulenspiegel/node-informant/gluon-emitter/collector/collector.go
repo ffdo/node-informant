@@ -5,47 +5,86 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/scheduler"
+	"github.com/dereulenspiegel/node-informant/gluon-emitter/data"
+)
+
+type CollectionFrequency int
+
+const (
+	CollectOnce CollectionFrequency = -1
+	DontPoll    CollectionFrequency = -2
 )
 
 type FactCollector interface {
 	Init(map[string]interface{}) error
-	Collect() interface{}
+	Collect() (interface{}, error)
 	Path() string
+	Frequency() CollectionFrequency
 }
 
 type CreateFactCollector func() FactCollector
 
 var (
-	FactCollectorCreators []CreateFactCollector
-	FactCollectors        []FactCollector
+	factCollectorCreators []CreateFactCollector
+	factCollectors        []FactCollector
 
-	collectJob *scheduler.ScheduledJob
+	collectionJobs []*scheduler.ScheduledJob
 )
 
 func init() {
-	FactCollectorCreators = make([]CreateFactCollector, 0, 20)
-	FactCollectors = make([]FactCollector, 0, 20)
+	factCollectorCreators = make([]CreateFactCollector, 0, 20)
+	factCollectors = make([]FactCollector, 0, 20)
+	collectionJobs = make([]*scheduler.ScheduledJob, 0, 20)
 }
 
 func Register(createColletorFunc CreateFactCollector) {
-	FactCollectorCreators = append(FactCollectorCreators, createColletorFunc)
+	factCollectorCreators = append(factCollectorCreators, createColletorFunc)
+}
+
+func collectFacts(collector FactCollector) {
+	path := collector.Path()
+	fact, err := collector.Collect()
+	if err == nil {
+		data.MergeCollectedData(path, fact)
+	} else {
+		log.WithFields(log.Fields{
+			"collectorPath": path,
+			"error":         err,
+		}).Error("Can't collect metric")
+	}
 }
 
 func InitCollection(collectorConfig map[string]interface{}) {
-	for _, creator := range FactCollectorCreators {
-		FactCollector := creator(collectorConfig)
-		if err := FactCollector.Init(); err != nil {
-			FactCollectors = append(FactCollectors, FactCollector)
+	for _, creator := range factCollectorCreators {
+		factCollector := creator()
+		if err := factCollector.Init(collectorConfig); err != nil {
+			factCollectors = append(factCollectors, factCollector)
+			path := factCollector.Path()
+			if config, exists := collectorConfig[path]; exists {
+				if err := factCollector.Init(config.(map[string]interface{})); err == nil {
+					frequency := factCollector.Frequency()
+					if frequency == CollectOnce {
+						collectFacts(factCollector)
+					} else if frequency > 0 {
+						func(factCollector FactCollector) {
+							collectJob := scheduler.NewJob(time.Second*time.Duration(frequency), func() {
+								collectFacts(factCollector)
+							}, true)
+							collectionJobs = append(collectionJobs, collectJob)
+						}(factCollector)
+					}
+				} else {
+					log.WithFields(log.Fields{
+						"collectorPath": path,
+						"error":         err,
+					}).Error("Can't initialise collector")
+				}
+			}
 		} else {
 			log.WithFields(log.Fields{
 				"error":  err,
-				"metric": FactCollector.Path(),
+				"metric": factCollector.Path(),
 			}).Fatalf("Failed to initialize statistic collector")
 		}
 	}
-	collectJob = scheduler.NewJob(time.Minute*1, func() {
-		for _, collector := range FactCollectors {
-			collector.Collect()
-		}
-	}, true)
 }

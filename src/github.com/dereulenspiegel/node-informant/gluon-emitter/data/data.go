@@ -134,7 +134,7 @@ func normalize(in interface{}) (interface{}, error) {
 	}
 }
 
-func MergeCollectedData(path string, metrics map[string]interface{}) {
+func MergeCollectedData(path string, metrics interface{}) {
 	if err := set(collectedData, path, metrics); err != nil {
 		log.WithFields(log.Fields{
 			"path":          path,

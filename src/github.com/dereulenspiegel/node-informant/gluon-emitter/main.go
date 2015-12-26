@@ -3,13 +3,16 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"net"
 
+	"github.com/dereulenspiegel/node-informant/gluon-emitter/collector"
+	"github.com/dereulenspiegel/node-informant/gluon-emitter/collector/hostname"
+	"github.com/dereulenspiegel/node-informant/gluon-emitter/data"
 	"golang.org/x/net/ipv6"
 
-	"github.com/dereulenspiegel/node-informant/gluon-emitter/data"
-
 	log "github.com/Sirupsen/logrus"
+	"gopkg.in/yaml.v2"
 
 	"regexp"
 )
@@ -20,9 +23,34 @@ var (
 	aliasFilePath    = flag.String("alias", "", "Alias file to load")
 	groupAddressFlag = flag.String("group", "ff02:0:0:0:0:0:2:1001", "Address of multicast group to join")
 	logLevelFlag     = flag.String("loglevel", "info", "Set the log level")
+	configFileFlag   = flag.String("config", "", "Path to a configuration yaml file")
 
 	requestRegexp = regexp.MustCompile(`^GET\s([\w]+)$`)
 )
+
+func init() {
+	hostname.Init()
+}
+
+func parseConfig(filePath string) map[string]interface{} {
+	configMap := make(map[string]interface{})
+	configBytes, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"configFilePath": filePath,
+			"error":          err,
+		}).Fatal("Can't read configuration")
+	}
+
+	err = yaml.Unmarshal(configBytes, &configMap)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error":          err,
+			"configFilePath": filePath,
+		}).Fatal("Can't unmarshal configuration file")
+	}
+	return configMap
+}
 
 func joinMulticastGroup(interfaceName, groupAddr string, port int) (*ipv6.PacketConn, error) {
 	log.WithFields(log.Fields{
@@ -53,6 +81,7 @@ func joinMulticastGroup(interfaceName, groupAddr string, port int) (*ipv6.Packet
 
 func main() {
 	flag.Parse()
+	config := parseConfig(*configFileFlag)
 	logLevel, err := log.ParseLevel(*logLevelFlag)
 	if err != nil {
 		logLevel = log.InfoLevel
@@ -67,6 +96,7 @@ func main() {
 			"error": err,
 		}).Fatal("Can't load alias file")
 	}
+	collector.InitCollection(config)
 
 	conn, err := joinMulticastGroup(*interfaceFlag, *groupAddressFlag, *portFlag)
 	if err != nil {
