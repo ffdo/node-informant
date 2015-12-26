@@ -76,6 +76,7 @@ func (g *GraphGenerator) buildNodeTableAndList() (map[string]*GraphNode, []*Grap
 			counter++
 		}
 	}
+
 	return nodeTable, nodeList
 }
 
@@ -128,7 +129,8 @@ func (g *GraphGenerator) buildLink(nodeTable map[string]*GraphNode, sourceMac, t
 
 func linkExists(links []*GraphLink, source, target int) bool {
 	for _, link := range links {
-		if link.Source == source && link.Target == target {
+		if link.Source == source && link.Target == target ||
+			link.Source == target && link.Target == source {
 			return true
 		}
 	}
@@ -186,7 +188,6 @@ func (g *GraphGenerator) GenerateGraph() GraphJson {
 			}
 		}
 	}
-
 	allLinks := make([]*GraphLink, 0, len(unidirectionalLinks)+len(bidirectionalLinks))
 	allLinks = append(allLinks, bidirectionalLinks...)
 	allLinks = append(allLinks, unidirectionalLinks...)

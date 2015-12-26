@@ -13,16 +13,17 @@ import (
 
 func TestCompletePipe(t *testing.T) {
 	assert := assert.New(t)
-	log.SetLevel(log.DebugLevel)
+	log.SetLevel(log.ErrorLevel)
 	store := data.NewSimpleInMemoryStore()
 	test.ExecuteCompletePipe(t, store)
 
 	graphGenerator := &meshviewer.GraphGenerator{Store: store}
 	nodesGenerator := &meshviewer.NodesJsonGenerator{Store: store}
+
 	graph := graphGenerator.GenerateGraph()
 	assert.NotNil(graph)
 	assert.Equal(169, len(graph.Batadv.Nodes))
-	assert.Equal(71, len(graph.Batadv.Links))
+	assert.Equal(66, len(graph.Batadv.Links))
 
 	nodes := nodesGenerator.GetNodesJson()
 	assert.NotNil(nodes)
@@ -30,7 +31,7 @@ func TestCompletePipe(t *testing.T) {
 
 func TestCompletePipeWithBoltStore(t *testing.T) {
 	assert := assert.New(t)
-	log.SetLevel(log.DebugLevel)
+	log.SetLevel(log.ErrorLevel)
 	dbPath := "./bolt.db"
 	defer os.RemoveAll(dbPath)
 	store, err := data.NewBoltStore(dbPath)
