@@ -5,6 +5,7 @@ import (
 
 	"encoding/json"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/test"
 	"github.com/stretchr/testify/assert"
@@ -74,6 +75,7 @@ func testForDoublettes(assert *assert.Assertions, nodes []*GraphNode) {
 
 func TestGeneratingNodeGraph(t *testing.T) {
 	assert := assert.New(t)
+	log.SetLevel(log.ErrorLevel)
 	assert.True(true)
 	store := data.NewSimpleInMemoryStore()
 	test.ExecuteCompletePipe(t, store)
