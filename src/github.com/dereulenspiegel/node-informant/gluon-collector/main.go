@@ -105,7 +105,7 @@ func Assemble() ([]io.Closer, error) {
 		return closeables, err
 	}
 	graphGenerator := &meshviewer.GraphGenerator{Store: DataStore}
-	nodesGenerator := &meshviewer.NodesJsonGenerator{Store: DataStore}
+	nodesGenerator := meshviewer.NewNodesJsonGenerator(DataStore)
 	missingUpdate := &MissingUpdater{Store: DataStore, Requester: requester}
 	DataStore.NotifyNodeOffline(missingUpdate.CheckNodeUnicast)
 	nodesGenerator.UpdateNodesJson()
