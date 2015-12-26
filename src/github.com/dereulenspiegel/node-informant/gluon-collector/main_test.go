@@ -4,6 +4,7 @@ import (
 	"os"
 	"testing"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/meshviewer"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/test"
