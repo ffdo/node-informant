@@ -20,7 +20,7 @@ func TestCompletePipe(t *testing.T) {
 	graph := graphGenerator.GenerateGraph()
 	assert.NotNil(graph)
 	assert.Equal(169, len(graph.Batadv.Nodes))
-	assert.Equal(72, len(graph.Batadv.Links))
+	assert.Equal(71, len(graph.Batadv.Links))
 
 	nodes := nodesGenerator.GetNodesJson()
 	assert.NotNil(nodes)
