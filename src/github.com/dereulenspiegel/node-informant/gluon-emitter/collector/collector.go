@@ -8,12 +8,12 @@ import (
 )
 
 type StatCollector interface {
-	Init() error
+	Init(map[string]interface{}) error
 	Collect() interface{}
 	Path() string
 }
 
-type CreateStatCollector func(map[string]interface{}) StatCollector
+type CreateStatCollector func() StatCollector
 
 var (
 	statCollectorCreators []CreateStatCollector
