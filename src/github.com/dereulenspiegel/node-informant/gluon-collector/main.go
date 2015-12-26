@@ -222,6 +222,7 @@ func main() {
 	Closeables = make([]io.Closer, 0, 5)
 	flag.Parse()
 	conf.InitConfig()
+	prometheus.Init()
 	if conf.Global == nil {
 		log.Fatal("Configuration couldn't be parsed")
 	}

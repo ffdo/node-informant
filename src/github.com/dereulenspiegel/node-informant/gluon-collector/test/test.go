@@ -12,11 +12,14 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	cfg "github.com/olebedev/config"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/dereulenspiegel/node-informant/announced"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/assemble"
+	"github.com/dereulenspiegel/node-informant/gluon-collector/config"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
+	"github.com/dereulenspiegel/node-informant/gluon-collector/prometheus"
 	"github.com/dereulenspiegel/node-informant/utils"
 )
 
@@ -47,6 +50,7 @@ func (t *TestDataReceiver) Close() error {
 
 func ExecuteCompletePipe(t *testing.T, store data.Nodeinfostore) {
 	log.SetLevel(log.ErrorLevel)
+	prometheus.Init()
 	assert := assert.New(t)
 	testReceiver := &TestDataReceiver{TestData: TestData}
 
@@ -145,7 +149,12 @@ func LoadTestData() error {
 	return nil
 }
 
+func initDefaultConfig() {
+	config.Global = &cfg.Config{}
+}
+
 func init() {
+	initDefaultConfig()
 	err := LoadTestData()
 	if err != nil {
 		log.Fatalf("Can't load test data: %v", err)

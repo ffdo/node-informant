@@ -2,8 +2,13 @@ package prometheus
 
 import (
 	log "github.com/Sirupsen/logrus"
+	"github.com/dereulenspiegel/node-informant/gluon-collector/config"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
 	stat "github.com/prometheus/client_golang/prometheus"
+)
+
+var (
+	nodeLabels = []string{"nodeid"}
 )
 
 /*
@@ -11,6 +16,30 @@ These are counters accumulated over all nodes. If possible these should be
 updated dynamically in ProcessPipes
 */
 var (
+	TotalClientCounter stat.Gauge
+
+	TotalNodes stat.Gauge
+
+	TotalNodeTrafficRx stat.Counter
+
+	TotalNodeTrafficTx stat.Counter
+
+	TotalNodeMgmtTrafficRx stat.Counter
+
+	TotalNodeMgmtTrafficTx stat.Counter
+
+	OnlineNodes stat.Gauge
+
+	NodesTrafficRx *stat.CounterVec
+
+	NodesTrafficTx *stat.CounterVec
+
+	NodesUptime *stat.CounterVec
+
+	NodesClients *stat.GaugeVec
+)
+
+func initPrometheusMetrics() {
 	TotalClientCounter = stat.NewGauge(stat.GaugeOpts{
 		Name: "total_clients",
 		Help: "Total number of connected clients",
@@ -49,36 +78,44 @@ var (
 	NodesTrafficRx = stat.NewCounterVec(stat.CounterOpts{
 		Name: "meshnode_traffic_rx",
 		Help: "Transmitted traffic from nodes",
-	}, []string{"nodeid", "type"})
+	}, append(nodeLabels, "type"))
 
 	NodesTrafficTx = stat.NewCounterVec(stat.CounterOpts{
 		Name: "meshnode_traffic_tx",
 		Help: "Received traffic on nodes",
-	}, []string{"nodeid", "type"})
+	}, append(nodeLabels, "type"))
 
 	NodesUptime = stat.NewCounterVec(stat.CounterOpts{
 		Name: "meshnode_uptime",
 		Help: "Uptime of meshnodes",
-	}, []string{"nodeid"})
+	}, nodeLabels)
 
 	NodesClients = stat.NewGaugeVec(stat.GaugeOpts{
 		Name: "meshnode_clients",
 		Help: "Clients on single meshnodes",
-	}, []string{"nodeid"})
+	}, nodeLabels)
+}
 
-	NodeMetricsMap = make(map[string]*NodeMetrics)
-)
-
-// This type holds the Metrics for a single node
-type NodeMetrics struct {
-	Clients stat.Gauge
-	Uptime  stat.Counter
-	Traffic *stat.CounterVec
-	NodeId  string
+func initNodeLabels() {
+	prometheusCfg, err := config.Global.Get("prometheus")
+	if err != nil {
+		return
+	}
+	if prometheusCfg.UBool("namelabel", false) {
+		nodeLabels = append(nodeLabels, "hostname")
+	}
+	if prometheusCfg.UBool("sitecodelabel", false) {
+		nodeLabels = append(nodeLabels, "sitecode")
+	}
 }
 
 // Register all accumulated metrics
-func init() {
+func Init() {
+	if NodesTrafficRx != nil {
+		return
+	}
+	initNodeLabels()
+	initPrometheusMetrics()
 	stat.MustRegister(TotalClientCounter)
 	stat.MustRegister(TotalNodes)
 	stat.MustRegister(TotalNodeTrafficRx)

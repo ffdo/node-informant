@@ -2,6 +2,7 @@ package prometheus
 
 import (
 	log "github.com/Sirupsen/logrus"
+	"github.com/dereulenspiegel/node-informant/gluon-collector/config"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
 	"github.com/dereulenspiegel/node-informant/gluon-collector/pipeline"
 	stat "github.com/prometheus/client_golang/prometheus"
@@ -128,7 +129,25 @@ func (t *TrafficCountPipe) Process(in chan data.ParsedResponse) chan data.Parsed
 }
 
 // NodeMetricCollector updates per node metrics based on received statistics responses.
-type NodeMetricCollector struct{}
+type NodeMetricCollector struct {
+	Store data.Nodeinfostore
+}
+
+func getLabels(nodeinfo data.NodeInfo, defaultLabels ...string) []string {
+	labels := make([]string, 0, 5)
+	labels = append(labels, nodeinfo.NodeId)
+	prometheusCfg, err := config.Global.Get("prometheus")
+	if err != nil {
+		return append(labels, defaultLabels...)
+	}
+	if prometheusCfg.UBool("namelabel", false) {
+		labels = append(labels, nodeinfo.Hostname)
+	}
+	if prometheusCfg.UBool("sitecodelabel", false) {
+		labels = append(labels, nodeinfo.System.SiteCode)
+	}
+	return append(labels, defaultLabels...)
+}
 
 func (n *NodeMetricCollector) Process(in chan data.ParsedResponse) chan data.ParsedResponse {
 	out := make(chan data.ParsedResponse)
@@ -136,13 +155,33 @@ func (n *NodeMetricCollector) Process(in chan data.ParsedResponse) chan data.Par
 		for response := range in {
 			if response.Type() == "statistics" {
 				stats := response.ParsedData().(*data.StatisticsStruct)
-				NodesClients.WithLabelValues(response.NodeId()).Set(float64(stats.Clients.Total))
-				NodesUptime.WithLabelValues(response.NodeId()).Set(stats.Uptime)
-				if stats.Traffic != nil {
-					NodesTrafficRx.WithLabelValues(response.NodeId(), "traffic").Set(float64(stats.Traffic.Rx.Bytes))
-					NodesTrafficTx.WithLabelValues(response.NodeId(), "traffic").Set(float64(stats.Traffic.Tx.Bytes))
-					NodesTrafficRx.WithLabelValues(response.NodeId(), "mgmt_traffic").Set(float64(stats.Traffic.MgmtRx.Bytes))
-					NodesTrafficTx.WithLabelValues(response.NodeId(), "mgmt_traffic").Set(float64(stats.Traffic.MgmtTx.Bytes))
+				nodeinfo, err := n.Store.GetNodeInfo(response.NodeId())
+				if err != nil {
+					// Extended labels are not configured
+					if _, err := config.Global.Get("prometheus"); err != nil {
+						// FIXME This is bad code duplication, we should find a more elegant way
+						NodesClients.WithLabelValues(response.NodeId()).Set(float64(stats.Clients.Total))
+						NodesUptime.WithLabelValues(response.NodeId()).Set(stats.Uptime)
+						if stats.Traffic != nil {
+							NodesTrafficRx.WithLabelValues(response.NodeId(), "traffic").Set(float64(stats.Traffic.Rx.Bytes))
+							NodesTrafficTx.WithLabelValues(response.NodeId(), "traffic").Set(float64(stats.Traffic.Tx.Bytes))
+							NodesTrafficRx.WithLabelValues(response.NodeId(), "mgmt_traffic").Set(float64(stats.Traffic.MgmtRx.Bytes))
+							NodesTrafficTx.WithLabelValues(response.NodeId(), "mgmt_traffic").Set(float64(stats.Traffic.MgmtTx.Bytes))
+						}
+					} else {
+						log.WithFields(log.Fields{
+							"nodeid": response.NodeId(),
+						}).Errorf("Can't retrieve node infos to get the hostname")
+					}
+				} else {
+					NodesClients.WithLabelValues(getLabels(nodeinfo)...).Set(float64(stats.Clients.Total))
+					NodesUptime.WithLabelValues(getLabels(nodeinfo)...).Set(stats.Uptime)
+					if stats.Traffic != nil {
+						NodesTrafficRx.WithLabelValues(getLabels(nodeinfo, "traffic")...).Set(float64(stats.Traffic.Rx.Bytes))
+						NodesTrafficTx.WithLabelValues(getLabels(nodeinfo, "traffic")...).Set(float64(stats.Traffic.Tx.Bytes))
+						NodesTrafficRx.WithLabelValues(getLabels(nodeinfo, "mgmt_traffic")...).Set(float64(stats.Traffic.MgmtRx.Bytes))
+						NodesTrafficTx.WithLabelValues(getLabels(nodeinfo, "mgmt_traffic")...).Set(float64(stats.Traffic.MgmtTx.Bytes))
+					}
 				}
 			}
 			out <- response
@@ -160,6 +199,6 @@ func GetPrometheusProcessPipes(store data.Nodeinfostore) []pipeline.ProcessPipe 
 	//out = append(out, &ReturnedNodeDetector{Store: store})
 	out = append(out, &ClientCountPipe{Store: store})
 	out = append(out, &TrafficCountPipe{Store: store})
-	out = append(out, &NodeMetricCollector{})
+	out = append(out, &NodeMetricCollector{Store: store})
 	return out
 }
