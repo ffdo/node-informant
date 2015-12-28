@@ -27,7 +27,16 @@ func initNodeidCollector(config map[string]interface{}) error {
 		data.MergeCollectedData("statistics.node_id", nodeid)
 		data.MergeCollectedData("nodeinfo.node_id", nodeid)
 		data.MergeCollectedData("neighbours.node_id", nodeid)
-
+		data.MergeCollectedData("nodeinfo.network.mac", mac)
+		addresses, err := iface.Addrs()
+		if err != nil {
+			return err
+		}
+		addressStrings := make([]string, 0, len(addresses))
+		for _, addr := range addresses {
+			addressStrings = append(addressStrings, addr.String())
+		}
+		data.MergeCollectedData("nodeinfo.network.addresses")
 		return nil
 	} else {
 		return fmt.Errorf("No interface defined")
