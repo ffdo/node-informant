@@ -150,6 +150,10 @@ func (n *NodesJsonGenerator) GetNodesJsonV2() NodesJsonV2 {
 		nodeId := nodeInfo.NodeId
 		status, _ := n.Store.GetNodeStatusInfo(nodeId)
 		var stats StatisticsStruct
+		flags := NodeFlags{
+			Online:  status.Online,
+			Gateway: status.Gateway,
+		}
 		if storedStats, err := n.Store.GetStatistics(nodeId); err == nil {
 			if !status.Online {
 				storedStats.Clients.Wifi = 0
@@ -159,10 +163,6 @@ func (n *NodesJsonGenerator) GetNodesJsonV2() NodesJsonV2 {
 			stats = convertToMeshviewerStatistics(&storedStats)
 		} else {
 			stats = StatisticsStruct{}
-		}
-		flags := NodeFlags{
-			Online:  status.Online,
-			Gateway: status.Gateway,
 		}
 		node := NodesJsonNode{
 			Nodeinfo:   nodeInfo,
