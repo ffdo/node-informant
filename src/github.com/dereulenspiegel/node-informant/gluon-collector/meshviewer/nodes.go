@@ -155,6 +155,7 @@ func (n *NodesJsonGenerator) GetNodesJsonV2() NodesJsonV2 {
 				storedStats.Clients.Wifi = 0
 				storedStats.Clients.Total = 0
 			}
+			flags.Uplink = determineUplink(storedStats)
 			stats = convertToMeshviewerStatistics(&storedStats)
 		} else {
 			stats = StatisticsStruct{}
