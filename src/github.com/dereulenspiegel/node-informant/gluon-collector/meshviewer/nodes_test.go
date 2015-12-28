@@ -230,6 +230,21 @@ func TestNodesJsonHasFlaggedUplinks(t *testing.T) {
 		}
 	}
 	assert.True(uplinkFound, "No node was flagged as uplink")
+
+	statistics = data.StatisticsStruct{}
+	err = json.Unmarshal([]byte(nonUplinkStats), &statistics)
+	assert.Nil(err)
+
+	uplinkFound = false
+	store.PutStatistics(statistics)
+	nodesJson = generator.GetNodesJson()
+	for _, node := range nodesJson.Nodes {
+		if !node.Flags.Uplink && node.Nodeinfo.NodeId == "e8de27252554" {
+			uplinkFound = true
+			break
+		}
+	}
+	assert.True(uplinkFound, "A node was not correctly flagged")
 }
 
 func TestFlaggingUplink(t *testing.T) {
