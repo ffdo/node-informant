@@ -108,22 +108,21 @@ func (n *NodesJsonGenerator) GetNodesJson() NodesJson {
 		nodeId := nodeInfo.NodeId
 		status, _ := n.Store.GetNodeStatusInfo(nodeId)
 		var stats StatisticsStruct
-		var isUplink bool
+		flags := NodeFlags{
+			Online:  status.Online,
+			Gateway: status.Gateway,
+		}
 		if storedStats, err := n.Store.GetStatistics(nodeId); err == nil {
 			if !status.Online {
 				storedStats.Clients.Wifi = 0
 				storedStats.Clients.Total = 0
 			}
-			isUplink = determineUplink(storedStats)
+			flags.Uplink = determineUplink(storedStats)
 			stats = convertToMeshviewerStatistics(&storedStats)
 		} else {
 			stats = StatisticsStruct{}
 		}
-		flags := NodeFlags{
-			Online:  status.Online,
-			Gateway: status.Gateway,
-			Uplink:  isUplink,
-		}
+
 		node := NodesJsonNode{
 			Nodeinfo:   nodeInfo,
 			Statistics: &stats,
