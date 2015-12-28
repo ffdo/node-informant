@@ -13,9 +13,9 @@ type MeshVPNStruct struct {
 }
 
 type TrafficObject struct {
-	Bytes   float64 `json:"bytes,omitempty"`
-	Packets uint64  `json:"packets,omitempty"`
-	Dropped uint64  `json:"dropped,omitempty"`
+	Bytes   uint64 `json:"bytes,omitempty"`
+	Packets uint64 `json:"packets,omitempty"`
+	Dropped uint64 `json:"dropped,omitempty"`
 }
 
 type TrafficStruct struct {
