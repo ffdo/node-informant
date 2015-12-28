@@ -45,13 +45,21 @@ func (d *DefaultFactCollector) Frequency() CollectionFrequency {
 	return d.frequency
 }
 
+func defaultInitImpl(config map[string]interface{}) error {
+	return nil
+}
+
 func NewFactCollector(path string, frequency CollectionFrequency,
 	initImpl func(map[string]interface{}) error, collectImpl func() (interface{}, error)) CreateFactCollector {
+	usedInitImpl := initImpl
+	if usedInitImpl == nil {
+		usedInitImpl = defaultInitImpl
+	}
 	return func() FactCollector {
 		return &DefaultFactCollector{
 			frequency:   frequency,
 			path:        path,
-			initImpl:    initImpl,
+			initImpl:    usedInitImpl,
 			collectImpl: collectImpl,
 		}
 	}
