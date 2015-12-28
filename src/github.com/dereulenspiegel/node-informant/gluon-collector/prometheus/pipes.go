@@ -103,7 +103,17 @@ func collectTrafficBytes(counter stat.Counter, oldTraffic, newTraffic *data.Traf
 	} else {
 		value = float64(newTraffic.Bytes)
 	}
-	counter.Add(value)
+	if value > 0 {
+		counter.Add(value)
+	} else if newTraffic.Bytes > 0 {
+		counter.Add(newTraffic.Bytes)
+	} else {
+		log.WithFields(log.Fields{
+			"newTraffic": *newTraffic,
+			"oldTraffic": oldTraffic,
+			"value":      value,
+		}).Errorf("New traffic value was smaller than the old value and the new traffic value even seemed to be negative")
+	}
 }
 
 func (t *TrafficCountPipe) Process(in chan data.ParsedResponse) chan data.ParsedResponse {
