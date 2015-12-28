@@ -102,7 +102,7 @@ func buildAnnouncedReceiver(announcedConfig *cfg.Config) announced.AnnouncedPack
 	}
 	requester, err := announced.NewRequester(iface, port)
 	if err != nil {
-		log.Fatalf("Error creating requester")
+		log.Fatalf("Error creating requester: %v", err)
 	}
 	return requester
 }

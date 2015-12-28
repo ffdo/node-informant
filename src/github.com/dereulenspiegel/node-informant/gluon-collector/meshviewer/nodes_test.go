@@ -209,6 +209,7 @@ var (
 )
 
 func TestNodesJsonHasFlaggedUplinks(t *testing.T) {
+	//log.SetLevel(log.DebugLevel)
 	assert := assert.New(t)
 	store := data.NewSimpleInMemoryStore()
 	test.ExecuteCompletePipe(t, store)
