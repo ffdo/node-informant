@@ -7,15 +7,8 @@ import (
 
 func Init() {
 	uptimeCollectorCreator := collector.NewFactCollector("statistics.uptime", 60,
-		initUptimeCollector, collectUptime)
+		nil, collectUptime)
 	collector.Register(uptimeCollectorCreator)
-}
-
-type UptimeCollector struct{}
-
-func initUptimeCollector(map[string]interface{}) error {
-	// Just here for interface compliance
-	return nil
 }
 
 func collectUptime() (interface{}, error) {
