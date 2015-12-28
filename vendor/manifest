@@ -45,6 +45,12 @@
 			"branch": "master"
 		},
 		{
+			"importpath": "github.com/capnm/sysinfo",
+			"repository": "https://github.com/capnm/sysinfo",
+			"revision": "5909a53897f32d198d9c81e3417f6d25ecfd2229",
+			"branch": "master"
+		},
+		{
 			"importpath": "github.com/codegangsta/inject",
 			"repository": "https://github.com/codegangsta/inject",
 			"revision": "33e0aa1cb7c019ccc3fbe049a8262a6403d30504",
