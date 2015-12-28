@@ -5,10 +5,72 @@ import (
 	"testing"
 
 	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
+	"github.com/dereulenspiegel/node-informant/gluon-collector/test"
 	"github.com/stretchr/testify/assert"
 )
 
 var (
+	nodeinfos = `
+	{
+  "hardware": {
+    "model": "TP-Link TL-WR842N/ND v2",
+    "nproc": 1
+  },
+  "hostname": "FF-DO-Josephstr-13",
+  "location": {
+    "latitude": 51.512426,
+    "longitude": 7.455485
+  },
+  "network": {
+    "addresses": [
+      "fe80:0:0:0:eade:27ff:fe25:2554",
+      "2a03:2260:50:5:eade:27ff:fe25:2554"
+    ],
+    "mac": "e8:de:27:25:25:54",
+    "mesh": {
+      "bat0": {
+        "interfaces": {
+          "tunnel": [
+            "ea:e2:27:25:25:54"
+          ],
+          "wireless": [
+            "ea:e1:28:25:25:54"
+          ]
+        }
+      }
+    },
+    "mesh_interfaces": [
+      "ea:e2:27:25:25:54",
+      "ea:e1:28:25:25:54"
+    ]
+  },
+  "node_id": "e8de27252554",
+  "owner": {
+    "contact": "till.klocke@gmail.com"
+  },
+  "software": {
+    "autoupdater": {
+      "branch": "stable",
+      "enabled": true
+    },
+    "batman-adv": {
+      "compat": 15,
+      "version": "2015.0"
+    },
+    "fastd": {
+      "enabled": true,
+      "version": "v17"
+    },
+    "firmware": {
+      "base": "gluon-v2015.1.2",
+      "release": "0.7.2"
+    }
+  },
+  "system": {
+    "site_code": "ffdo"
+  }
+}
+	`
 	uplinkStats = `
   {
         "mesh_vpn": {
@@ -145,6 +207,30 @@ var (
   }
   `
 )
+
+func TestNodesJsonHasFlaggedUplinks(t *testing.T) {
+	assert := assert.New(t)
+	store := data.NewSimpleInMemoryStore()
+	test.ExecuteCompletePipe(t, store)
+
+	statistics := data.StatisticsStruct{}
+	err := json.Unmarshal([]byte(uplinkStats), &statistics)
+	assert.Nil(err)
+
+	store.PutStatistics(statistics)
+
+	generator := &NodesJsonGenerator{Store: store}
+	nodesJson := generator.GetNodesJson()
+
+	uplinkFound := false
+	for _, node := range nodesJson.Nodes {
+		if node.Flags.Uplink && node.Nodeinfo.NodeId == "e8de27252554" {
+			uplinkFound = true
+			break
+		}
+	}
+	assert.True(uplinkFound, "No node was flagged as uplink")
+}
 
 func TestFlaggingUplink(t *testing.T) {
 	assert := assert.New(t)
