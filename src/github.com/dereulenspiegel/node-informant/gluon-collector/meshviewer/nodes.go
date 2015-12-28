@@ -16,6 +16,7 @@ const TimeFormat string = time.RFC3339
 type NodeFlags struct {
 	Gateway bool `json:"gateway"`
 	Online  bool `json:"online"`
+	Uplink  bool `json:"uplink"`
 }
 
 // NodesJsonNode is the structure expected by mehsviewer to contain all information
@@ -83,6 +84,21 @@ func convertToMeshviewerStatistics(in *data.StatisticsStruct) StatisticsStruct {
 	}
 }
 
+func determineUplink(stats data.StatisticsStruct) bool {
+	if stats.MeshVpn != nil {
+		for _, group := range stats.MeshVpn.Groups {
+			if group != nil {
+				for _, peer := range group.Peers {
+					if peer != nil && peer.Established > 0 {
+						return true
+					}
+				}
+			}
+		}
+	}
+	return false
+}
+
 // GetNodesJson fills a NodesJson struct with all information stored in the
 // Nodeinfostore
 func (n *NodesJsonGenerator) GetNodesJson() NodesJson {
@@ -92,11 +108,13 @@ func (n *NodesJsonGenerator) GetNodesJson() NodesJson {
 		nodeId := nodeInfo.NodeId
 		status, _ := n.Store.GetNodeStatusInfo(nodeId)
 		var stats StatisticsStruct
+		var isUplink bool
 		if storedStats, err := n.Store.GetStatistics(nodeId); err == nil {
 			if !status.Online {
 				storedStats.Clients.Wifi = 0
 				storedStats.Clients.Total = 0
 			}
+			isUplink = determineUplink(storedStats)
 			stats = convertToMeshviewerStatistics(&storedStats)
 		} else {
 			stats = StatisticsStruct{}
@@ -104,6 +122,7 @@ func (n *NodesJsonGenerator) GetNodesJson() NodesJson {
 		flags := NodeFlags{
 			Online:  status.Online,
 			Gateway: status.Gateway,
+			Uplink:  isUplink,
 		}
 		node := NodesJsonNode{
 			Nodeinfo:   nodeInfo,
