@@ -97,18 +97,18 @@ func LoadYamlFile(path string) error {
 	if err != nil {
 		return err
 	}
-	normalizedData, err := normalize(alias)
+	normalizedData, err := NormalizeMap(alias)
 	collectedData = normalizedData.(map[string]interface{})
 	return err
 }
 
-func normalize(in interface{}) (interface{}, error) {
+func NormalizeMap(in interface{}) (interface{}, error) {
 	switch in.(type) {
 	case map[string]interface{}:
 		inMap := in.(map[string]interface{})
 		for key, value := range inMap {
 			var err error
-			inMap[key], err = normalize(value)
+			inMap[key], err = NormalizeMap(value)
 			if err != nil {
 				return nil, err
 			}
@@ -120,7 +120,7 @@ func normalize(in interface{}) (interface{}, error) {
 		for key, value := range in.(map[interface{}]interface{}) {
 			if stringKey, ok := key.(string); ok {
 				var err error
-				stringMap[stringKey], err = normalize(value)
+				stringMap[stringKey], err = NormalizeMap(value)
 				if err != nil {
 					return nil, err
 				}

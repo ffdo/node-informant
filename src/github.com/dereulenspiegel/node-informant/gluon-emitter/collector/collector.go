@@ -57,7 +57,7 @@ func collectFacts(collector FactCollector) {
 func InitCollection(collectorConfig map[string]interface{}) {
 	for _, creator := range factCollectorCreators {
 		factCollector := creator()
-		if err := factCollector.Init(collectorConfig); err != nil {
+		if err := factCollector.Init(collectorConfig); err == nil {
 			factCollectors = append(factCollectors, factCollector)
 			path := factCollector.Path()
 			if config, exists := collectorConfig[path]; exists {

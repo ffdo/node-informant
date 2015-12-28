@@ -49,7 +49,11 @@ func parseConfig(filePath string) map[string]interface{} {
 			"configFilePath": filePath,
 		}).Fatal("Can't unmarshal configuration file")
 	}
-	return configMap
+	normalizedMap, err := data.NormalizeMap(configMap)
+	if err != nil {
+		log.Fatalf("Can't normalize config data: %v", err)
+	}
+	return normalizedMap.(map[string]interface{})
 }
 
 func joinMulticastGroup(interfaceName, groupAddr string, port int) (*ipv6.PacketConn, error) {
