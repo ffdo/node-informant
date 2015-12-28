@@ -22,6 +22,41 @@ type FactCollector interface {
 	Frequency() CollectionFrequency
 }
 
+type DefaultFactCollector struct {
+	frequency   CollectionFrequency
+	path        string
+	initImpl    func(map[string]interface{}) error
+	collectImpl func() (interface{}, error)
+}
+
+func (d *DefaultFactCollector) Init(config map[string]interface{}) error {
+	return d.initImpl(config)
+}
+
+func (d *DefaultFactCollector) Collect() (interface{}, error) {
+	return d.collectImpl()
+}
+
+func (d *DefaultFactCollector) Path() string {
+	return d.path
+}
+
+func (d *DefaultFactCollector) Frequency() CollectionFrequency {
+	return d.frequency
+}
+
+func NewFactCollector(path string, frequency CollectionFrequency,
+	initImpl func(map[string]interface{}) error, collectImpl func() (interface{}, error)) CreateFactCollector {
+	return func() FactCollector {
+		return &DefaultFactCollector{
+			frequency:   frequency,
+			path:        path,
+			initImpl:    initImpl,
+			collectImpl: collectImpl,
+		}
+	}
+}
+
 type CreateFactCollector func() FactCollector
 
 var (
@@ -73,10 +108,17 @@ func InitCollection(collectorConfig map[string]interface{}) {
 		path := factCollector.Path()
 		if isEnabled, config := isCollectorEnabed(path, collectorConfig); isEnabled {
 			if err := factCollector.Init(config); err == nil {
+				log.WithFields(log.Fields{
+					"collectorPath": path,
+				}).Debug("Enabling collector")
 				frequency := factCollector.Frequency()
 				if frequency == CollectOnce {
 					collectFacts(factCollector)
 				} else if frequency > 0 {
+					log.WithFields(log.Fields{
+						"frequency":     frequency,
+						"collectorPath": path,
+					}).Debug("Scheduling collection job")
 					func(factCollector FactCollector) {
 						collectJob := scheduler.NewJob(time.Second*time.Duration(frequency), func() {
 							collectFacts(factCollector)

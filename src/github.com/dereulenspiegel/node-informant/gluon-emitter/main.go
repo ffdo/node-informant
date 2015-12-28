@@ -8,6 +8,7 @@ import (
 
 	"github.com/dereulenspiegel/node-informant/gluon-emitter/collector"
 	"github.com/dereulenspiegel/node-informant/gluon-emitter/collector/hostname"
+	"github.com/dereulenspiegel/node-informant/gluon-emitter/collector/uptime"
 	"github.com/dereulenspiegel/node-informant/gluon-emitter/data"
 	"golang.org/x/net/ipv6"
 
@@ -30,6 +31,7 @@ var (
 
 func init() {
 	hostname.Init()
+	uptime.Init()
 }
 
 func parseConfig(filePath string) map[string]interface{} {
