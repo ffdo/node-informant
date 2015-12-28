@@ -36,7 +36,7 @@ func initNodeidCollector(config map[string]interface{}) error {
 		for _, addr := range addresses {
 			addressStrings = append(addressStrings, addr.String())
 		}
-		data.MergeCollectedData("nodeinfo.network.addresses")
+		data.MergeCollectedData("nodeinfo.network.addresses", addressStrings)
 		return nil
 	} else {
 		return fmt.Errorf("No interface defined")
