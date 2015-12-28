@@ -22,7 +22,7 @@ var (
 func TestNormalization(t *testing.T) {
 	assert := assert.New(t)
 
-	saneMap, err := normalize(badMap)
+	saneMap, err := NormalizeMap(badMap)
 	assert.Nil(err)
 	assert.NotNil(saneMap)
 	_, ok := saneMap.(map[string]interface{})
