@@ -54,37 +54,42 @@ func collectFacts(collector FactCollector) {
 	}
 }
 
+func isCollectorEnabed(path string, config map[string]interface{}) (bool, map[string]interface{}) {
+	if subConfig, exists := config[path]; exists {
+		collectorConfig := subConfig.(map[string]interface{})
+		if enabledValue, enabledExists := collectorConfig["enabled"]; enabledExists {
+			if enabledValue.(bool) {
+				return true, collectorConfig
+			}
+		}
+	}
+	return false, nil
+}
+
 func InitCollection(collectorConfig map[string]interface{}) {
 	for _, creator := range factCollectorCreators {
 		factCollector := creator()
-		if err := factCollector.Init(collectorConfig); err == nil {
-			factCollectors = append(factCollectors, factCollector)
-			path := factCollector.Path()
-			if config, exists := collectorConfig[path]; exists {
-				if err := factCollector.Init(config.(map[string]interface{})); err == nil {
-					frequency := factCollector.Frequency()
-					if frequency == CollectOnce {
-						collectFacts(factCollector)
-					} else if frequency > 0 {
-						func(factCollector FactCollector) {
-							collectJob := scheduler.NewJob(time.Second*time.Duration(frequency), func() {
-								collectFacts(factCollector)
-							}, true)
-							collectionJobs = append(collectionJobs, collectJob)
-						}(factCollector)
-					}
-				} else {
-					log.WithFields(log.Fields{
-						"collectorPath": path,
-						"error":         err,
-					}).Error("Can't initialise collector")
+		factCollectors = append(factCollectors, factCollector)
+		path := factCollector.Path()
+		if isEnabled, config := isCollectorEnabed(path, collectorConfig); isEnabled {
+			if err := factCollector.Init(config); err == nil {
+				frequency := factCollector.Frequency()
+				if frequency == CollectOnce {
+					collectFacts(factCollector)
+				} else if frequency > 0 {
+					func(factCollector FactCollector) {
+						collectJob := scheduler.NewJob(time.Second*time.Duration(frequency), func() {
+							collectFacts(factCollector)
+						}, true)
+						collectionJobs = append(collectionJobs, collectJob)
+					}(factCollector)
 				}
+			} else {
+				log.WithFields(log.Fields{
+					"collectorPath": path,
+					"error":         err,
+				}).Error("Can't initialise collector")
 			}
-		} else {
-			log.WithFields(log.Fields{
-				"error":  err,
-				"metric": factCollector.Path(),
-			}).Fatalf("Failed to initialize statistic collector")
 		}
 	}
 }
