@@ -1,5 +1,17 @@
 package data
 
+type MeshVPNPeerLink struct {
+	Established float64 `json:"established"`
+}
+
+type MeshVPNPeerGroup struct {
+	Peers map[string]*MeshVPNPeerLink `json:"peers"`
+}
+
+type MeshVPNStruct struct {
+	Groups map[string]*MeshVPNPeerGroup `json:"groups,omitempty"`
+}
+
 type TrafficObject struct {
 	Bytes   uint64 `json:"bytes,omitempty"`
 	Packets uint64 `json:"packets,omitempty"`
@@ -39,5 +51,6 @@ type StatisticsStruct struct {
 		Total   uint64 `json:"total"`
 		Running uint64 `json:"running"`
 	} `json:"processes"`
-	LoadAverage float64 `json:"loadavg"`
+	LoadAverage float64        `json:"loadavg"`
+	MeshVpn     *MeshVPNStruct `json:"mesh_vpn,omitempty"`
 }
