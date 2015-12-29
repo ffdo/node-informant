@@ -5,7 +5,8 @@ type MeshVPNPeerLink struct {
 }
 
 type MeshVPNPeerGroup struct {
-	Peers map[string]*MeshVPNPeerLink `json:"peers"`
+	Peers  map[string]*MeshVPNPeerLink  `json:"peers"`
+	Groups map[string]*MeshVPNPeerGroup `json:"groups"`
 }
 
 type MeshVPNStruct struct {

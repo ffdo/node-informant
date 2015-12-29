@@ -84,15 +84,25 @@ func convertToMeshviewerStatistics(in *data.StatisticsStruct) StatisticsStruct {
 	}
 }
 
+func checkGroupForUplinks(group *data.MeshVPNPeerGroup) bool {
+	for _, peer := range group.Peers {
+		if peer != nil && peer.Established > 0 {
+			return true
+		}
+	}
+	for _, group := range group.Groups {
+		if checkGroupForUplinks(group) {
+			return true
+		}
+	}
+	return false
+}
+
 func determineUplink(stats data.StatisticsStruct) bool {
 	if stats.MeshVpn != nil {
 		for _, group := range stats.MeshVpn.Groups {
-			if group != nil {
-				for _, peer := range group.Peers {
-					if peer != nil && peer.Established > 0 {
-						return true
-					}
-				}
+			if checkGroupForUplinks(group) {
+				return true
 			}
 		}
 	}
