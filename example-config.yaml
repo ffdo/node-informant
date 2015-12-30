@@ -14,10 +14,8 @@ http:
   port: 8080
   #address: "[::]"
 
-<<<<<<< HEAD
 prometheus:
   namelabel: true
   sitecodelabel: true
-=======
+
 meshviewer_version: 1
->>>>>>> master
