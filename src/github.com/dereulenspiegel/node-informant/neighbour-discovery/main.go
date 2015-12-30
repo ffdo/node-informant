@@ -10,14 +10,16 @@ import (
 	"github.com/dereulenspiegel/node-informant/utils"
 )
 
-var ifaceName = flag.String("iface", "", "Network interface")
-var queryString = flag.String("query", "", "Query string")
-var deflate = flag.Bool("deflate", false, "Is the received data compressed")
-var port = flag.Int("port", 12444, "Port to listen to responses on")
-var timeout = flag.Int("timeout", -1, "Timeout after i seconds")
-var targetAddress = flag.String("target", "", "Query a single device via unicast")
+var (
+	ifaceName     = flag.String("iface", "", "Network interface")
+	queryString   = flag.String("query", "", "Query string")
+	deflate       = flag.Bool("deflate", false, "Is the received data compressed")
+	port          = flag.Int("port", 12444, "Port to listen to responses on")
+	timeout       = flag.Int("timeout", -1, "Timeout after i seconds")
+	targetAddress = flag.String("target", "", "Query a single device via unicast")
 
-var requester *announced.Requester
+	requester *announced.Requester
+)
 
 func UseAnnounced() {
 	localRequester, err := announced.NewRequester(*ifaceName, *port)

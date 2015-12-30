@@ -8,17 +8,19 @@ import (
 	log "github.com/Sirupsen/logrus"
 )
 
-// MultiCastGroup is the default multicast group used by announced
-const MultiCastGroup string = "ff02:0:0:0:0:0:2:1001"
+const (
+	// MultiCastGroup is the default multicast group used by announced
+	MultiCastGroup string = "ff02:0:0:0:0:0:2:1001"
 
-// Port is the default udp port used by announced
-const Port int = 1001
+	// Port is the default udp port used by announced
+	Port int = 1001
 
-// Proto specifies that announced will only work with UDP on IPv6
-const Proto string = "udp6"
+	// Proto specifies that announced will only work with UDP on IPv6
+	Proto string = "udp6"
 
-// MaxDataGramSize is more a less a guessed value of the maximum receivable size
-const MaxDataGramSize int = 8192
+	// MaxDataGramSize is more a less a guessed value of the maximum receivable size
+	MaxDataGramSize int = 8192
+)
 
 var announcedAddr = &net.UDPAddr{IP: net.ParseIP(MultiCastGroup), Port: Port}
 
