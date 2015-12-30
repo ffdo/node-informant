@@ -26,11 +26,13 @@ type JsonBool struct {
 	Value bool
 }
 
-const NodeinfoBucket string = "nodeinfos"
-const StatisticsBucket string = "statistics"
-const StatusInfoBucket string = "statusinfo"
-const NeighboursBucket string = "neighbours"
-const GatewayBucket string = "gateways"
+const (
+	NodeinfoBucket   string = "nodeinfos"
+	StatisticsBucket string = "statistics"
+	StatusInfoBucket string = "statusinfo"
+	NeighboursBucket string = "neighbours"
+	GatewayBucket    string = "gateways"
+)
 
 var AllBucketNames = []string{NodeinfoBucket, StatisticsBucket,
 	StatusInfoBucket, NeighboursBucket, GatewayBucket}
