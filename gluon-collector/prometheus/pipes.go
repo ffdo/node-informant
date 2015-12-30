@@ -227,11 +227,11 @@ func (n *NodeMetricCollector) Process(in chan data.ParsedResponse) chan data.Par
 // metrics up to date. In most cases the Prometheus pipes need to be added before
 // all other pipes to the ProcessPipeline.
 func GetPrometheusProcessPipes(store data.Nodeinfostore) []pipeline.ProcessPipe {
-	out := make([]pipeline.ProcessPipe, 0, 10)
-	out = append(out, &NodeCountPipe{Store: store})
-	//out = append(out, &ReturnedNodeDetector{Store: store})
-	out = append(out, &ClientCountPipe{Store: store})
-	out = append(out, &TrafficCountPipe{Store: store})
-	out = append(out, &NodeMetricCollector{Store: store})
-	return out
+	return []pipeline.ProcessPipe{
+		&NodeCountPipe{Store: store},
+		// &ReturnedNodeDetector{Store: store},
+		&ClientCountPipe{Store: store},
+		&TrafficCountPipe{Store: store},
+		&NodeMetricCollector{Store: store},
+	}
 }
