@@ -128,17 +128,15 @@ func (r *Requester) writeLoop() {
 
 // readLoop reads UDP packets from the socket and puts these Respones on a channel
 func (r *Requester) readLoop() {
-	var socketIsOpen = true
-	var buf []byte = make([]byte, MaxDataGramSize)
-	for socketIsOpen {
+	buf := make([]byte, MaxDataGramSize)
+	for {
 		count, raddr, err := r.unicastConn.ReadFrom(buf)
 		if err != nil {
 			log.Printf("Error reading from MulticastGroup: %v", err)
 			log.WithFields(log.Fields{
 				"error": err,
 			}).Error("Error reading from udp socket, closing")
-			socketIsOpen = false
-			continue
+			break
 		}
 		payload := make([]byte, count)
 		copy(payload, buf)
