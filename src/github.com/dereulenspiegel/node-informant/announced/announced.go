@@ -65,11 +65,8 @@ func getIPFromInterface(ifaceName string) (*net.IP, error) {
 		return nil, err
 	}
 	for _, addr := range addresses {
-		ip, ok := addr.(*net.IPNet)
-		if ok {
-			if ip.IP.To4() == nil && ip.IP.IsLinkLocalUnicast() {
-				return &ip.IP, nil
-			}
+		if ip, ok := addr.(*net.IPNet); ok && ip.IP.To4() == nil && ip.IP.IsLinkLocalUnicast() {
+			return &ip.IP, nil
 		}
 	}
 	return nil, fmt.Errorf("No valid IPv6 address found on interface %s", ifaceName)
@@ -78,8 +75,7 @@ func getIPFromInterface(ifaceName string) (*net.IP, error) {
 // NewRequester creates a new Requester using the interface named by interfaceName
 // and listening on the port specified for responses.
 func NewRequester(ifaceName string, port int) (r *Requester, err error) {
-	var lIP *net.IP = &net.IPv6zero
-	r = &Requester{}
+	lIP := &net.IPv6zero
 	if ifaceName != "" {
 		lIP, err = getIPFromInterface(ifaceName)
 		if err != nil {
@@ -89,12 +85,14 @@ func NewRequester(ifaceName string, port int) (r *Requester, err error) {
 		err = fmt.Errorf("No interface specified")
 		return
 	}
+	r = &Requester{
+		queryChan:   make(chan Query),
+		ReceiveChan: make(chan Response, 100),
+	}
 	r.unicastConn, err = net.ListenPacket(Proto, fmt.Sprintf("[%s%%%s]:%d", lIP.String(), ifaceName, port))
 	if err != nil {
 		return
 	}
-	r.queryChan = make(chan Query)
-	r.ReceiveChan = make(chan Response, 100)
 	go r.writeLoop()
 	go r.readLoop()
 	return
@@ -142,11 +140,11 @@ func (r *Requester) readLoop() {
 		}
 		payload := make([]byte, count)
 		copy(payload, buf)
-		response := Response{
+
+		r.ReceiveChan <- Response{
 			ClientAddr: raddr,
 			Payload:    payload,
 		}
-		r.ReceiveChan <- response
 	}
 }
 
@@ -161,15 +159,13 @@ func (r *Requester) Close() error {
 // QueryUnicast sends an UDP query to a host directly via unicast. The IPv6 address
 // and the port where announced listens on the remote node need to be known.
 func (r *Requester) QueryUnicast(addr *net.UDPAddr, queryString string) {
-	query := Query{QueryString: queryString, TargetAddr: addr}
-	r.queryChan <- query
+	r.queryChan <- Query{QueryString: queryString, TargetAddr: addr}
 }
 
 // Query multicasts the specified query to the default announced multicast group
 // on the default port.
 func (r *Requester) Query(queryString string) {
-	query := Query{QueryString: queryString}
-	r.queryChan <- query
+	r.queryChan <- Query{QueryString: queryString}
 }
 
 // Receive is an implementation of the AnnouncedPacketReceiver interface
