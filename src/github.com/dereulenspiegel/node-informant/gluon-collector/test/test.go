@@ -144,6 +144,8 @@ func LoadTestData() error {
 		responses = append(responses, response)
 	}
 	TestData = responses
+	TestData = append(TestData, announced.Response{ClientAddr: nil, Payload: []byte(defectNodeinfo)})
+	TestData = append(TestData, announced.Response{ClientAddr: nil, Payload: []byte(defectStatistics)})
 	log.Printf("Loaded %d packets", len(TestData))
 	return nil
 }
