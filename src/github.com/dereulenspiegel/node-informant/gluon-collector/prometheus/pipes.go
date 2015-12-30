@@ -97,6 +97,10 @@ type TrafficCountPipe struct {
 }
 
 func collectTrafficBytes(counter stat.Counter, oldTraffic, newTraffic *data.TrafficObject) {
+	if newTraffic == nil {
+		// If a client statistics has no traffic information, don't collect anything
+		return
+	}
 	var value float64
 	if oldTraffic != nil {
 		value = float64(newTraffic.Bytes - oldTraffic.Bytes)
@@ -176,10 +180,18 @@ func (n *NodeMetricCollector) Process(in chan data.ParsedResponse) chan data.Par
 						NodesClients.WithLabelValues(response.NodeId()).Set(float64(stats.Clients.Total))
 						NodesUptime.WithLabelValues(response.NodeId()).Set(stats.Uptime)
 						if stats.Traffic != nil {
-							NodesTrafficRx.WithLabelValues(response.NodeId(), "traffic").Set(float64(stats.Traffic.Rx.Bytes))
-							NodesTrafficTx.WithLabelValues(response.NodeId(), "traffic").Set(float64(stats.Traffic.Tx.Bytes))
-							NodesTrafficRx.WithLabelValues(response.NodeId(), "mgmt_traffic").Set(float64(stats.Traffic.MgmtRx.Bytes))
-							NodesTrafficTx.WithLabelValues(response.NodeId(), "mgmt_traffic").Set(float64(stats.Traffic.MgmtTx.Bytes))
+							if stats.Traffic.Rx != nil {
+								NodesTrafficRx.WithLabelValues(response.NodeId(), "traffic").Set(float64(stats.Traffic.Rx.Bytes))
+							}
+							if stats.Traffic.Tx != nil {
+								NodesTrafficTx.WithLabelValues(response.NodeId(), "traffic").Set(float64(stats.Traffic.Tx.Bytes))
+							}
+							if stats.Traffic.MgmtRx != nil {
+								NodesTrafficRx.WithLabelValues(response.NodeId(), "mgmt_traffic").Set(float64(stats.Traffic.MgmtRx.Bytes))
+							}
+							if stats.Traffic.MgmtTx != nil {
+								NodesTrafficTx.WithLabelValues(response.NodeId(), "mgmt_traffic").Set(float64(stats.Traffic.MgmtTx.Bytes))
+							}
 						}
 					} else {
 						log.WithFields(log.Fields{
@@ -190,10 +202,18 @@ func (n *NodeMetricCollector) Process(in chan data.ParsedResponse) chan data.Par
 					NodesClients.WithLabelValues(getLabels(nodeinfo)...).Set(float64(stats.Clients.Total))
 					NodesUptime.WithLabelValues(getLabels(nodeinfo)...).Set(stats.Uptime)
 					if stats.Traffic != nil {
-						NodesTrafficRx.WithLabelValues(getLabels(nodeinfo, "traffic")...).Set(float64(stats.Traffic.Rx.Bytes))
-						NodesTrafficTx.WithLabelValues(getLabels(nodeinfo, "traffic")...).Set(float64(stats.Traffic.Tx.Bytes))
-						NodesTrafficRx.WithLabelValues(getLabels(nodeinfo, "mgmt_traffic")...).Set(float64(stats.Traffic.MgmtRx.Bytes))
-						NodesTrafficTx.WithLabelValues(getLabels(nodeinfo, "mgmt_traffic")...).Set(float64(stats.Traffic.MgmtTx.Bytes))
+						if stats.Traffic.Rx != nil {
+							NodesTrafficRx.WithLabelValues(getLabels(nodeinfo, "traffic")...).Set(float64(stats.Traffic.Rx.Bytes))
+						}
+						if stats.Traffic.Tx != nil {
+							NodesTrafficTx.WithLabelValues(getLabels(nodeinfo, "traffic")...).Set(float64(stats.Traffic.Tx.Bytes))
+						}
+						if stats.Traffic.MgmtRx != nil {
+							NodesTrafficRx.WithLabelValues(getLabels(nodeinfo, "mgmt_traffic")...).Set(float64(stats.Traffic.MgmtRx.Bytes))
+						}
+						if stats.Traffic.MgmtTx != nil {
+							NodesTrafficTx.WithLabelValues(getLabels(nodeinfo, "mgmt_traffic")...).Set(float64(stats.Traffic.MgmtTx.Bytes))
+						}
 					}
 				}
 			}

@@ -2,7 +2,6 @@ package test
 
 var (
 	defectNodeinfo = `{
-  "nodeinfo": {
       "nodeinfo": {
         "hostname": "dus0 (Mapserver)",
         "node_id": "dus0",
@@ -19,16 +18,13 @@ var (
           "site_code": "ffdus"
         }
       }
-    }
   }
   `
 	defectStatistics = `
 {
-"statistics": {
     "statistics": {
       "node_id": "dus0"
     }
-  }
 }
   `
 )

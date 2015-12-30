@@ -1,7 +1,10 @@
 package test
 
 import (
+	"bytes"
+	"compress/flate"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net"
 	"os"
@@ -46,6 +49,30 @@ func (t *TestDataReceiver) Receive(rFunc func(announced.Response)) {
 func (t *TestDataReceiver) Close() error {
 	// Only here to satisfy the announced.AnnouncedPacketReceiver interface
 	return nil
+}
+
+func deflateCompress(in []byte) ([]byte, error) {
+	buf := bytes.NewBuffer(make([]byte, 0, 4096))
+	flateWriter, err := flate.NewWriter(buf, flate.BestCompression)
+	if err != nil {
+		return nil, err
+	}
+	n, err := flateWriter.Write(in)
+	if err != nil {
+		return nil, err
+	}
+	if n != len(in) {
+		return nil, fmt.Errorf("Wrote less bytes to flate compressor than data available (data %d bytes, written %d bytes)", n, len(in))
+	}
+	err = flateWriter.Flush()
+	if err != nil {
+		return nil, err
+	}
+	err = flateWriter.Close()
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
 }
 
 func ExecuteCompletePipe(t *testing.T, store data.Nodeinfostore) {
@@ -144,8 +171,11 @@ func LoadTestData() error {
 		responses = append(responses, response)
 	}
 	TestData = responses
-	TestData = append(TestData, announced.Response{ClientAddr: nil, Payload: []byte(defectNodeinfo)})
-	TestData = append(TestData, announced.Response{ClientAddr: nil, Payload: []byte(defectStatistics)})
+	defectPayload1, _ := deflateCompress([]byte(defectNodeinfo))
+	defectPayload2, _ := deflateCompress([]byte(defectStatistics))
+	TestData = append(TestData, announced.Response{ClientAddr: nil, Payload: defectPayload1})
+	TestData = append(TestData, announced.Response{ClientAddr: nil, Payload: defectPayload2})
+	TestData = append(TestData, announced.Response{ClientAddr: nil, Payload: []byte("uncompressed string")})
 	log.Printf("Loaded %d packets", len(TestData))
 	return nil
 }
