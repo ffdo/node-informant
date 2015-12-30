@@ -127,6 +127,9 @@ func (t *TrafficCountPipe) Process(in chan data.ParsedResponse) chan data.Parsed
 				if oldStats.Traffic == nil {
 					oldStats.Traffic = &data.TrafficStruct{}
 				}
+				if newStats.Traffic == nil {
+					newStats.Traffic = &data.TrafficStruct{}
+				}
 				collectTrafficBytes(TotalNodeTrafficTx, oldStats.Traffic.Tx, newStats.Traffic.Tx)
 				collectTrafficBytes(TotalNodeTrafficRx, oldStats.Traffic.Rx, newStats.Traffic.Rx)
 				collectTrafficBytes(TotalNodeMgmtTrafficRx, oldStats.Traffic.MgmtRx, newStats.Traffic.MgmtRx)
