@@ -53,3 +53,17 @@ func (n NeighbourReponse) ParsedData() interface{} {
 func (n NeighbourReponse) NodeId() string {
 	return n.Neighbours.NodeId
 }
+
+type ErroredResponse struct{}
+
+func (n ErroredResponse) Type() string {
+	return "errored"
+}
+
+func (n ErroredResponse) ParsedData() interface{} {
+	return nil
+}
+
+func (n ErroredResponse) NodeId() string {
+	return ""
+}

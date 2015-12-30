@@ -14,6 +14,7 @@ import (
 type Response struct {
 	ClientAddr net.Addr
 	Payload    []byte
+	Errored    bool
 }
 
 type JsonAddr struct {

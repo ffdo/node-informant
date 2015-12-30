@@ -19,30 +19,35 @@ func (j *JsonParsePipe) Process(in chan announced.Response) chan data.ParsedResp
 	out := make(chan data.ParsedResponse)
 	go func() {
 		for response := range in {
-			respondInfo := &data.RespondNodeinfo{}
-			err := json.Unmarshal(response.Payload, respondInfo)
-			if err != nil {
-				log.WithFields(log.Fields{
-					"error":  err,
-					"client": response.ClientAddr,
-					"json":   string(response.Payload),
-				}).Error("Error parsing json")
+			if !response.Errored {
+				respondInfo := &data.RespondNodeinfo{}
+				err := json.Unmarshal(response.Payload, respondInfo)
+				if err != nil {
+					log.WithFields(log.Fields{
+						"error":  err,
+						"client": response.ClientAddr,
+						"json":   string(response.Payload),
+					}).Error("Error parsing json")
+					out <- data.ErroredResponse{}
+				} else {
+					if respondInfo.Nodeinfo != nil {
+						out <- data.NodeinfoResponse{
+							Nodeinfo: *respondInfo.Nodeinfo,
+						}
+					}
+					if respondInfo.Statistics != nil {
+						out <- data.StatisticsResponse{
+							Statistics: respondInfo.Statistics,
+						}
+					}
+					if respondInfo.Neighbours != nil {
+						out <- data.NeighbourReponse{
+							Neighbours: respondInfo.Neighbours,
+						}
+					}
+				}
 			} else {
-				if respondInfo.Nodeinfo != nil {
-					out <- data.NodeinfoResponse{
-						Nodeinfo: *respondInfo.Nodeinfo,
-					}
-				}
-				if respondInfo.Statistics != nil {
-					out <- data.StatisticsResponse{
-						Statistics: respondInfo.Statistics,
-					}
-				}
-				if respondInfo.Neighbours != nil {
-					out <- data.NeighbourReponse{
-						Neighbours: respondInfo.Neighbours,
-					}
-				}
+				out <- data.ErroredResponse{}
 			}
 		}
 	}()

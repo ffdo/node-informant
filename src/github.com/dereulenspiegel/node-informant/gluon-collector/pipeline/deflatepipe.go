@@ -23,10 +23,11 @@ func (d *DeflatePipe) Process(in chan announced.Response) chan announced.Respons
 					"client":  response.ClientAddr,
 					"payload": response.Payload,
 				}).Error("Error deflating response")
+				response.Errored = true
 			} else {
 				response.Payload = decompressedData
-				out <- response
 			}
+			out <- response
 		}
 
 	}()
