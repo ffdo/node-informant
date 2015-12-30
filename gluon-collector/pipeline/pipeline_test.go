@@ -28,7 +28,7 @@ func TestDeflatingReceivePipeline(t *testing.T) {
 	var receivedPackets = 0
 	go func() {
 		receivePipeline.Dequeue(func(response data.ParsedResponse) {
-			receivedPackets = receivedPackets + 1
+			receivedPackets++
 		})
 	}()
 	go func() {

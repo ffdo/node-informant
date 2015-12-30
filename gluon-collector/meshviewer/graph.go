@@ -197,11 +197,10 @@ func (g *GraphGenerator) GenerateGraph() GraphJson {
 		Nodes:      nodeList,
 		Links:      removeDoublettes(allLinks),
 	}
-	graph := GraphJson{
+	return GraphJson{
 		Batadv:  batGraph,
 		Version: 1,
 	}
-	return graph
 }
 
 func (g *GraphGenerator) UpdateGraphJson() {
@@ -223,8 +222,7 @@ func (g *GraphGenerator) GetGraphJsonRest(w http.ResponseWriter, r *http.Request
 }
 
 func (g *GraphGenerator) Routes() []httpserver.Route {
-	var graphRoutes = []httpserver.Route{
+	return []httpserver.Route{
 		httpserver.Route{"GraphJson", "GET", "/graph.json", g.GetGraphJsonRest},
 	}
-	return graphRoutes
 }

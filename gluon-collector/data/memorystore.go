@@ -36,11 +36,10 @@ func NewSimpleInMemoryStore() *SimpleInMemoryStore {
 }
 
 func (s *SimpleInMemoryStore) GetNodeStatusInfo(nodeId string) (status NodeStatusInfo, err error) {
-	stat, exists := s.StatusInfo[nodeId]
+	status, exists := s.StatusInfo[nodeId]
 	if !exists {
 		err = fmt.Errorf("NodeId %s has no status info", nodeId)
 	}
-	status = stat
 	return
 }
 
@@ -111,12 +110,10 @@ func (s *SimpleInMemoryStore) PutNodeNeighbours(neighbours NeighbourStruct) {
 }
 
 func (s *SimpleInMemoryStore) GetNodeInfo(nodeId string) (info NodeInfo, err error) {
-	nodeinfo, exists := s.Nodeinfos[nodeId]
+	info, exists := s.Nodeinfos[nodeId]
 	if !exists {
 		err = fmt.Errorf("NodeId %s does not exist", nodeId)
-		return
 	}
-	info = nodeinfo
 	return
 }
 
