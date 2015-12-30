@@ -4,7 +4,6 @@ import (
 	"flag"
 	"log"
 	"net"
-	"runtime"
 	"time"
 
 	"github.com/dereulenspiegel/node-informant/announced"
@@ -50,7 +49,6 @@ func UseAnnounced() {
 		} else {
 			log.Printf("Received response from %s: %s", response.ClientAddr.String(), string(response.Payload))
 		}
-		runtime.Gosched()
 	}
 }
 

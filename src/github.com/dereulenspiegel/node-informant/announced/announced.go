@@ -2,10 +2,8 @@ package announced
 
 import (
 	"fmt"
-	"net"
-	"runtime"
-
 	"io"
+	"net"
 
 	log "github.com/Sirupsen/logrus"
 )
@@ -125,7 +123,6 @@ func (r *Requester) writeLoop() {
 				"error":          err,
 			}).Error("Error writing to multicast group")
 		}
-		//runtime.Gosched()
 	}
 }
 
@@ -150,7 +147,6 @@ func (r *Requester) readLoop() {
 			Payload:    payload,
 		}
 		r.ReceiveChan <- response
-		runtime.Gosched()
 	}
 }
 
