@@ -162,17 +162,17 @@ func initTrafficCounter(store data.Nodeinfostore) {
 
 	for _, stats := range store.GetAllStatistics() {
 		if stats.Traffic != nil {
-			if stats.Traffic.Rx != nil {
-				TotalNodeTrafficRx.Add(float64(stats.Traffic.Rx.Bytes))
+			if b := stats.Traffic.Rx; b != nil {
+				TotalNodeTrafficRx.Add(float64(b.Bytes))
 			}
-			if stats.Traffic.Tx != nil {
-				TotalNodeTrafficTx.Add(float64(stats.Traffic.Tx.Bytes))
+			if b := stats.Traffic.Tx; b != nil {
+				TotalNodeTrafficTx.Add(float64(b.Bytes))
 			}
-			if stats.Traffic.MgmtRx != nil {
-				TotalNodeMgmtTrafficRx.Add(float64(stats.Traffic.MgmtRx.Bytes))
+			if b := stats.Traffic.MgmtRx; b != nil {
+				TotalNodeMgmtTrafficRx.Add(float64(b.Bytes))
 			}
-			if stats.Traffic.MgmtTx != nil {
-				TotalNodeMgmtTrafficTx.Add(float64(stats.Traffic.MgmtTx.Bytes))
+			if b := stats.Traffic.MgmtTx; b != nil {
+				TotalNodeMgmtTrafficTx.Add(float64(b.Bytes))
 			}
 		}
 	}
