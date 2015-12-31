@@ -1,7 +1,6 @@
 package data
 
 type ParsedResponse interface {
-	Type() string
 	ParsedData() interface{}
 	NodeId() string
 }
@@ -10,10 +9,6 @@ type ParsedResponseReader func(store Nodeinfostore, response ParsedResponse)
 
 type NodeinfoResponse struct {
 	Nodeinfo NodeInfo
-}
-
-func (n NodeinfoResponse) Type() string {
-	return "nodeinfo"
 }
 
 func (n NodeinfoResponse) ParsedData() interface{} {
@@ -28,10 +23,6 @@ type StatisticsResponse struct {
 	Statistics *StatisticsStruct
 }
 
-func (s StatisticsResponse) Type() string {
-	return "statistics"
-}
-
 func (s StatisticsResponse) ParsedData() interface{} {
 	return s.Statistics
 }
@@ -44,10 +35,6 @@ type NeighbourReponse struct {
 	Neighbours *NeighbourStruct
 }
 
-func (n NeighbourReponse) Type() string {
-	return "neighbours"
-}
-
 func (n NeighbourReponse) ParsedData() interface{} {
 	return n.Neighbours
 }
@@ -57,10 +44,6 @@ func (n NeighbourReponse) NodeId() string {
 }
 
 type ErroredResponse struct{}
-
-func (n ErroredResponse) Type() string {
-	return "errored"
-}
 
 func (n ErroredResponse) ParsedData() interface{} {
 	return nil

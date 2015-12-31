@@ -12,21 +12,18 @@ import (
 // GatewayCollector inspects all received statistics and stores the mac addresses
 // of gateways to the data store.
 func GatewayCollector(store data.Nodeinfostore, response data.ParsedResponse) {
-	if response.Type() == "statistics" {
-		statistics := response.ParsedData().(*data.StatisticsStruct)
+	if statistics, ok := response.ParsedData().(*data.StatisticsStruct); ok {
 		gateway := statistics.Gateway
 		if gateway != "" {
 			store.PutGateway(gateway)
 		}
 	}
-
 }
 
 // NodeinfoCollector inspects all ParsedResponses containing general information
 // about a node and stores this to the data store.
 func NodeinfoCollector(store data.Nodeinfostore, response data.ParsedResponse) {
-	if response.Type() == "nodeinfo" {
-		nodeinfo := response.ParsedData().(data.NodeInfo)
+	if nodeinfo, ok := response.ParsedData().(data.NodeInfo); ok {
 		store.PutNodeInfo(nodeinfo)
 	}
 }
@@ -34,8 +31,7 @@ func NodeinfoCollector(store data.Nodeinfostore, response data.ParsedResponse) {
 // StatisticsCollector collects all ParsedResponses containing statistics information
 // and stores them in the data store.
 func StatisticsCollector(store data.Nodeinfostore, response data.ParsedResponse) {
-	if response.Type() == "statistics" {
-		statistics := response.ParsedData().(*data.StatisticsStruct)
+	if statistics, ok := response.ParsedData().(*data.StatisticsStruct); ok {
 		store.PutStatistics(*statistics)
 	}
 }
@@ -43,11 +39,9 @@ func StatisticsCollector(store data.Nodeinfostore, response data.ParsedResponse)
 // NeighbourInfoCollector inspects all ParsedResponses containing information about
 // mesh neighbours and stores them to the data store.
 func NeighbourInfoCollector(store data.Nodeinfostore, response data.ParsedResponse) {
-	if response.Type() == "neighbours" {
-		neighbours := response.ParsedData().(*data.NeighbourStruct)
+	if neighbours, ok := response.ParsedData().(*data.NeighbourStruct); ok {
 		store.PutNodeNeighbours(*neighbours)
 	}
-
 }
 
 const TimeFormat string = time.RFC3339

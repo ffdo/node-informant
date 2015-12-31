@@ -26,7 +26,7 @@ func GetPrometheusProcessPipes() []data.ParsedResponseReader {
 // It also increments the OnlineNodes Gauge by one in case the stored NodeStatusInfo
 // indicates that this node wasn't online before.
 func NodeCounter(store data.Nodeinfostore, response data.ParsedResponse) {
-	if response.Type() != "nodeinfo" {
+	if _, ok := response.ParsedData().(data.NodeInfo); !ok {
 		return
 	}
 	_, err := store.GetNodeStatusInfo(response.NodeId())
@@ -42,7 +42,7 @@ func NodeCounter(store data.Nodeinfostore, response data.ParsedResponse) {
 // ReturnedNodeDetector handles incrementing the online node metric for returning
 // nodes.
 func ReturnedNodeDetector(store data.Nodeinfostore, response data.ParsedResponse) {
-	if response.Type() != "nodeinfo" {
+	if _, ok := response.ParsedData().(data.NodeInfo); !ok {
 		return
 	}
 	status, err := store.GetNodeStatusInfo(response.NodeId())
@@ -57,10 +57,11 @@ func ReturnedNodeDetector(store data.Nodeinfostore, response data.ParsedResponse
 // between the currently received statistics and the received statistics and adds
 // the difference to the TotalClientsCounter Gauge.
 func ClientCounter(store data.Nodeinfostore, response data.ParsedResponse) {
-	if response.Type() != "statistics" {
+	newStats, ok := response.ParsedData().(*data.StatisticsStruct)
+	if !ok {
 		return
 	}
-	newStats, _ := response.ParsedData().(*data.StatisticsStruct)
+
 	oldStats, err := store.GetStatistics(response.NodeId())
 	var addValue float64
 	if err == nil {
@@ -76,10 +77,11 @@ func ClientCounter(store data.Nodeinfostore, response data.ParsedResponse) {
 // TODO: Have look whether CounterVec is a better choice than 4 different counters.
 
 func TrafficCounter(store data.Nodeinfostore, response data.ParsedResponse) {
-	if response.Type() != "statistics" {
+	newStats, ok := response.ParsedData().(*data.StatisticsStruct)
+	if !ok {
 		return
 	}
-	newStats, _ := response.ParsedData().(*data.StatisticsStruct)
+
 	oldStats, _ := store.GetStatistics(response.NodeId())
 
 	if oldStats.Traffic == nil {
@@ -120,11 +122,11 @@ func collectTrafficBytes(counter stat.Counter, oldTraffic, newTraffic *data.Traf
 
 // NodeMetricCollector updates per node metrics based on received statistics responses.
 func NodeMetricCollector(store data.Nodeinfostore, response data.ParsedResponse) {
-	if response.Type() != "statistics" {
+	stats, ok := response.ParsedData().(*data.StatisticsStruct)
+	if !ok {
 		return
 	}
 	var labels []string
-	stats := response.ParsedData().(*data.StatisticsStruct)
 	nodeinfo, err := store.GetNodeInfo(response.NodeId())
 	if err != nil {
 		// Extended labels are not configured
