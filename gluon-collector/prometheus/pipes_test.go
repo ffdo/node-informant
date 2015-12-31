@@ -33,11 +33,5 @@ func TestCreationOfPrometheusLabels(t *testing.T) {
 	prmcfg, err := config.Global.Get("prometheus")
 	assert.Nil(err)
 	assert.NotNil(prmcfg)
-
-	nodeLabels := getLabels(nodeinfo, "metric")
-	assert.Equal(4, len(nodeLabels))
-	assert.Equal("1122", nodeLabels[0])
-	assert.Equal("Testnode", nodeLabels[1])
-	assert.Equal("fftest", nodeLabels[2])
-	assert.Equal("metric", nodeLabels[3])
+	assert.Equal([]string{"1122", "Testnode", "fftest"}, getLabels(nodeinfo))
 }

@@ -6,6 +6,8 @@ type ParsedResponse interface {
 	NodeId() string
 }
 
+type ParsedResponseReader func(store Nodeinfostore, response ParsedResponse)
+
 type NodeinfoResponse struct {
 	Nodeinfo NodeInfo
 }

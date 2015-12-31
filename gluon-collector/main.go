@@ -57,15 +57,7 @@ func (l *LogPipe) Process(in chan announced.Response) chan announced.Response {
 	return out
 }
 
-/* func getProcessPipes(store data.Nodeinfostore) []pipeline.ProcessPipe {
-	pipes := make([]pipeline.ProcessPipe, 0, 10)
-
-	pipes = append(pipes, prometheus.GetPrometheusProcessPipes(store)...)
-	pipes = append(pipes, &collectors.GatewayCollector{Store: store},
-		&collectors.NodeinfoCollector{Store: store}, &collectors.StatisticsCollector{Store: store},
-		&collectors.NeighbourInfoCollector{Store: store}, &collectors.StatusInfoCollector{Store: store})
-	return pipes
-}
+/*
 
 func BuildPipelines(store data.Nodeinfostore, receiver announced.AnnouncedPacketReceiver, pipeEnd func(response data.ParsedResponse)) ([]io.Closer, error) {
 
