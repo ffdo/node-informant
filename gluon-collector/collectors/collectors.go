@@ -54,6 +54,7 @@ const TimeFormat string = time.RFC3339
 func StatusInfoCollector(store data.Nodeinfostore, response data.ParsedResponse) {
 	nodeId := response.NodeId()
 	statusInfo, err := store.GetNodeStatusInfo(nodeId)
+	now := time.Now().Format(TimeFormat)
 	if err == nil {
 		if !statusInfo.Online {
 			prometheus.OnlineNodes.Inc()
@@ -62,16 +63,15 @@ func StatusInfoCollector(store data.Nodeinfostore, response data.ParsedResponse)
 			}).Info("Node is considered online again, after receiving any packet at all")
 		}
 		statusInfo.Online = true
-		statusInfo.Lastseen = time.Now().Format(TimeFormat)
+		statusInfo.Lastseen = now
 	} else {
 		statusInfo = data.NodeStatusInfo{
 			Online:    true,
-			Firstseen: time.Now().Format(TimeFormat),
-			Lastseen:  time.Now().Format(TimeFormat),
+			Firstseen: now,
+			Lastseen:  now,
 			Gateway:   false,
 			NodeId:    nodeId,
 		}
 	}
 	store.PutNodeStatusInfo(nodeId, statusInfo)
-
 }
