@@ -3,15 +3,13 @@
 Node informant actually consists of two tools. neighbour-discovery and gluon-collector.
 
 This is a little utility to continuously request data from announced enabled
-nodes. Currently it uses [gb](http://getgb.io/) as build system. Once the go
-vendor feature is not experimental any more (or at least a used default) this
-project will move to the default go tools most probably.
+nodes. The experimental go vendor feature is used to manage dependecies, so you need
+to set GO15VENDOREXPERIMENT=1 to use the vendored dependencies. To manage dependencies
+[govendor](https://github.com/kardianos/govendor) is recommended (and used in this
+project).
 
 ## How to build
-Simply check out the project and install [gb](http://getgb.io/). Then simply
-execute `gb build` and executables are build. gluon-collector is a daemon for
-continuous data collection,neighbour-discovery is replacement for
-gluon-neighbour-discovery and executes single queries.
+`go get github.com/ffdo/node-informant/...`
 
 # neighbour-discovery
 
