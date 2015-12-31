@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"os"
 
-	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
+	"github.com/ffdo/node-informant/gluon-collector/data"
 )
 
 type FFMapBackendDataLoader struct {

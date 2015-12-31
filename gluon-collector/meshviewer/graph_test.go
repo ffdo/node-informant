@@ -6,8 +6,8 @@ import (
 	"encoding/json"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
-	"github.com/dereulenspiegel/node-informant/gluon-collector/test"
+	"github.com/ffdo/node-informant/gluon-collector/data"
+	"github.com/ffdo/node-informant/gluon-collector/test"
 	"github.com/stretchr/testify/assert"
 )
 

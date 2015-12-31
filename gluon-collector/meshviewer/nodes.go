@@ -6,9 +6,9 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/dereulenspiegel/node-informant/gluon-collector/config"
-	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
-	"github.com/dereulenspiegel/node-informant/gluon-collector/httpserver"
+	"github.com/ffdo/node-informant/gluon-collector/config"
+	"github.com/ffdo/node-informant/gluon-collector/data"
+	"github.com/ffdo/node-informant/gluon-collector/httpserver"
 )
 
 const TimeFormat string = time.RFC3339

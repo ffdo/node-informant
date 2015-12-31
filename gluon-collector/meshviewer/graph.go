@@ -8,8 +8,8 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 
-	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
-	"github.com/dereulenspiegel/node-informant/gluon-collector/httpserver"
+	"github.com/ffdo/node-informant/gluon-collector/data"
+	"github.com/ffdo/node-informant/gluon-collector/httpserver"
 )
 
 type GraphNode struct {

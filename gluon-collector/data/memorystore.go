@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	conf "github.com/dereulenspiegel/node-informant/gluon-collector/config"
+	conf "github.com/ffdo/node-informant/gluon-collector/config"
 	"github.com/muesli/cache2go"
 )
 

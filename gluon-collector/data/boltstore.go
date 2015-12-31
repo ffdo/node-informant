@@ -7,8 +7,8 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/boltdb/bolt"
-	conf "github.com/dereulenspiegel/node-informant/gluon-collector/config"
-	"github.com/dereulenspiegel/node-informant/gluon-collector/scheduler"
+	conf "github.com/ffdo/node-informant/gluon-collector/config"
+	"github.com/ffdo/node-informant/gluon-collector/scheduler"
 )
 
 // BoltStore implements the Nodeinfostore interface. BoltStore uses the embedded

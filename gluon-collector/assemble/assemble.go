@@ -5,11 +5,11 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 
-	"github.com/dereulenspiegel/node-informant/announced"
-	"github.com/dereulenspiegel/node-informant/gluon-collector/collectors"
-	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
-	"github.com/dereulenspiegel/node-informant/gluon-collector/pipeline"
-	"github.com/dereulenspiegel/node-informant/gluon-collector/prometheus"
+	"github.com/ffdo/node-informant/announced"
+	"github.com/ffdo/node-informant/gluon-collector/collectors"
+	"github.com/ffdo/node-informant/gluon-collector/data"
+	"github.com/ffdo/node-informant/gluon-collector/pipeline"
+	"github.com/ffdo/node-informant/gluon-collector/prometheus"
 )
 
 func getProcessPipes(store data.Nodeinfostore) []pipeline.ProcessPipe {

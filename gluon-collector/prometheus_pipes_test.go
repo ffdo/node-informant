@@ -4,12 +4,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dereulenspiegel/node-informant/gluon-collector/collectors"
-	"github.com/dereulenspiegel/node-informant/gluon-collector/config"
-	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
-	"github.com/dereulenspiegel/node-informant/gluon-collector/pipeline"
-	"github.com/dereulenspiegel/node-informant/gluon-collector/prometheus"
-	"github.com/dereulenspiegel/node-informant/gluon-collector/test"
+	"github.com/ffdo/node-informant/gluon-collector/collectors"
+	"github.com/ffdo/node-informant/gluon-collector/config"
+	"github.com/ffdo/node-informant/gluon-collector/data"
+	"github.com/ffdo/node-informant/gluon-collector/pipeline"
+	"github.com/ffdo/node-informant/gluon-collector/prometheus"
+	"github.com/ffdo/node-informant/gluon-collector/test"
 	stat "github.com/prometheus/client_golang/prometheus"
 
 	dto "github.com/prometheus/client_model/go"

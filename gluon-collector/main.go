@@ -12,15 +12,15 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 
-	"github.com/dereulenspiegel/node-informant/announced"
-	"github.com/dereulenspiegel/node-informant/gluon-collector/api"
-	"github.com/dereulenspiegel/node-informant/gluon-collector/assemble"
-	conf "github.com/dereulenspiegel/node-informant/gluon-collector/config"
-	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
-	"github.com/dereulenspiegel/node-informant/gluon-collector/httpserver"
-	"github.com/dereulenspiegel/node-informant/gluon-collector/meshviewer"
-	"github.com/dereulenspiegel/node-informant/gluon-collector/prometheus"
-	"github.com/dereulenspiegel/node-informant/gluon-collector/scheduler"
+	"github.com/ffdo/node-informant/announced"
+	"github.com/ffdo/node-informant/gluon-collector/api"
+	"github.com/ffdo/node-informant/gluon-collector/assemble"
+	conf "github.com/ffdo/node-informant/gluon-collector/config"
+	"github.com/ffdo/node-informant/gluon-collector/data"
+	"github.com/ffdo/node-informant/gluon-collector/httpserver"
+	"github.com/ffdo/node-informant/gluon-collector/meshviewer"
+	"github.com/ffdo/node-informant/gluon-collector/prometheus"
+	"github.com/ffdo/node-informant/gluon-collector/scheduler"
 )
 
 var importPath = flag.String("import", "", "Import data from this path")

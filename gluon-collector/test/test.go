@@ -18,12 +18,12 @@ import (
 	cfg "github.com/olebedev/config"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/dereulenspiegel/node-informant/announced"
-	"github.com/dereulenspiegel/node-informant/gluon-collector/assemble"
-	"github.com/dereulenspiegel/node-informant/gluon-collector/config"
-	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
-	"github.com/dereulenspiegel/node-informant/gluon-collector/prometheus"
-	"github.com/dereulenspiegel/node-informant/utils"
+	"github.com/ffdo/node-informant/announced"
+	"github.com/ffdo/node-informant/gluon-collector/assemble"
+	"github.com/ffdo/node-informant/gluon-collector/config"
+	"github.com/ffdo/node-informant/gluon-collector/data"
+	"github.com/ffdo/node-informant/gluon-collector/prometheus"
+	"github.com/ffdo/node-informant/utils"
 )
 
 var TestData []announced.Response

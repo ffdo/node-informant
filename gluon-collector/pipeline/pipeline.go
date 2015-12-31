@@ -1,8 +1,8 @@
 package pipeline
 
 import (
-	"github.com/dereulenspiegel/node-informant/announced"
-	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
+	"github.com/ffdo/node-informant/announced"
+	"github.com/ffdo/node-informant/gluon-collector/data"
 )
 
 // ReceivePipe needs to implemented by all types which want to participate in the

@@ -5,8 +5,8 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 
-	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
-	"github.com/dereulenspiegel/node-informant/gluon-collector/prometheus"
+	"github.com/ffdo/node-informant/gluon-collector/data"
+	"github.com/ffdo/node-informant/gluon-collector/prometheus"
 )
 
 // GatewayCollector inspects all received statistics and stores the mac addresses

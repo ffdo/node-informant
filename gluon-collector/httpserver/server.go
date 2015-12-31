@@ -9,7 +9,7 @@ import (
 	stat "github.com/prometheus/client_golang/prometheus"
 
 	log "github.com/Sirupsen/logrus"
-	conf "github.com/dereulenspiegel/node-informant/gluon-collector/config"
+	conf "github.com/ffdo/node-informant/gluon-collector/config"
 )
 
 // StartHttpServerBlocking is a blocking method which takes an arbritrary number

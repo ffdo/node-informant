@@ -2,8 +2,8 @@ package pipeline
 
 import (
 	log "github.com/Sirupsen/logrus"
-	"github.com/dereulenspiegel/node-informant/announced"
-	"github.com/dereulenspiegel/node-informant/utils"
+	"github.com/ffdo/node-informant/announced"
+	"github.com/ffdo/node-informant/utils"
 )
 
 // DeflatePipe tries to decompress the payload of all received Responses with

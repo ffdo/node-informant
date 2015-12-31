@@ -1,6 +1,6 @@
 package meshviewer
 
-import "github.com/dereulenspiegel/node-informant/gluon-collector/data"
+import "github.com/ffdo/node-informant/gluon-collector/data"
 
 /*
 "statistics": {

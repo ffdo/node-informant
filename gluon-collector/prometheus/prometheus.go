@@ -2,8 +2,8 @@ package prometheus
 
 import (
 	log "github.com/Sirupsen/logrus"
-	"github.com/dereulenspiegel/node-informant/gluon-collector/config"
-	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
+	"github.com/ffdo/node-informant/gluon-collector/config"
+	"github.com/ffdo/node-informant/gluon-collector/data"
 	stat "github.com/prometheus/client_golang/prometheus"
 )
 

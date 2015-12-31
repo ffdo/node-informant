@@ -3,8 +3,8 @@ package prometheus
 import (
 	"testing"
 
-	"github.com/dereulenspiegel/node-informant/gluon-collector/config"
-	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
+	"github.com/ffdo/node-informant/gluon-collector/config"
+	"github.com/ffdo/node-informant/gluon-collector/data"
 	cfg "github.com/olebedev/config"
 	"github.com/stretchr/testify/assert"
 )

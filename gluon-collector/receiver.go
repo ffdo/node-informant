@@ -5,10 +5,10 @@ import (
 	"net"
 
 	log "github.com/Sirupsen/logrus"
-	conf "github.com/dereulenspiegel/node-informant/gluon-collector/config"
+	conf "github.com/ffdo/node-informant/gluon-collector/config"
 	cfg "github.com/olebedev/config"
 
-	"github.com/dereulenspiegel/node-informant/announced"
+	"github.com/ffdo/node-informant/announced"
 )
 
 type MultiReceiver struct {

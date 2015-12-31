@@ -6,8 +6,8 @@ import (
 	"net"
 	"time"
 
-	"github.com/dereulenspiegel/node-informant/announced"
-	"github.com/dereulenspiegel/node-informant/utils"
+	"github.com/ffdo/node-informant/announced"
+	"github.com/ffdo/node-informant/utils"
 )
 
 var (

@@ -5,8 +5,8 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 
-	"github.com/dereulenspiegel/node-informant/announced"
-	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
+	"github.com/ffdo/node-informant/announced"
+	"github.com/ffdo/node-informant/gluon-collector/data"
 )
 
 // MissingUpdater has the simple jop if iterating through all available NodeInfos

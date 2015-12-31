@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/dereulenspiegel/node-informant/announced"
-	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
+	"github.com/ffdo/node-informant/announced"
+	"github.com/ffdo/node-informant/gluon-collector/data"
 )
 
 // JsonParsePipe is meant as the last stage of the ReceivePipeline. JsonParsePipe

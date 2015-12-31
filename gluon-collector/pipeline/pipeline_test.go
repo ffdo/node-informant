@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dereulenspiegel/node-informant/announced"
-	"github.com/dereulenspiegel/node-informant/gluon-collector/data"
+	"github.com/ffdo/node-informant/announced"
+	"github.com/ffdo/node-informant/gluon-collector/data"
 	"github.com/stretchr/testify/assert"
 )
 
