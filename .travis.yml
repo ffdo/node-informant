@@ -3,6 +3,8 @@ go:
 - 1.5
 env:
 - GO15VENDOREXPERIMENT=1
+install:
+- echo "Using vendoring"
 script:
 - go test -v ./gluon-collector
 - go test -v ./announced
