@@ -1,12 +1,18 @@
 language: go
 go:
 - 1.5
-install:
-- go get github.com/constabulary/gb/...
+env:
+- GO15VENDOREXPERIMENT=1
 script:
-- gb test -test.v
-- env GOOS=linux GOARCH=amd64 gb build
-- env GOOS=linux GOARCH=386 gb build
+- go test -v ./gluon-collector
+- go test -v ./announced
+- go test -v ./neighbour-discovery
+- go test -v ./utils
+- mkdir bin
+- env GOOS=linux GOARCH=amd64 go build -o ./bin/gluon-collector ./gluon-collector
+- env GOOS=linux GOARCH=386 go build -o ./bin/gluon-collector-linux-386 ./gluon-collector
+- env GOOS=linux GOARCH=amd64 go build -o ./bin/neighbour-discovery ./neighbour-discovery
+- env GOOS=linux GOARCH=386 go build -o ./bin/neighbour-discovery-linux-386 ./neighbour-discovery
 deploy:
   provider: releases
   api_key:
