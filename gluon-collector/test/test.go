@@ -117,14 +117,13 @@ func stringToBytes(in string) []byte {
 }
 
 func findTestData() string {
-	dataFound := false
 	currentPath, err := os.Getwd()
 	if err != nil {
 		log.Fatalf("Error can't determine current work directory: %v", err)
 	}
 	currentPath = path.Join(currentPath, "..")
 	currentPath = path.Clean(currentPath)
-	for !dataFound && currentPath != "/" {
+	for currentPath != "/" {
 		dataPath := path.Join(currentPath, "testdata.raw")
 		if utils.FileExists(dataPath) {
 			return dataPath

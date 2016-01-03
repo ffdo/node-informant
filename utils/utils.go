@@ -31,8 +31,6 @@ func Deflate(in []byte) (data []byte, err error) {
 }
 
 func FileExists(path string) bool {
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return false
-	}
-	return true
+	_, err := os.Stat(path)
+	return !os.IsNotExist(err)
 }

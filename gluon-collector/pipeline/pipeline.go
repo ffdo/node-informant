@@ -62,47 +62,8 @@ func (pipeline *ReceivePipeline) Close() error {
 	return nil
 }
 
-// ProcessPipe needs to be implemented by all types which want to participate in
-// the analysis and processing of the received and parsed data.
-type ProcessPipe interface {
-	Process(in chan data.ParsedResponse) chan data.ParsedResponse
-}
-
-// ProcessPipeline takes care of connecting all ProcessPipes together.
-type ProcessPipeline struct {
-	head chan data.ParsedResponse
-	tail chan data.ParsedResponse
-}
-
-func (pipeline *ProcessPipeline) Close() error {
-	close(pipeline.head)
-	close(pipeline.tail)
-	return nil
-}
-
-// Enqueue gives a common interface to push ParsedResponses into the ProcessPipeline
-func (pipeline *ProcessPipeline) Enqueue(response data.ParsedResponse) {
-	pipeline.head <- response
-}
-
-// Dequeue gives a common interface to pull ParsedResponses out of the ProcessPipeline
-// after it ran through all ProcessPipes.
-func (pipeline *ProcessPipeline) Dequeue(handler func(data.ParsedResponse)) {
-	for response := range pipeline.tail {
-		handler(response)
+func FeedParsedResponseReaders(readers []data.ParsedResponseReader, store data.Nodeinfostore, response data.ParsedResponse) {
+	for _, reader := range readers {
+		reader(store, response)
 	}
-}
-
-// NewProcessPipeline creates a new ProcessPipeline connecting all specified ProcessPipes
-func NewProcessPipeline(pipes ...ProcessPipe) *ProcessPipeline {
-	head := make(chan data.ParsedResponse)
-	var next_chan chan data.ParsedResponse
-	for _, pipe := range pipes {
-		if next_chan == nil {
-			next_chan = pipe.Process(head)
-		} else {
-			next_chan = pipe.Process(next_chan)
-		}
-	}
-	return &ProcessPipeline{head: head, tail: next_chan}
 }

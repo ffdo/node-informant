@@ -2,7 +2,6 @@ package main
 
 import (
 	"testing"
-	"time"
 
 	"github.com/ffdo/node-informant/gluon-collector/collectors"
 	"github.com/ffdo/node-informant/gluon-collector/config"
@@ -33,59 +32,41 @@ func collectGaugeValue(gauge stat.Collector) float64 {
 	return value
 }
 
-func feedClientsStat(processPipeline *pipeline.ProcessPipeline, clientCount int) {
-	clients1 := data.ClientStatistics{
-		Wifi:  clientCount,
-		Total: clientCount,
-	}
-	stats1 := data.StatisticsStruct{
-		Clients: clients1,
-		NodeId:  testNodeId,
-	}
-
-	packet1 := data.StatisticsResponse{
-		Statistics: &stats1,
-	}
-
-	processPipeline.Enqueue(packet1)
-}
-
 func TestPrometheusClientCounter(t *testing.T) {
 	assert := assert.New(t)
 	assert.True(true)
 
-	var expectedClientCounts = []float64{13, 11, 15}
-	finishChan := make(chan bool)
+	// set initial value
+	initialCount := 10
+	clientCounts := []int{13, 11, 15}
+	prometheus.TotalClientCounter.Set(float64(initialCount))
 
 	store := data.NewSimpleInMemoryStore()
-	processPipeline := pipeline.NewProcessPipeline(&prometheus.ClientCountPipe{Store: store},
-		&collectors.StatisticsCollector{Store: store})
 
-	prometheus.TotalClientCounter.Set(10.0)
-
-	var packetCount int = 0
-	go processPipeline.Dequeue(func(response data.ParsedResponse) {
-		value := collectGaugeValue(prometheus.TotalClientCounter)
-		assert.Equal(expectedClientCounts[packetCount], value)
-		packetCount = packetCount + 1
-		if packetCount == len(expectedClientCounts) {
-			finishChan <- true
-			close(finishChan)
-		}
-	})
-
-	feedClientsStat(processPipeline, 3)
-	// Give the collector pipe a little time to execute its go routin
-	// in production it is very very unrealistic that we will have two Statistics
-	// Responses from the same node in the channel at the same time.
-	time.Sleep(time.Millisecond * 50)
-	feedClientsStat(processPipeline, 1)
-	time.Sleep(time.Millisecond * 50)
-	feedClientsStat(processPipeline, 5)
-
-	for range finishChan {
-		processPipeline.Close()
+	readers := []data.ParsedResponseReader{
+		prometheus.ClientCounter,
+		collectors.StatisticsCollector,
 	}
+
+	// push data into the readers
+	for step, clientCount := range clientCounts {
+		packet := data.StatisticsResponse{
+			Statistics: &data.StatisticsStruct{
+				NodeId: testNodeId,
+				Clients: data.ClientStatistics{
+					Wifi:  clientCount,
+					Total: clientCount,
+				},
+			},
+		}
+
+		pipeline.FeedParsedResponseReaders(readers, store, packet)
+
+		// check value
+		value := collectGaugeValue(prometheus.TotalClientCounter)
+		assert.Equal(clientCounts[step]+initialCount, int(value))
+	}
+
 }
 
 func TestPrometheusClientCounterWithFullLabels(t *testing.T) {

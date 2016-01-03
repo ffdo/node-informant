@@ -11,88 +11,37 @@ import (
 
 // GatewayCollector inspects all received statistics and stores the mac addresses
 // of gateways to the data store.
-type GatewayCollector struct {
-	Store data.Nodeinfostore
-}
-
-func (g *GatewayCollector) Process(in chan data.ParsedResponse) chan data.ParsedResponse {
-	out := make(chan data.ParsedResponse)
-	go func() {
-		for response := range in {
-			if response.Type() == "statistics" {
-				statistics := response.ParsedData().(*data.StatisticsStruct)
-				gateway := statistics.Gateway
-				if gateway != "" {
-					g.Store.PutGateway(gateway)
-				}
-			}
-			out <- response
+func GatewayCollector(store data.Nodeinfostore, response data.ParsedResponse) {
+	if statistics, ok := response.ParsedData().(*data.StatisticsStruct); ok {
+		gateway := statistics.Gateway
+		if gateway != "" {
+			store.PutGateway(gateway)
 		}
-
-	}()
-	return out
+	}
 }
 
 // NodeinfoCollector inspects all ParsedResponses containing general information
 // about a node and stores this to the data store.
-type NodeinfoCollector struct {
-	Store data.Nodeinfostore
-}
-
-func (n *NodeinfoCollector) Process(in chan data.ParsedResponse) chan data.ParsedResponse {
-	out := make(chan data.ParsedResponse)
-	go func() {
-		for response := range in {
-			if response.Type() == "nodeinfo" {
-				nodeinfo := response.ParsedData().(data.NodeInfo)
-				n.Store.PutNodeInfo(nodeinfo)
-			}
-			out <- response
-		}
-
-	}()
-	return out
+func NodeinfoCollector(store data.Nodeinfostore, response data.ParsedResponse) {
+	if nodeinfo, ok := response.ParsedData().(data.NodeInfo); ok {
+		store.PutNodeInfo(nodeinfo)
+	}
 }
 
 // StatisticsCollector collects all ParsedResponses containing statistics information
 // and stores them in the data store.
-type StatisticsCollector struct {
-	Store data.Nodeinfostore
-}
-
-func (s *StatisticsCollector) Process(in chan data.ParsedResponse) chan data.ParsedResponse {
-	out := make(chan data.ParsedResponse)
-	go func() {
-		for response := range in {
-			if response.Type() == "statistics" {
-				statistics := response.ParsedData().(*data.StatisticsStruct)
-				s.Store.PutStatistics(*statistics)
-			}
-			out <- response
-		}
-	}()
-	return out
+func StatisticsCollector(store data.Nodeinfostore, response data.ParsedResponse) {
+	if statistics, ok := response.ParsedData().(*data.StatisticsStruct); ok {
+		store.PutStatistics(*statistics)
+	}
 }
 
 // NeighbourInfoCollector inspects all ParsedResponses containing information about
 // mesh neighbours and stores them to the data store.
-type NeighbourInfoCollector struct {
-	Store data.Nodeinfostore
-}
-
-func (n *NeighbourInfoCollector) Process(in chan data.ParsedResponse) chan data.ParsedResponse {
-	out := make(chan data.ParsedResponse)
-	go func() {
-		for response := range in {
-			if response.Type() == "neighbours" {
-				neighbours := response.ParsedData().(*data.NeighbourStruct)
-				n.Store.PutNodeNeighbours(*neighbours)
-			}
-			out <- response
-		}
-
-	}()
-	return out
+func NeighbourInfoCollector(store data.Nodeinfostore, response data.ParsedResponse) {
+	if neighbours, ok := response.ParsedData().(*data.NeighbourStruct); ok {
+		store.PutNodeNeighbours(*neighbours)
+	}
 }
 
 const TimeFormat string = time.RFC3339
@@ -102,38 +51,27 @@ const TimeFormat string = time.RFC3339
 // update the Lastseen value. If we have never seen a packet from this node before we
 // also set the Firstseen value.
 // TODO determine Gateway status.
-type StatusInfoCollector struct {
-	Store data.Nodeinfostore
-}
-
-func (s *StatusInfoCollector) Process(in chan data.ParsedResponse) chan data.ParsedResponse {
-	out := make(chan data.ParsedResponse)
-	go func() {
-		for response := range in {
-			nodeId := response.NodeId()
-			statusInfo, err := s.Store.GetNodeStatusInfo(nodeId)
-			if err == nil {
-				if !statusInfo.Online {
-					prometheus.OnlineNodes.Inc()
-					log.WithFields(log.Fields{
-						"nodeid": nodeId,
-					}).Info("Node is considered online again, after receiving any packet at all")
-				}
-				statusInfo.Online = true
-				statusInfo.Lastseen = time.Now().Format(TimeFormat)
-			} else {
-				statusInfo = data.NodeStatusInfo{
-					Online:    true,
-					Firstseen: time.Now().Format(TimeFormat),
-					Lastseen:  time.Now().Format(TimeFormat),
-					Gateway:   false,
-					NodeId:    nodeId,
-				}
-			}
-			s.Store.PutNodeStatusInfo(nodeId, statusInfo)
-			out <- response
+func StatusInfoCollector(store data.Nodeinfostore, response data.ParsedResponse) {
+	nodeId := response.NodeId()
+	statusInfo, err := store.GetNodeStatusInfo(nodeId)
+	now := time.Now().Format(TimeFormat)
+	if err == nil {
+		if !statusInfo.Online {
+			prometheus.OnlineNodes.Inc()
+			log.WithFields(log.Fields{
+				"nodeid": nodeId,
+			}).Info("Node is considered online again, after receiving any packet at all")
 		}
-
-	}()
-	return out
+		statusInfo.Online = true
+		statusInfo.Lastseen = now
+	} else {
+		statusInfo = data.NodeStatusInfo{
+			Online:    true,
+			Firstseen: now,
+			Lastseen:  now,
+			Gateway:   false,
+			NodeId:    nodeId,
+		}
+	}
+	store.PutNodeStatusInfo(nodeId, statusInfo)
 }
