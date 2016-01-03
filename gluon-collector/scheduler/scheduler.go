@@ -8,7 +8,7 @@ import (
 // and the Ticker.
 type ScheduledJob struct {
 	ticker   *time.Ticker
-	quitChan chan bool
+	quitChan chan interface{}
 	method   func()
 }
 
@@ -25,29 +25,26 @@ func NewJob(interval time.Duration, job func(), fireNow bool) *ScheduledJob {
 	sJob := &ScheduledJob{
 		ticker:   time.NewTicker(interval),
 		method:   job,
-		quitChan: make(chan bool),
+		quitChan: make(chan interface{}),
 	}
-	go func() {
-		sJob.loop()
-	}()
+	go sJob.loop()
 	return sJob
 }
 
 // Stop stops a scheduled job immediately. But it will not cancel the
 // specified method if it is long running job.
 func (s *ScheduledJob) Stop() {
-	s.quitChan <- true
+	s.quitChan <- nil
 }
 
 func (s *ScheduledJob) loop() {
-	stopped := false
-	for !stopped {
+	for {
 		select {
 		case <-s.ticker.C:
 			s.method()
-		case quit := <-s.quitChan:
+		case <-s.quitChan:
 			s.ticker.Stop()
-			stopped = quit
+			return
 		}
 	}
 }

@@ -27,88 +27,72 @@ func (h *HttpApi) Routes() []httpserver.Route {
 	return apiRoutes
 }
 
-func respondJson(w http.ResponseWriter, data interface{}) {
+func respond(w http.ResponseWriter, data interface{}, status int) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(status)
 	json.NewEncoder(w).Encode(data)
 }
 
-func respondMissing(w http.ResponseWriter, err error) {
-	w.WriteHeader(http.StatusNotFound)
-	json.NewEncoder(w).Encode(err)
+func respondOK(w http.ResponseWriter, data interface{}) {
+	respond(w, data, http.StatusOK)
+}
+
+func respondMissing(w http.ResponseWriter, data error) {
+	respond(w, data, http.StatusNotFound)
 }
 
 func (h *HttpApi) GetAllNodeStatus(w http.ResponseWriter, r *http.Request) {
-	respondJson(w, h.Store.GetNodeStatusInfos())
+	respondOK(w, h.Store.GetNodeStatusInfos())
 }
 
 func (h *HttpApi) GetNodeStatus(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	nodeid := vars["nodeid"]
-	status, err := h.Store.GetNodeStatusInfo(nodeid)
+	status, err := h.Store.GetNodeStatusInfo(vars["nodeid"])
 	if err == nil {
-		respondJson(w, status)
+		respondOK(w, status)
 	} else {
 		respondMissing(w, err)
 	}
 }
 
 func (h *HttpApi) GetAllStatistics(w http.ResponseWriter, r *http.Request) {
-	respondJson(w, h.Store.GetAllStatistics())
+	respondOK(w, h.Store.GetAllStatistics())
 }
 
 func (h *HttpApi) GetAllNeighboursRest(w http.ResponseWriter, r *http.Request) {
-	neighbours := h.Store.GetAllNeighbours()
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(neighbours)
+	respondOK(w, h.Store.GetAllNeighbours())
 }
 
 func (h *HttpApi) GetNodeStatisticsRest(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	nodeid := vars["nodeid"]
-	stats, err := h.Store.GetStatistics(nodeid)
+	stats, err := h.Store.GetStatistics(vars["nodeid"])
 	if err == nil {
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(stats)
+		respondOK(w, stats)
 	} else {
-		w.WriteHeader(http.StatusNotFound)
-		json.NewEncoder(w).Encode(err)
+		respondMissing(w, err)
 	}
 }
 
 func (n *HttpApi) GetNodeNeighboursRest(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	nodeid := vars["nodeid"]
-	neighbours, err := n.Store.GetNodeNeighbours(nodeid)
+	neighbours, err := n.Store.GetNodeNeighbours(vars["nodeid"])
 	if err == nil {
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(neighbours)
+		respondOK(w, neighbours)
 	} else {
-		w.WriteHeader(http.StatusNotFound)
-		json.NewEncoder(w).Encode(err)
+		respondMissing(w, err)
 	}
 }
 
 func (n *HttpApi) GetNodeinfosRest(w http.ResponseWriter, r *http.Request) {
-	Nodeinfos := n.Store.GetNodeInfos()
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(Nodeinfos)
+	respondOK(w, n.Store.GetNodeInfos())
 }
 
 func (n *HttpApi) GetNodeInfoRest(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	nodeid := vars["nodeid"]
-	nodeinfo, err := n.Store.GetNodeInfo(nodeid)
+	nodeinfo, err := n.Store.GetNodeInfo(vars["nodeid"])
 	if err == nil {
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(nodeinfo)
+		respondOK(w, nodeinfo)
 	} else {
-		w.WriteHeader(http.StatusNotFound)
-		json.NewEncoder(w).Encode(err)
+		respondMissing(w, err)
 	}
 }

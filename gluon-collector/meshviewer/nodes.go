@@ -58,10 +58,9 @@ func NewNodesJsonGenerator(store data.Nodeinfostore) *NodesJsonGenerator {
 }
 
 func (n *NodesJsonGenerator) Routes() []httpserver.Route {
-	var nodesRoutes = []httpserver.Route{
+	return []httpserver.Route{
 		httpserver.Route{"NodesJson", "GET", "/nodes.json", n.GetNodesJsonRest},
 	}
-	return nodesRoutes
 }
 
 func (n *NodesJsonGenerator) GetNodesJsonRest(w http.ResponseWriter, r *http.Request) {
@@ -133,21 +132,20 @@ func (n *NodesJsonGenerator) GetNodesJson() NodesJson {
 			stats = StatisticsStruct{}
 		}
 
-		node := NodesJsonNode{
+		nodes[nodeId] = NodesJsonNode{
 			Nodeinfo:   nodeInfo,
 			Statistics: &stats,
 			Lastseen:   status.Lastseen,
 			Firstseen:  status.Firstseen,
 			Flags:      flags,
 		}
-		nodes[nodeId] = node
 	}
-	nodesJson := NodesJson{
+
+	return NodesJson{
 		Timestamp: timestamp,
 		Version:   1,
 		Nodes:     nodes,
 	}
-	return nodesJson
 }
 
 // GetNodesJson fills a NodesJsonV2 struct with all information stored in the
