@@ -229,7 +229,7 @@ func (n *NodeMetricCollector) Process(in chan data.ParsedResponse) chan data.Par
 func GetPrometheusProcessPipes(store data.Nodeinfostore) []pipeline.ProcessPipe {
 	return []pipeline.ProcessPipe{
 		&NodeCountPipe{Store: store},
-		// &ReturnedNodeDetector{Store: store},
+		&ReturnedNodeDetector{Store: store},
 		&ClientCountPipe{Store: store},
 		&TrafficCountPipe{Store: store},
 		&NodeMetricCollector{Store: store},
