@@ -65,6 +65,7 @@ type NodeInfo struct {
 	Location *LocationStruct `json:"location,omitempty"`
 	Software SoftwareStruct  `json:"software"`
 	Hardware HardwareStruct  `json:"hardware"`
+	VPN      bool            `json:"vpn"`
 }
 
 type RespondNodeinfo struct {
