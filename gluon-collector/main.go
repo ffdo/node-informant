@@ -222,10 +222,10 @@ func main() {
 	Closeables = make([]io.Closer, 0, 5)
 	flag.Parse()
 	conf.InitConfig()
-	prometheus.Init()
 	if conf.Global == nil {
 		log.Fatal("Configuration couldn't be parsed")
 	}
+	prometheus.Init()
 	ConfigureLogger()
 	CreateDataStore()
 	prometheus.ProcessStoredValues(DataStore)
